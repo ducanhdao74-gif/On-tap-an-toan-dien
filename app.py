@@ -14,7 +14,37 @@ def load_data():
         sheets_data = {}
         for sheet in xls.sheet_names:
             df = pd.read_excel(xls, sheet_name=sheet)
-            sheets_data[sheet] = df
+            col = df.columns[0]
+            
+            questions = []
+            current_q = None
+            current_opts = []
+            
+            for val in df[col].dropna():
+                val_str = str(val).strip()
+                if val_str.lower().startswith("câu"):
+                    if current_q:
+                        questions.append({"question": current_q, "options": current_opts})
+                    current_q = val_str
+                    current_opts = []
+                elif val_str.lower().startswith(("a.", "b.", "c.", "d.")):
+                    current_opts.append(val_str)
+                else:
+                    if current_q and not current_opts:
+                        current_q += " " + val_str
+                    elif current_opts:
+                        current_opts[-1] += " " + val_str
+            if current_q:
+                questions.append({"question": current_q, "options": current_opts})
+                
+            # Fallback nếu file cấu trúc khác
+            if not questions:
+                for idx, row in df.iterrows():
+                    row_vals = [str(x) for x in row.values if pd.notna(x)]
+                    if row_vals:
+                        questions.append({"question": row_vals[0], "options": row_vals[1:] if len(row_vals)>1 else ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]})
+                        
+            sheets_data[sheet] = questions
         return sheets_data, None
     except Exception as e:
         return None, f"Lỗi khi đọc file Excel: {e}"
@@ -43,11 +73,8 @@ else:
         sheet_list = list(sheets_data.keys())
         selected_sheet = st.sidebar.selectbox("", sheet_list, label_visibility="collapsed")
         
-        df_current = sheets_data[selected_sheet]
-        
-        # Lọc các dòng có câu hỏi (giả sử cột chứa câu hỏi là cột có chứa text hoặc lấy các cột từ 1 đến 5 làm câu hỏi và đáp án)
-        valid_df = df_current.dropna(how="all").reset_index(drop=True)
-        total_q = len(valid_df)
+        q_list = sheets_data[selected_sheet]
+        total_q = len(q_list)
         
         if f"q_idx_{selected_sheet}" not in st.session_state:
             st.session_state[f"q_idx_{selected_sheet}"] = 0
@@ -66,41 +93,34 @@ else:
         st.title("⚡ Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện")
         
         idx = st.session_state[f"q_idx_{selected_sheet}"]
-        if idx >= total_q:
+        if idx >= total_q and total_q > 0:
             idx = 0
             st.session_state[f"q_idx_{selected_sheet}"] = 0
 
-        row = valid_df.iloc[idx]
-        
-        # Lấy nội dung câu hỏi (thường ở cột 0 hoặc cột 1) và các đáp án ở các cột kế tiếp
-        cols = list(valid_df.columns)
-        q_text = row[cols[0]] if pd.notna(row[cols[0]]) else f"Câu hỏi {idx + 1}"
-        
-        st.subheader(f"Chuyên đề: {selected_sheet} (Câu {idx + 1}/{total_q})")
-        st.markdown("---")
-        st.markdown(f"#### {q_text}")
-        st.write("Chọn đáp án của bạn:")
+        if total_q == 0:
+            st.warning("Chuyên đề này hiện chưa có câu hỏi nào được trích xuất.")
+        else:
+            q_item = q_list[idx]
+            
+            st.subheader(f"Chuyên đề: {selected_sheet} (Câu {idx + 1}/{total_q})")
+            st.markdown("---")
+            st.markdown(f"#### {q_item['question']}")
+            st.write("Chọn đáp án của bạn:")
 
-        # Lấy tất cả các ô có dữ liệu trong dòng này làm phương án lựa chọn
-        options = []
-        for c in cols[1:]:
-            val = row[c]
-            if pd.notna(val) and str(val).strip() != "":
-                options.append(str(val))
-                
-        if not options:
-            options = ["A. Không có dữ liệu đáp án", "B. Kiểm tra lại file Excel", "C. ---", "D. ---"]
+            options = q_item['options']
+            if not options:
+                options = ["A. Đang cập nhật đáp án", "B. ---", "C. ---", "D. ---"]
 
-        choice = st.radio("Đáp án", options, key=f"radio_{selected_sheet}_{idx}", label_visibility="collapsed")
+            choice = st.radio("Đáp án", options, key=f"radio_{selected_sheet}_{idx}", label_visibility="collapsed")
 
-        st.markdown("---")
-        if st.button("Bỏ qua / Sang câu tiếp theo ➡️", type="primary"):
-            st.session_state[f"done_{selected_sheet}"] = min(total_q, st.session_state[f"done_{selected_sheet}"] + 1)
-            if st.session_state[f"q_idx_{selected_sheet}"] < total_q - 1:
-                st.session_state[f"q_idx_{selected_sheet}"] += 1
-            else:
-                st.session_state[f"q_idx_{selected_sheet}"] = 0
-            st.rerun()
+            st.markdown("---")
+            if st.button("Bỏ qua / Sang câu tiếp theo ➡️", type="primary"):
+                st.session_state[f"done_{selected_sheet}"] = min(total_q, st.session_state[f"done_{selected_sheet}"] + 1)
+                if st.session_state[f"q_idx_{selected_sheet}"] < total_q - 1:
+                    st.session_state[f"q_idx_{selected_sheet}"] += 1
+                else:
+                    st.session_state[f"q_idx_{selected_sheet}"] = 0
+                st.rerun()
             
     else:
         st.title("📝 Chế độ thi thử (Mock Test)")

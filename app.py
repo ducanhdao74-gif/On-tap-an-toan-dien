@@ -282,7 +282,6 @@ else:
                     st.markdown(f"**Câu {i+1}** *(Thuộc: {q['sheet']})*: {q['question']}")
                     options = q['options'] if q['options'] else ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
                     
-                    # Dùng index=None để không có option nào bị tích sẵn dấu chấm đỏ
                     st.radio(
                         "Chọn đáp án:", 
                         options, 
@@ -360,7 +359,6 @@ else:
                 st.markdown(f"**Câu {i+1}: {q['question']}**")
                 options = q['options'] if q['options'] else ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
                 
-                # Bỏ chọn sẵn dấu chấm đỏ bằng index=None
                 ans = st.radio(
                     "Chọn đáp án:", 
                     options, 

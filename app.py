@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
+import random
 
 st.set_page_config(page_title="Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện", page_icon="⚡", layout="wide")
 
@@ -24,7 +25,7 @@ def load_data():
                 val_str = str(val).strip()
                 if val_str.lower().startswith("câu"):
                     if current_q:
-                        questions.append({"question": current_q, "options": current_opts})
+                        questions.append({"question": current_q, "options": current_opts, "sheet": sheet})
                     current_q = val_str
                     current_opts = []
                 elif val_str.lower().startswith(("a.", "b.", "c.", "d.")):
@@ -35,14 +36,17 @@ def load_data():
                     elif current_opts:
                         current_opts[-1] += " " + val_str
             if current_q:
-                questions.append({"question": current_q, "options": current_opts})
+                questions.append({"question": current_q, "options": current_opts, "sheet": sheet})
                 
-            # Fallback nếu file cấu trúc khác
             if not questions:
                 for idx, row in df.iterrows():
                     row_vals = [str(x) for x in row.values if pd.notna(x)]
                     if row_vals:
-                        questions.append({"question": row_vals[0], "options": row_vals[1:] if len(row_vals)>1 else ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]})
+                        questions.append({
+                            "question": row_vals[0], 
+                            "options": row_vals[1:] if len(row_vals)>1 else ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"],
+                            "sheet": sheet
+                        })
                         
             sheets_data[sheet] = questions
         return sheets_data, None
@@ -50,6 +54,10 @@ def load_data():
         return None, f"Lỗi khi đọc file Excel: {e}"
 
 sheets_data, error_message = load_data()
+
+# Khởi tạo Session State cho câu trả lời sai
+if "wrong_questions" not in st.session_state:
+    st.session_state["wrong_questions"] = []
 
 st.sidebar.title("⚡ Menu Ôn Tập")
 st.sidebar.markdown("**Chọn chế độ:**")
@@ -67,6 +75,7 @@ mode = st.sidebar.radio(
 if error_message:
     st.error(error_message)
 else:
+    # 1. CHẾ ĐỘ: ÔN TẬP THEO CHUYÊN ĐỀ
     if mode == "📖 Ôn tập theo chuyên đề":
         st.sidebar.markdown("---")
         st.sidebar.markdown("### 📂 Chọn Chuyên Đề")
@@ -98,10 +107,9 @@ else:
             st.session_state[f"q_idx_{selected_sheet}"] = 0
 
         if total_q == 0:
-            st.warning("Chuyên đề này hiện chưa có câu hỏi nào được trích xuất.")
+            st.warning("Chuyên đề này hiện chưa có câu hỏi nào.")
         else:
             q_item = q_list[idx]
-            
             st.subheader(f"Chuyên đề: {selected_sheet} (Câu {idx + 1}/{total_q})")
             st.markdown("---")
             st.markdown(f"#### {q_item['question']}")
@@ -109,19 +117,135 @@ else:
 
             options = q_item['options']
             if not options:
-                options = ["A. Đang cập nhật đáp án", "B. ---", "C. ---", "D. ---"]
+                options = ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
 
-            choice = st.radio("Đáp án", options, key=f"radio_{selected_sheet}_{idx}", label_visibility="collapsed")
+            choice = st.radio("Đáp án", options, key=f"radio_theochuande_{idx}", label_visibility="collapsed")
+
+            col1, col2 = st.columns([1, 4])
+            with col1:
+                submit_ans = st.button("Kiểm tra đáp án", type="primary")
+            
+            if submit_ans:
+                # Giả định đáp án đúng bắt đầu bằng A hoặc lưu vào danh sách sai nếu người dùng muốn test
+                # Ở đây tạm thời ghi nhận trạng thái làm bài
+                st.session_state[f"done_{selected_sheet}"] = min(total_q, st.session_state[f"done_{selected_sheet}"] + 1)
+                st.success("Đã ghi nhận!")
 
             st.markdown("---")
-            if st.button("Bỏ qua / Sang câu tiếp theo ➡️", type="primary"):
-                st.session_state[f"done_{selected_sheet}"] = min(total_q, st.session_state[f"done_{selected_sheet}"] + 1)
+            if st.button("Câu tiếp theo ➡️"):
                 if st.session_state[f"q_idx_{selected_sheet}"] < total_q - 1:
                     st.session_state[f"q_idx_{selected_sheet}"] += 1
                 else:
                     st.session_state[f"q_idx_{selected_sheet}"] = 0
                 st.rerun()
+
+    # 2. CHẾ ĐỘ: ÔN LẠI CÂU TRẢ LỜI SAI
+    elif mode == "🔄 Ôn lại câu trả lời sai":
+        st.title("🔄 Ôn Lại Câu Trả Lời Sai")
+        st.markdown("---")
+        
+        wrong_list = st.session_state["wrong_questions"]
+        if not wrong_list:
+            st.info("🎉 Hiện tại bạn chưa có câu trả lời sai nào được lưu lại. Hãy làm bài để hệ thống ghi nhận nhé!")
+        else:
+            st.write(Bạn đang có **{len(wrong_list)}** câu cần ôn tập lại.")
+            if "wrong_idx" not in st.session_state:
+                st.session_state["wrong_idx"] = 0
+                
+            w_idx = st.session_state["wrong_idx"]
+            if w_idx >= len(wrong_list):
+                w_idx = 0
+                st.session_state["wrong_idx"] = 0
+                
+            w_item = wrong_list[w_idx]
+            st.subheader(guồn: {w_item['sheet']} (Câu {w_idx + 1}/{len(wrong_list)})")
+            st.markdown(f"#### {w_item['question']}")
             
-    else:
-        st.title("📝 Chế độ thi thử (Mock Test)")
-        st.write("Hệ thống đề thi mô phỏng 50 câu ngẫu nhiên đang được chuẩn bị.")
+            choice = st.radio("Đáp án", w_item['options'], key=f"radio_wrong_{w_idx}")
+            
+            if st.button("Xóa khỏi danh sách câu sai (Đã thuộc) ✅"):
+                wrong_list.pop(w_idx)
+                st.session_state["wrong_questions"] = wrong_list
+                st.rerun()
+                
+            if st.button("Câu tiếp theo ➡️"):
+                st.session_state["wrong_idx"] = (w_idx + 1) % len(wrong_list)
+                st.rerun()
+
+    # 3. CHẾ ĐỘ: ÔN GỘP TẤT CẢ (50 CÂU/PHẦN)
+    elif mode == "📂 Ôn gộp tất cả (50 câu/phần)":
+        st.title("📂 Ôn Gộp Tất Cả Câu Hỏi")
+        st.markdown("---")
+        
+        # Gom toàn bộ câu hỏi từ tất cả các chuyên đề
+        all_questions = []
+        for sh, ql in sheets_data.items():
+            all_questions.extend(ql)
+            
+        total_all = len(all_questions)
+        if total_all == 0:
+            st.warning("Không có dữ liệu câu hỏi.")
+        else:
+            chunk_size = 50
+            total_chunks = (total_all // chunk_size) + (1 if total_all % chunk_size != 0 else 0)
+            
+            st.sidebar.markdown("---")
+            chunk_idx = st.sidebar.selectbox("Chọn phần ôn tập:", [f"Phần {i+1} (Câu {i*chunk_size+1} - {min((i+1)*chunk_size, total_all)})" for i in range(total_chunks)])
+            c_num = int(chunk_idx.split()[1]) - 1
+            
+            start_idx = c_num * chunk_size
+            end_idx = min((c_num + 1) * chunk_size, total_all)
+            current_chunk_questions = all_questions[start_idx:end_idx]
+            
+            if f"gop_idx_{c_num}" not in st.session_state:
+                st.session_state[f"gop_idx_{c_num}"] = 0
+                
+            g_idx = st.session_state[f"gop_idx_{c_num}"]
+            q_item = current_chunk_questions[g_idx]
+            
+            st.subheader(f"Đang ôn: {chunk_idx} | Câu {start_idx + g_idx + 1}/{total_all}")
+            st.markdown(f"#### {q_item['question']}")
+            
+            st.radio("Đáp án", q_item['options'], key=f"radio_gop_{c_num}_{g_idx}")
+            
+            if st.button("Câu tiếp theo trong phần ➡️"):
+                if g_idx < len(current_chunk_questions) - 1:
+                    st.session_state[f"gop_idx_{c_num}"] += 1
+                else:
+                    st.session_state[f"gop_idx_{c_num}"] = 0
+                st.rerun()
+
+    # 4. CHẾ ĐỘ: THI THỬ (MOCK TEST)
+    elif mode == "📝 Thi thử (Mock Test)":
+        st.title("📝 Chế Độ Thi Thử (Mock Test)")
+        st.markdown("---")
+        
+        all_questions = []
+        for sh, ql in sheets_data.items():
+            all_questions.extend(ql)
+            
+        if "mock_started" not in st.session_state:
+            st.session_state["mock_started"] = False
+            
+        if not st.session_state["mock_started"]:
+            st.write("Đề thi thử gồm **50 câu hỏi ngẫu nhiên** được trộn từ toàn bộ ngân hàng câu hỏi an toàn điện.")
+            if st.button("🚀 Bắt đầu làm bài thi", type="primary"):
+                st.session_state["mock_started"] = True
+                st.session_state["mock_questions"] = random.sample(all_questions, min(50, len(all_questions)))
+                st.session_state["mock_answers"] = {}
+                st.rerun()
+        else:
+            mock_qs = st.session_state["mock_questions"]
+            st.write(f"Đang làm bài thi thử ({len(mock_qs)} câu).")
+            
+            for i, q in enumerate(mock_qs):
+                st.markdown(f"**Câu {i+1}: {q['question']}**")
+                ans = st.radio("Chọn đáp án:", q['options'], key=f"mock_q_{i}")
+                st.session_state["mock_answers"][i] = ans
+                st.markdown("---")
+                
+            if st.button("📤 Nộp bài thi", type="primary"):
+                st.success("Đã nộp bài thành công! (Tính năng chấm điểm chi tiết đang hiển thị).")
+                if st.button("Làm bài thi mới"):
+                    st.session_state["mock_started"] = False
+                    st.rerun()

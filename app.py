@@ -119,8 +119,24 @@ else:
 
             choice = st.radio("Đáp án", options, key=f"radio_theochuande_{idx}", label_visibility="collapsed")
 
-            if st.button("Bỏ qua / Sang câu tiếp theo ➡️", type="primary"):
+            col1, col2 = st.columns([1, 4])
+            with col1:
+                check_btn = st.button("Kiểm tra đáp án", type="primary")
+
+            if check_btn:
+                # Quy ước mặc định đáp án đúng bắt đầu bằng A. (hoặc bạn có thể điều chỉnh logic check đáp án tại đây)
+                is_correct = choice.strip().startswith("A.")
+                if is_correct:
+                    st.success("🎉 Chính xác! Bạn đã chọn đúng đáp án.")
+                else:
+                    st.error("❌ Chưa chính xác! Đáp án đúng là phương án A.")
+                    if q_item not in st.session_state["wrong_questions"]:
+                        st.session_state["wrong_questions"].append(q_item)
+                
                 st.session_state[f"done_{selected_sheet}"] = min(total_q, st.session_state[f"done_{selected_sheet}"] + 1)
+
+            st.markdown("---")
+            if st.button("Câu tiếp theo ➡️"):
                 if st.session_state[f"q_idx_{selected_sheet}"] < total_q - 1:
                     st.session_state[f"q_idx_{selected_sheet}"] += 1
                 else:
@@ -150,6 +166,12 @@ else:
             
             choice = st.radio("Đáp án", w_item['options'], key=f"radio_wrong_{w_idx}")
             
+            if st.button("Kiểm tra đáp án sai", type="primary"):
+                if choice.strip().startswith("A."):
+                    st.success("🎉 Chính xác!")
+                else:
+                    st.error("❌ Vẫn chưa chính xác!")
+
             if st.button("Xóa khỏi danh sách câu sai (Đã thuộc) ✅"):
                 wrong_list.pop(w_idx)
                 st.session_state["wrong_questions"] = wrong_list
@@ -183,10 +205,9 @@ else:
             start_idx = c_num * chunk_size
             end_idx = min((c_num + 1) * chunk_size, total_all)
             
-            # Cố định thứ tự trộn đều cho mỗi phần nếu chưa có
             if f"chunk_q_{c_num}" not in st.session_state:
                 chunk_qs = all_questions.copy()
-                random.seed(42)  # Cố định seed để giữ nguyên thứ tự trộn mỗi khi vào lại phần này
+                random.seed(42)
                 random.shuffle(chunk_qs)
                 st.session_state[f"chunk_q_{c_num}"] = chunk_qs[start_idx:end_idx]
                 
@@ -229,10 +250,22 @@ else:
                 if not options:
                     options = ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
 
-                st.radio("Đáp án", options, key=f"radio_gop_{c_num}_{g_idx}", label_visibility="collapsed")
+                choice = st.radio("Đáp án", options, key=f"radio_gop_{c_num}_{g_idx}", label_visibility="collapsed")
+
+                col1, col2 = st.columns([1, 4])
+                with col1:
+                    check_gop = st.button("Kiểm tra đáp án", type="primary")
+
+                if check_gop:
+                    if choice.strip().startswith("A."):
+                        st.success("🎉 Chính xác!")
+                    else:
+                        st.error("❌ Sai rồi! Đáp án đúng là A.")
+                        if q_item not in st.session_state["wrong_questions"]:
+                            st.session_state["wrong_questions"].append(q_item)
 
                 st.markdown("---")
-                if st.button("Bỏ qua / Sang câu tiếp theo ➡️", type="primary"):
+                if st.button("Câu tiếp theo ➡️"):
                     if g_idx < actual_chunk_len - 1:
                         st.session_state[f"gop_idx_{c_num}"] += 1
                     else:
@@ -255,7 +288,7 @@ else:
                     st.rerun()
 
             elif sub_mode == "⚠️ Làm lại các câu sai trong phần này":
-                st.info("Tính năng ôn lại các câu trả lời sai trong phần này đang được đồng bộ hóa với hệ thống lưu vết câu sai tổng.")
+                st.info("Tính năng ôn lại các câu trả lời sai đang được đồng bộ hóa với hệ thống câu sai tổng.")
 
     elif mode == "📝 Thi thử (Mock Test)":
         st.title("📝 Chế Độ Thi Thử (Mock Test)")

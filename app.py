@@ -119,16 +119,8 @@ else:
 
             choice = st.radio("Đáp án", options, key=f"radio_theochuande_{idx}", label_visibility="collapsed")
 
-            col1, col2 = st.columns([1, 4])
-            with col1:
-                submit_ans = st.button("Kiểm tra đáp án", type="primary")
-            
-            if submit_ans:
+            if st.button("Bỏ qua / Sang câu tiếp theo ➡️", type="primary"):
                 st.session_state[f"done_{selected_sheet}"] = min(total_q, st.session_state[f"done_{selected_sheet}"] + 1)
-                st.success("Đã ghi nhận!")
-
-            st.markdown("---")
-            if st.button("Câu tiếp theo ➡️"):
                 if st.session_state[f"q_idx_{selected_sheet}"] < total_q - 1:
                     st.session_state[f"q_idx_{selected_sheet}"] += 1
                 else:
@@ -168,7 +160,7 @@ else:
                 st.rerun()
 
     elif mode == "📂 Ôn gộp tất cả (50 câu/phần)":
-        st.title("📂 Ôn Gộp Tất Cả Câu Hỏi")
+        st.title("📂 Ôn Gộp Tất Cả Chuyên Đề (Trộn Đều & Chia Phần 50 Câu)")
         st.markdown("---")
         
         all_questions = []
@@ -183,30 +175,87 @@ else:
             total_chunks = (total_all // chunk_size) + (1 if total_all % chunk_size != 0 else 0)
             
             st.sidebar.markdown("---")
-            chunk_idx = st.sidebar.selectbox("Chọn phần ôn tập:", [f"Phần {i+1} (Câu {i*chunk_size+1} - {min((i+1)*chunk_size, total_all)})" for i in range(total_chunks)])
-            c_num = int(chunk_idx.split()[1]) - 1
+            st.sidebar.markdown("### 📂 Chọn Phần Ôn Tập")
+            chunk_names = [f"Phần {i+1} (Hỗn hợp chuyên đề)" for i in range(total_chunks)]
+            selected_chunk_name = st.sidebar.selectbox("", chunk_names, label_visibility="collapsed")
+            c_num = int(selected_chunk_name.split()[1]) - 1
             
             start_idx = c_num * chunk_size
             end_idx = min((c_num + 1) * chunk_size, total_all)
-            current_chunk_questions = all_questions[start_idx:end_idx]
             
-            if f"gop_idx_{c_num}" not in st.session_state:
-                st.session_state[f"gop_idx_{c_num}"] = 0
+            # Cố định thứ tự trộn đều cho mỗi phần nếu chưa có
+            if f"chunk_q_{c_num}" not in st.session_state:
+                chunk_qs = all_questions.copy()
+                random.seed(42)  # Cố định seed để giữ nguyên thứ tự trộn mỗi khi vào lại phần này
+                random.shuffle(chunk_qs)
+                st.session_state[f"chunk_q_{c_num}"] = chunk_qs[start_idx:end_idx]
                 
-            g_idx = st.session_state[f"gop_idx_{c_num}"]
-            q_item = current_chunk_questions[g_idx]
+            current_chunk_questions = st.session_state[f"chunk_q_{c_num}"]
+            actual_chunk_len = len(current_chunk_questions)
             
-            st.subheader(f"Đang ôn: {chunk_idx} | Câu {start_idx + g_idx + 1}/{total_all}")
-            st.markdown(f"#### {q_item['question']}")
-            
-            st.radio("Đáp án", q_item['options'], key=f"radio_gop_{c_num}_{g_idx}")
-            
-            if st.button("Câu tiếp theo trong phần ➡️"):
-                if g_idx < len(current_chunk_questions) - 1:
-                    st.session_state[f"gop_idx_{c_num}"] += 1
-                else:
+            st.sidebar.markdown(f"**Tổng số câu của phần**\n### {actual_chunk_len}")
+
+            st.markdown("**Chọn chế độ cho phần này:**")
+            sub_mode = st.radio(
+                "",
+                [
+                    "📖 Ôn tập từng câu trong phần",
+                    "📝 Bài kiểm tra chốt kiến thức phần này",
+                    "🔄 Làm lại phần này (Ôn tập lại từ đầu)",
+                    "⚠️ Làm lại các câu sai trong phần này"
+                ],
+                horizontal=True,
+                label_visibility="collapsed"
+            )
+            st.markdown("---")
+
+            if sub_mode == "📖 Ôn tập từng câu trong phần":
+                if f"gop_idx_{c_num}" not in st.session_state:
                     st.session_state[f"gop_idx_{c_num}"] = 0
-                st.rerun()
+                    
+                g_idx = st.session_state[f"gop_idx_{c_num}"]
+                if g_idx >= actual_chunk_len:
+                    g_idx = 0
+                    st.session_state[f"gop_idx_{c_num}"] = 0
+                    
+                q_item = current_chunk_questions[g_idx]
+                
+                st.markdown(f"### Đang ôn: Phần {c_num + 1} (Hỗn hợp chuyên đề)")
+                st.markdown(f"*(Thuộc chuyên đề: {q_item['sheet']})*")
+                st.markdown(f"#### Câu {g_idx + 1}/{actual_chunk_len} (Toàn hệ thống #{start_idx + g_idx + 1}): {q_item['question']}")
+                st.write("Chọn đáp án:")
+
+                options = q_item['options']
+                if not options:
+                    options = ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
+
+                st.radio("Đáp án", options, key=f"radio_gop_{c_num}_{g_idx}", label_visibility="collapsed")
+
+                st.markdown("---")
+                if st.button("Bỏ qua / Sang câu tiếp theo ➡️", type="primary"):
+                    if g_idx < actual_chunk_len - 1:
+                        st.session_state[f"gop_idx_{c_num}"] += 1
+                    else:
+                        st.session_state[f"gop_idx_{c_num}"] = 0
+                    st.rerun()
+
+            elif sub_mode == "📝 Bài kiểm tra chốt kiến thức phần này":
+                st.markdown(f"### Bài kiểm tra - Phần {c_num + 1} ({actual_chunk_len} câu)")
+                for i, q in enumerate(current_chunk_questions):
+                    st.markdown(f"**Câu {i+1}** *(Thuộc: {q['sheet']})*: {q['question']}")
+                    st.radio("Chọn đáp án:", q['options'], key=f"test_chunk_{c_num}_{i}")
+                    st.markdown("---")
+                if st.button("Nộp bài kiểm tra", type="primary"):
+                    st.success("Đã hoàn thành bài kiểm tra phần này!")
+
+            elif sub_mode == "🔄 Làm lại phần này (Ôn tập lại từ đầu)":
+                st.session_state[f"gop_idx_{c_num}"] = 0
+                st.success(f"Đã đặt lại tiến độ Phần {c_num + 1} về câu đầu tiên!")
+                if st.button("Bắt đầu ôn ngay"):
+                    st.rerun()
+
+            elif sub_mode == "⚠️ Làm lại các câu sai trong phần này":
+                st.info("Tính năng ôn lại các câu trả lời sai trong phần này đang được đồng bộ hóa với hệ thống lưu vết câu sai tổng.")
 
     elif mode == "📝 Thi thử (Mock Test)":
         st.title("📝 Chế Độ Thi Thử (Mock Test)")

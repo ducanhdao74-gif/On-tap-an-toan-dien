@@ -278,67 +278,26 @@ else:
 
             elif sub_mode == "📝 Bài kiểm tra chốt kiến thức phần này":
                 st.markdown(f"### Bài kiểm tra - Phần {c_num + 1} ({actual_chunk_len} câu)")
-                st.write("Hãy hoàn thành tất cả các câu hỏi bên dưới và bấm nút **Nộp bài kiểm tra** ở cuối trang để xem kết quả điểm số.")
-                st.markdown("---")
-                
-                # Biến lưu trạng thái đã nộp hay chưa cho phần này
-                submit_key = f"submitted_test_{c_num}"
-                if submit_key not in st.session_state:
-                    st.session_state[submit_key] = False
-
-                user_answers = {}
                 for i, q in enumerate(current_chunk_questions):
                     st.markdown(f"**Câu {i+1}** *(Thuộc: {q['sheet']})*: {q['question']}")
+                    options = q['options'] if q['options'] else ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
                     
-                    options = q['options']
-                    if not options:
-                        options = ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
-                    
-                    # Thêm option trống đầu tiên để người dùng bắt buộc phải tự chọn, không bị tích sẵn đáp án A
-                    display_options = ["-- Chọn đáp án --"] + options
-                    
-                    chosen = st.radio("Chọn đáp án:", display_options, key=f"test_chunk_{c_num}_{i}", index=0)
-                    user_answers[i] = chosen
-                    
-                    # Nếu đã nộp bài, hiện thêm thông báo đúng/sai ngay dưới câu hỏi
-                    if st.session_state[submit_key]:
-                        correct_opt = next((opt for opt in options if opt.strip().startswith("A.")), options[0])
-                        if chosen == correct_opt:
-                            st.success(f"✅ Chính xác! (Đáp án: {correct_opt})")
-                        else:
-                            st.error(f"❌ Bạn chọn: {chosen} | ⚠️ Đáp án đúng là: {correct_opt}")
+                    # Dùng index=None để không có option nào bị tích sẵn dấu chấm đỏ
+                    st.radio(
+                        "Chọn đáp án:", 
+                        options, 
+                        index=None, 
+                        key=f"test_chunk_{c_num}_{i}"
+                    )
                     st.markdown("---")
-
-                if not st.session_state[submit_key]:
-                    if st.button("📤 Nộp bài kiểm tra", type="primary"):
-                        st.session_state[submit_key] = True
-                        st.session_state["completed_chunks"].add(c_num)
-                        st.rerun()
-                else:
-                    # Tính điểm sau khi nộp
-                    score = 0
-                    for i, q in enumerate(current_chunk_questions):
-                        options = q['options']
-                        correct_opt = next((opt for opt in options if opt.strip().startswith("A.")), options[0] if options else "")
-                        chosen = st.session_state.get(f"test_chunk_{c_num}_{i}")
-                        if chosen == correct_opt:
-                            score += 1
-                        else:
-                            # Tự động ghi nhận câu sai vào kho lưu trữ nếu làm sai trong bài kiểm tra
-                            if q not in st.session_state["wrong_questions"]:
-                                st.session_state["wrong_questions"].append(q)
-
-                    st.balloons()
-                    st.success(f"🎯 KẾT QUẢ BÀI KIỂM TRA: Đúng {score}/{actual_chunk_len} câu (Đạt tỷ lệ: {round(score*100/actual_chunk_len, 1)}%)")
                     
-                    if st.button("🔄 Làm lại bài kiểm tra này"):
-                        st.session_state[submit_key] = False
-                        st.rerun()
+                if st.button("Nộp bài kiểm tra", type="primary"):
+                    st.success("Đã hoàn thành bài kiểm tra phần này!")
+                    st.session_state["completed_chunks"].add(c_num)
+                    st.rerun()
 
             elif sub_mode == "🔄 Làm lại phần này (Ôn tập lại từ đầu)":
                 st.session_state[f"gop_idx_{c_num}"] = 0
-                if f"submitted_test_{c_num}" in st.session_state:
-                    st.session_state[f"submitted_test_{c_num}"] = False
                 if c_num in st.session_state["completed_chunks"]:
                     st.session_state["completed_chunks"].remove(c_num)
                 st.success(f"Đã đặt lại tiến độ Phần {c_num + 1} về câu đầu tiên!")
@@ -399,7 +358,15 @@ else:
             
             for i, q in enumerate(mock_qs):
                 st.markdown(f"**Câu {i+1}: {q['question']}**")
-                ans = st.radio("Chọn đáp án:", q['options'], key=f"mock_q_{i}")
+                options = q['options'] if q['options'] else ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
+                
+                # Bỏ chọn sẵn dấu chấm đỏ bằng index=None
+                ans = st.radio(
+                    "Chọn đáp án:", 
+                    options, 
+                    index=None, 
+                    key=f"mock_q_{i}"
+                )
                 st.session_state["mock_answers"][i] = ans
                 st.markdown("---")
                 

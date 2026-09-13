@@ -22,61 +22,87 @@ def load_data():
 
 sheets_data, error_message = load_data()
 
-# --- SIDEBAR ---
+# --- SIDEBAR MENU ---
 st.sidebar.title("⚡ Menu Ôn Tập")
-st.sidebar.markdown("### Chọn chế độ:")
-mode = st.sidebar.radio("", ["📖 Ôn tập theo chuyên đề", "📝 Thi thử (Mock Test)"])
+st.sidebar.markdown("**Chọn chế độ:**")
+mode = st.sidebar.radio(
+    "",
+    [
+        "📖 Ôn tập theo chuyên đề",
+        "🔄 Ôn lại câu trả lời sai",
+        "📂 Ôn gộp tất cả (50 câu/phần)",
+        "📝 Thi thử (Mock Test)"
+    ],
+    label_visibility="collapsed"
+)
 
 if error_message:
     st.error(error_message)
 else:
     if mode == "📖 Ôn tập theo chuyên đề":
+        st.sidebar.markdown("---")
+        st.sidebar.markdown("### 📂 Chọn Chuyên Đề")
         sheet_list = list(sheets_data.keys())
-        selected_sheet = st.sidebar.selectbox("📂 Chọn Chuyên Đề", sheet_list)
+        selected_sheet = st.sidebar.selectbox("", sheet_list, label_visibility="collapsed")
         
         df_current = sheets_data[selected_sheet]
+        col_q = df_current.columns[0]
+        valid_df = df_current.dropna(subset=[col_q]).reset_index(drop=True)
+        total_q = len(valid_df)
         
+        # Quản lý state cho từng chuyên đề riêng biệt
+        if f"q_idx_{selected_sheet}" not in st.session_state:
+            st.session_state[f"q_idx_{selected_sheet}"] = 0
+        if f"done_{selected_sheet}" not in st.session_state:
+            st.session_state[f"done_{selected_sheet}"] = 0
+
+        st.sidebar.markdown("---")
+        st.sidebar.markdown(f"**Tổng số câu**\n### {total_q}")
+        st.sidebar.markdown(f"**Đã làm**\n### {st.session_state[f'done_{selected_sheet}']}")
+        
+        if st.sidebar.button("🔄 Đặt lại tiến độ chuyên đề này"):
+            st.session_state[f"q_idx_{selected_sheet}"] = 0
+            st.session_state[f"done_{selected_sheet}"] = 0
+            st.rerun()
+
+        # --- GIAO DIỆN CHÍNH ---
         st.title("⚡ Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện")
         
-        # Lọc ra các dòng có chứa dữ liệu câu hỏi (loại bỏ giá trị NaN)
-        # Giả sử cột đầu tiên chứa nội dung câu hỏi
-        col_question_name = df_current.columns[0]
-        valid_rows = df_current.dropna(subset=[col_question_name]).reset_index(drop=True)
-        
-        total_qs = len(valid_rows)
-        st.markdown(f"### Chuyên đề: {selected_sheet} (Tổng số: {total_qs} dòng/câu)")
-        st.markdown("---")
-        
-        # Khởi tạo vị trí câu hỏi hiện tại trong session_state nếu chưa có
-        if 'q_index' not in st.session_state:
-            st.session_state.q_index = 0
-            
-        # Đảm bảo index không vượt quá giới hạn
-        if st.session_state.q_index >= total_qs:
-            st.session_state.q_index = 0
+        idx = st.session_state[f"q_idx_{selected_sheet}"]
+        if idx >= total_q:
+            idx = 0
+            st.session_state[f"q_idx_{selected_sheet}"] = 0
 
-        row = valid_rows.iloc[st.session_state.q_index]
-        question_text = row[col_question_name]
-        
-        st.markdown(f"**Câu {st.session_state.q_index + 1}:** {question_text}")
-        
-        # Hiển thị các cột tiếp theo làm các đáp án lựa chọn giả định
-        options = [str(row[c]) for c in valid_rows.columns[1:5] if pd.notna(row[c])]
-        
-        if options:
-            choice = st.radio("Chọn đáp án của bạn:", options, key=f"q_{st.session_state.q_index}")
-        
+        st.subheader(f"Chuyên đề: {selected_sheet} (Câu {idx + 1}/{total_q})")
         st.markdown("---")
-        col1, col2, col3 = st.columns([1, 1, 4])
-        with col1:
-            if st.button("⬅️ Câu trước") and st.session_state.q_index > 0:
-                st.session_state.q_index -= 1
-                st.rerun()
-        with col2:
-            if st.button("Câu tiếp theo ➡️") and st.session_state.q_index < total_qs - 1:
-                st.session_state.q_index += 1
-                st.rerun()
-                
+
+        row = valid_df.iloc[idx]
+        q_text = row[col_q]
+
+        st.markdown(f"#### {q_text}")
+        st.write("Chọn đáp án của bạn:")
+
+        # Lấy các đáp án từ các cột tiếp theo trong hàng Excel
+        options = []
+        for c in valid_df.columns[1:5]:
+            val = row[c]
+            if pd.notna(val):
+                options.append(str(val))
+
+        if not options:
+            options = ["A. Đang cập nhật đáp án", "B. Đang cập nhật đáp án", "C. Đang cập nhật đáp án", "D. Đang cập nhật đáp án"]
+
+        choice = st.radio("Đáp án", options, key=f"radio_{selected_sheet}_{idx}", label_visibility="collapsed")
+
+        st.markdown("---")
+        if st.button("Bỏ qua / Sang câu tiếp theo ➡️", type="primary"):
+            st.session_state[f"done_{selected_sheet}"] = min(total_q, st.session_state[f"done_{selected_sheet}"] + 1)
+            if st.session_state[f"q_idx_{selected_sheet}"] < total_q - 1:
+                st.session_state[f"q_idx_{selected_sheet}"] += 1
+            else:
+                st.session_state[f"q_idx_{selected_sheet}"] = 0
+            st.rerun()
+            
     else:
         st.title("📝 Chế độ thi thử (Mock Test)")
-        st.write("Hệ thống đề thi mô phỏng đang được cập nhật.")
+        st.write("Hệ thống đề thi mô phỏng 50 câu ngẫu nhiên đang được chuẩn bị.")

@@ -279,7 +279,6 @@ else:
             elif sub_mode == "📝 Bài kiểm tra chốt kiến thức phần này":
                 st.markdown(f"### Bài kiểm tra - Phần {c_num + 1} ({actual_chunk_len} câu)")
                 
-                # Kiểm tra xem đã submit bài này chưa
                 submitted_key = f"submitted_test_{c_num}"
                 if submitted_key not in st.session_state:
                     st.session_state[submitted_key] = False
@@ -300,12 +299,10 @@ else:
                         st.markdown("---")
                         
                     if st.button("Nộp bài kiểm tra", type="primary"):
-                        # Kiểm tra xem có câu nào chưa làm không
                         unanswered = [i+1 for i in range(actual_chunk_len) if user_answers[i] is None]
                         if unanswered:
                             st.error(f"⚠️ Ông chưa làm xong tất cả các câu! Còn thiếu các câu: {', '.join(map(str, unanswered))}. Vui lòng hoàn thành tất cả trước khi nộp.")
                         else:
-                            # Chấm điểm
                             correct_count = 0
                             wrong_count = 0
                             for i, q in enumerate(current_chunk_questions):
@@ -323,7 +320,6 @@ else:
                             st.session_state["completed_chunks"].add(c_num)
                             st.rerun()
                 else:
-                    # Hiển thị kết quả sau khi nộp
                     c_correct = st.session_state.get(f"result_correct_{c_num}", 0)
                     c_wrong = st.session_state.get(f"result_wrong_{c_num}", 0)
                     score_percent = (c_correct / actual_chunk_len) * 100
@@ -346,9 +342,8 @@ else:
                     st.session_state[f"submitted_test_{c_num}"] = False
                 if c_num in st.session_state["completed_chunks"]:
                     st.session_state["completed_chunks"].remove(c_num)
-                st.success(f"Đã đặt lại tiến độ Phần {c_num + 1} về câu đầu tiên!")
-                if st.button("Bắt đầu ôn ngay"):
-                    st.rerun()
+                st.success(f"Đã reset và xóa trạng thái hoàn thành của Phần {c_num + 1} thành công!")
+                st.rerun()
 
             elif sub_mode == "⚠️ Làm lại các câu sai trong phần này":
                 st.markdown(f"### Ôn lại các câu sai trong Phần {c_num + 1}")

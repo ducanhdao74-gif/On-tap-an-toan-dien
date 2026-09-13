@@ -57,6 +57,8 @@ sheets_data, error_message = load_data()
 
 if "wrong_questions" not in st.session_state:
     st.session_state["wrong_questions"] = []
+if "completed_chunks" not in st.session_state:
+    st.session_state["completed_chunks"] = set()
 
 st.sidebar.title("⚡ Menu Ôn Tập")
 st.sidebar.markdown("**Chọn chế độ:**")
@@ -182,9 +184,15 @@ else:
             
             st.sidebar.markdown("---")
             st.sidebar.markdown("### 📂 Chọn Phần Ôn Tập")
-            chunk_names = [f"Phần {i+1} (Hỗn hợp chuyên đề)" for i in range(total_chunks)]
+            
+            # Tạo tên hiển thị có gắn nhãn [ĐÃ HOÀN THÀNH] nếu đã xong
+            chunk_names = []
+            for i in range(total_chunks):
+                prefix = "✅ [ĐÃ HOÀN THÀNH] " if i in st.session_state["completed_chunks"] else ""
+                chunk_names.append(f"{prefix}Phần {i+1} (Hỗn hợp chuyên đề)")
+                
             selected_chunk_name = st.sidebar.selectbox("", chunk_names, label_visibility="collapsed")
-            c_num = int(selected_chunk_name.split()[1]) - 1
+            c_num = chunk_names.index(selected_chunk_name)
             
             start_idx = c_num * chunk_size
             end_idx = min((c_num + 1) * chunk_size, total_all)
@@ -248,6 +256,8 @@ else:
                             st.session_state[f"gop_idx_{c_num}"] += 1
                         else:
                             st.session_state[f"gop_idx_{c_num}"] = 0
+                            # Đánh dấu hoàn thành phần này khi đi hết vòng
+                            st.session_state["completed_chunks"].add(c_num)
                         st.rerun()
 
                 st.markdown("---")
@@ -265,6 +275,7 @@ else:
                             st.session_state[f"gop_idx_{c_num}"] += 1
                         else:
                             st.session_state[f"gop_idx_{c_num}"] = 0
+                            st.session_state["completed_chunks"].add(c_num)
                         st.rerun()
 
             elif sub_mode == "📝 Bài kiểm tra chốt kiến thức phần này":
@@ -275,16 +286,19 @@ else:
                     st.markdown("---")
                 if st.button("Nộp bài kiểm tra", type="primary"):
                     st.success("Đã hoàn thành bài kiểm tra phần này!")
+                    st.session_state["completed_chunks"].add(c_num)
+                    st.rerun()
 
             elif sub_mode == "🔄 Làm lại phần này (Ôn tập lại từ đầu)":
                 st.session_state[f"gop_idx_{c_num}"] = 0
+                if c_num in st.session_state["completed_chunks"]:
+                    st.session_state["completed_chunks"].remove(c_num)
                 st.success(f"Đã đặt lại tiến độ Phần {c_num + 1} về câu đầu tiên!")
                 if st.button("Bắt đầu ôn ngay"):
                     st.rerun()
 
             elif sub_mode == "⚠️ Làm lại các câu sai trong phần này":
                 st.markdown(f"### Ôn lại các câu sai trong Phần {c_num + 1}")
-                # Lọc ra các câu sai thuộc phần hiện tại
                 chunk_questions_set = set(id(q) for q in current_chunk_questions)
                 wrong_in_chunk = [q for q in st.session_state["wrong_questions"] if id(q) in chunk_questions_set]
                 
@@ -307,7 +321,6 @@ else:
                         if st.button(opt, key=f"btn_wrong_chunk_{c_num}_{wc_idx}_{opt}", use_container_width=True):
                             if opt.strip().startswith("A."):
                                 st.toast("🎉 Chính xác!", icon="✅")
-                                # Xóa khỏi danh sách câu sai chung nếu đúng
                                 if wc_item in st.session_state["wrong_questions"]:
                                     st.session_state["wrong_questions"].remove(wc_item)
                             else:

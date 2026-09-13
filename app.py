@@ -57,6 +57,8 @@ sheets_data, error_message = load_data()
 
 if "wrong_questions" not in st.session_state:
     st.session_state["wrong_questions"] = []
+if "bookmarked_questions" not in st.session_state:
+    st.session_state["bookmarked_questions"] = []
 if "completed_chunks" not in st.session_state:
     st.session_state["completed_chunks"] = set()
 
@@ -113,6 +115,19 @@ else:
             st.subheader(f"Chuyên đề: {selected_sheet} (Câu {idx + 1}/{total_q})")
             st.markdown("---")
             st.markdown(f"#### {q_item['question']}")
+            
+            # Nút đánh dấu ghi nhớ nhanh
+            is_bm = q_item in st.session_state["bookmarked_questions"]
+            bm_label = "⭐ Đã đánh dấu ghi nhớ" if is_bm else "☆ Đánh dấu câu cần ghi nhớ"
+            if st.button(bm_label, key=f"bm_chuande_{idx}"):
+                if is_bm:
+                    st.session_state["bookmarked_questions"].remove(q_item)
+                    st.toast("Đã bỏ đánh dấu câu hỏi!", icon="ℹ️")
+                else:
+                    st.session_state["bookmarked_questions"].append(q_item)
+                    st.toast("Đã thêm vào danh sách cần ghi nhớ!", icon="⭐")
+                st.rerun()
+
             st.write("Bấm chọn trực tiếp đáp án bên dưới:")
 
             options = q_item['options']
@@ -214,7 +229,8 @@ else:
                     "📖 Ôn tập từng câu trong phần",
                     "📝 Bài kiểm tra chốt kiến thức phần này",
                     "🔄 Làm lại phần này (Ôn tập lại từ đầu)",
-                    "⚠️ Làm lại các câu sai trong phần này"
+                    "⚠️ Làm lại các câu sai trong phần này",
+                    "⭐ Câu hỏi cần ghi nhớ"
                 ],
                 horizontal=True,
                 label_visibility="collapsed"
@@ -235,6 +251,19 @@ else:
                 st.markdown(f"### Đang ôn: Phần {c_num + 1} (Hỗn hợp chuyên đề)")
                 st.markdown(f"*(Thuộc chuyên đề: {q_item['sheet']})*")
                 st.markdown(f"#### Câu {g_idx + 1}/{actual_chunk_len} (Toàn hệ thống #{start_idx + g_idx + 1}): {q_item['question']}")
+                
+                # Nút đánh dấu ghi nhớ trong ôn gộp
+                is_bm = q_item in st.session_state["bookmarked_questions"]
+                bm_label = "⭐ Đã đánh dấu ghi nhớ" if is_bm else "☆ Đánh dấu câu cần ghi nhớ"
+                if st.button(bm_label, key=f"bm_gop_{c_num}_{g_idx}"):
+                    if is_bm:
+                        st.session_state["bookmarked_questions"].remove(q_item)
+                        st.toast("Đã bỏ đánh dấu câu hỏi!", icon="ℹ️")
+                    else:
+                        st.session_state["bookmarked_questions"].append(q_item)
+                        st.toast("Đã thêm vào danh sách cần ghi nhớ!", icon="⭐")
+                    st.rerun()
+
                 st.write("Bấm chọn trực tiếp đáp án bên dưới để tự động chuyển câu:")
 
                 options = q_item['options']
@@ -373,6 +402,40 @@ else:
                                     st.session_state["wrong_questions"].remove(wc_item)
                             else:
                                 st.toast("❌ Vẫn chưa chính xác!", icon="⚠️")
+                            st.rerun()
+
+            elif sub_mode == "⭐ Câu hỏi cần ghi nhớ":
+                st.markdown(f"### ⭐ Danh Sách Câu Hỏi Cần Ghi Nhớ (Phần {c_num + 1})")
+                chunk_questions_set = set(id(q) for q in current_chunk_questions)
+                bm_in_chunk = [q for q in st.session_state["bookmarked_questions"] if id(q) in chunk_questions_set]
+                
+                if not bm_in_chunk:
+                    st.info("⭐ Phần này bạn chưa đánh dấu câu hỏi nào cần ghi nhớ cả. Hãy bấm nút 'Đánh dấu câu cần ghi nhớ' trong lúc ôn tập nhé!")
+                else:
+                    if f"bm_chunk_idx_{c_num}" not in st.session_state:
+                        st.session_state[f"bm_chunk_idx_{c_num}"] = 0
+                    
+                    bmc_idx = st.session_state[f"bm_chunk_idx_{c_num}"]
+                    if bmc_idx >= len(bm_in_chunk):
+                        bmc_idx = 0
+                        st.session_state[f"bm_chunk_idx_{c_num}"] = 0
+                        
+                    bmc_item = bm_in_chunk[bmc_idx]
+                    st.write(f"Đang xem câu ghi nhớ **{bmc_idx + 1}/{len(bm_in_chunk)}** trong phần này:")
+                    st.markdown(f"#### {bmc_item['question']}")
+                    
+                    if st.button("❌ Bỏ đánh dấu câu này", key=f"remove_bm_{c_num}_{bmc_idx}"):
+                        st.session_state["bookmarked_questions"].remove(bmc_item)
+                        st.toast("Đã xóa khỏi danh sách ghi nhớ!", icon="ℹ️")
+                        st.rerun()
+                        
+                    st.markdown("---")
+                    for opt in bmc_item['options']:
+                        if st.button(opt, key=f"btn_bm_chunk_{c_num}_{bmc_idx}_{opt}", use_container_width=True):
+                            if opt.strip().startswith("A."):
+                                st.toast("🎉 Chính xác!", icon="✅")
+                            else:
+                                st.toast("❌ Chưa chính xác! Đáp án đúng là A.", icon="⚠️")
                             st.rerun()
 
     elif mode == "📝 Thi thử (Mock Test)":

@@ -111,37 +111,29 @@ else:
             st.subheader(f"Chuyên đề: {selected_sheet} (Câu {idx + 1}/{total_q})")
             st.markdown("---")
             st.markdown(f"#### {q_item['question']}")
-            st.write("Chọn đáp án của bạn:")
+            st.write("Bấm chọn trực tiếp đáp án bên dưới:")
 
             options = q_item['options']
             if not options:
                 options = ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
 
-            choice = st.radio("Đáp án", options, key=f"radio_theochuande_{idx}", label_visibility="collapsed")
-
-            col1, col2 = st.columns([1, 4])
-            with col1:
-                check_btn = st.button("Kiểm tra đáp án", type="primary")
-
-            if check_btn:
-                # Quy ước mặc định đáp án đúng bắt đầu bằng A. (hoặc bạn có thể điều chỉnh logic check đáp án tại đây)
-                is_correct = choice.strip().startswith("A.")
-                if is_correct:
-                    st.success("🎉 Chính xác! Bạn đã chọn đúng đáp án.")
-                else:
-                    st.error("❌ Chưa chính xác! Đáp án đúng là phương án A.")
-                    if q_item not in st.session_state["wrong_questions"]:
-                        st.session_state["wrong_questions"].append(q_item)
-                
-                st.session_state[f"done_{selected_sheet}"] = min(total_q, st.session_state[f"done_{selected_sheet}"] + 1)
-
-            st.markdown("---")
-            if st.button("Câu tiếp theo ➡️"):
-                if st.session_state[f"q_idx_{selected_sheet}"] < total_q - 1:
-                    st.session_state[f"q_idx_{selected_sheet}"] += 1
-                else:
-                    st.session_state[f"q_idx_{selected_sheet}"] = 0
-                st.rerun()
+            # Dùng button cho từng đáp án để click là ăn ngay lập tức
+            for opt in options:
+                if st.button(opt, key=f"btn_chuande_{idx}_{opt}", use_container_width=True):
+                    is_correct = opt.strip().startswith("A.")
+                    if is_correct:
+                        st.toast("🎉 Chính xác!", icon="✅")
+                    else:
+                        st.toast("❌ Sai rồi! Đáp án đúng là A.", icon="⚠️")
+                        if q_item not in st.session_state["wrong_questions"]:
+                            st.session_state["wrong_questions"].append(q_item)
+                    
+                    st.session_state[f"done_{selected_sheet}"] = min(total_q, st.session_state[f"done_{selected_sheet}"] + 1)
+                    if st.session_state[f"q_idx_{selected_sheet}"] < total_q - 1:
+                        st.session_state[f"q_idx_{selected_sheet}"] += 1
+                    else:
+                        st.session_state[f"q_idx_{selected_sheet}"] = 0
+                    st.rerun()
 
     elif mode == "🔄 Ôn lại câu trả lời sai":
         st.title("🔄 Ôn Lại Câu Trả Lời Sai")
@@ -164,22 +156,15 @@ else:
             st.subheader(f"Nguồn: {w_item['sheet']} (Câu {w_idx + 1}/{len(wrong_list)})")
             st.markdown(f"#### {w_item['question']}")
             
-            choice = st.radio("Đáp án", w_item['options'], key=f"radio_wrong_{w_idx}")
-            
-            if st.button("Kiểm tra đáp án sai", type="primary"):
-                if choice.strip().startswith("A."):
-                    st.success("🎉 Chính xác!")
-                else:
-                    st.error("❌ Vẫn chưa chính xác!")
-
-            if st.button("Xóa khỏi danh sách câu sai (Đã thuộc) ✅"):
-                wrong_list.pop(w_idx)
-                st.session_state["wrong_questions"] = wrong_list
-                st.rerun()
-                
-            if st.button("Câu tiếp theo ➡️"):
-                st.session_state["wrong_idx"] = (w_idx + 1) % len(wrong_list)
-                st.rerun()
+            for opt in w_item['options']:
+                if st.button(opt, key=f"btn_wrong_{w_idx}_{opt}", use_container_width=True):
+                    if opt.strip().startswith("A."):
+                        st.toast("🎉 Chính xác!", icon="✅")
+                        wrong_list.pop(w_idx)
+                        st.session_state["wrong_questions"] = wrong_list
+                    else:
+                        st.toast("❌ Vẫn chưa chính xác!", icon="⚠️")
+                    st.rerun()
 
     elif mode == "📂 Ôn gộp tất cả (50 câu/phần)":
         st.title("📂 Ôn Gộp Tất Cả Chuyên Đề (Trộn Đều & Chia Phần 50 Câu)")
@@ -222,8 +207,7 @@ else:
                 [
                     "📖 Ôn tập từng câu trong phần",
                     "📝 Bài kiểm tra chốt kiến thức phần này",
-                    "🔄 Làm lại phần này (Ôn tập lại từ đầu)",
-                    "⚠️ Làm lại các câu sai trong phần này"
+                    "🔄 Làm lại phần này (Ôn tập lại từ đầu)"
                 ],
                 horizontal=True,
                 label_visibility="collapsed"
@@ -244,33 +228,27 @@ else:
                 st.markdown(f"### Đang ôn: Phần {c_num + 1} (Hỗn hợp chuyên đề)")
                 st.markdown(f"*(Thuộc chuyên đề: {q_item['sheet']})*")
                 st.markdown(f"#### Câu {g_idx + 1}/{actual_chunk_len} (Toàn hệ thống #{start_idx + g_idx + 1}): {q_item['question']}")
-                st.write("Chọn đáp án:")
+                st.write("Bấm chọn trực tiếp đáp án bên dưới để tự động chuyển câu:")
 
                 options = q_item['options']
                 if not options:
                     options = ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
 
-                choice = st.radio("Đáp án", options, key=f"radio_gop_{c_num}_{g_idx}", label_visibility="collapsed")
+                for opt in options:
+                    if st.button(opt, key=f"btn_gop_{c_num}_{g_idx}_{opt}", use_container_width=True):
+                        is_correct = opt.strip().startswith("A.")
+                        if is_correct:
+                            st.toast("🎉 Chính xác!", icon="✅")
+                        else:
+                            st.toast("❌ Sai rồi! Đáp án đúng là A.", icon="⚠️")
+                            if q_item not in st.session_state["wrong_questions"]:
+                                st.session_state["wrong_questions"].append(q_item)
 
-                col1, col2 = st.columns([1, 4])
-                with col1:
-                    check_gop = st.button("Kiểm tra đáp án", type="primary")
-
-                if check_gop:
-                    if choice.strip().startswith("A."):
-                        st.success("🎉 Chính xác!")
-                    else:
-                        st.error("❌ Sai rồi! Đáp án đúng là A.")
-                        if q_item not in st.session_state["wrong_questions"]:
-                            st.session_state["wrong_questions"].append(q_item)
-
-                st.markdown("---")
-                if st.button("Câu tiếp theo ➡️"):
-                    if g_idx < actual_chunk_len - 1:
-                        st.session_state[f"gop_idx_{c_num}"] += 1
-                    else:
-                        st.session_state[f"gop_idx_{c_num}"] = 0
-                    st.rerun()
+                        if g_idx < actual_chunk_len - 1:
+                            st.session_state[f"gop_idx_{c_num}"] += 1
+                        else:
+                            st.session_state[f"gop_idx_{c_num}"] = 0
+                        st.rerun()
 
             elif sub_mode == "📝 Bài kiểm tra chốt kiến thức phần này":
                 st.markdown(f"### Bài kiểm tra - Phần {c_num + 1} ({actual_chunk_len} câu)")
@@ -286,9 +264,6 @@ else:
                 st.success(f"Đã đặt lại tiến độ Phần {c_num + 1} về câu đầu tiên!")
                 if st.button("Bắt đầu ôn ngay"):
                     st.rerun()
-
-            elif sub_mode == "⚠️ Làm lại các câu sai trong phần này":
-                st.info("Tính năng ôn lại các câu trả lời sai đang được đồng bộ hóa với hệ thống câu sai tổng.")
 
     elif mode == "📝 Thi thử (Mock Test)":
         st.title("📝 Chế Độ Thi Thử (Mock Test)")

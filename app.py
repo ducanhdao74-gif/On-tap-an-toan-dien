@@ -117,7 +117,6 @@ else:
             if not options:
                 options = ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
 
-            # Dùng button cho từng đáp án để click là ăn ngay lập tức
             for opt in options:
                 if st.button(opt, key=f"btn_chuande_{idx}_{opt}", use_container_width=True):
                     is_correct = opt.strip().startswith("A.")
@@ -207,7 +206,8 @@ else:
                 [
                     "📖 Ôn tập từng câu trong phần",
                     "📝 Bài kiểm tra chốt kiến thức phần này",
-                    "🔄 Làm lại phần này (Ôn tập lại từ đầu)"
+                    "🔄 Làm lại phần này (Ôn tập lại từ đầu)",
+                    "⚠️ Làm lại các câu sai trong phần này"
                 ],
                 horizontal=True,
                 label_visibility="collapsed"
@@ -250,6 +250,23 @@ else:
                             st.session_state[f"gop_idx_{c_num}"] = 0
                         st.rerun()
 
+                st.markdown("---")
+                col_prev, col_next = st.columns(2)
+                with col_prev:
+                    if st.button("⬅️ Câu trước"):
+                        if st.session_state[f"gop_idx_{c_num}"] > 0:
+                            st.session_state[f"gop_idx_{c_num}"] -= 1
+                        else:
+                            st.session_state[f"gop_idx_{c_num}"] = actual_chunk_len - 1
+                        st.rerun()
+                with col_next:
+                    if st.button("Câu tiếp theo ➡️"):
+                        if st.session_state[f"gop_idx_{c_num}"] < actual_chunk_len - 1:
+                            st.session_state[f"gop_idx_{c_num}"] += 1
+                        else:
+                            st.session_state[f"gop_idx_{c_num}"] = 0
+                        st.rerun()
+
             elif sub_mode == "📝 Bài kiểm tra chốt kiến thức phần này":
                 st.markdown(f"### Bài kiểm tra - Phần {c_num + 1} ({actual_chunk_len} câu)")
                 for i, q in enumerate(current_chunk_questions):
@@ -264,6 +281,38 @@ else:
                 st.success(f"Đã đặt lại tiến độ Phần {c_num + 1} về câu đầu tiên!")
                 if st.button("Bắt đầu ôn ngay"):
                     st.rerun()
+
+            elif sub_mode == "⚠️ Làm lại các câu sai trong phần này":
+                st.markdown(f"### Ôn lại các câu sai trong Phần {c_num + 1}")
+                # Lọc ra các câu sai thuộc phần hiện tại
+                chunk_questions_set = set(id(q) for q in current_chunk_questions)
+                wrong_in_chunk = [q for q in st.session_state["wrong_questions"] if id(q) in chunk_questions_set]
+                
+                if not wrong_in_chunk:
+                    st.info("🎉 Phần này bạn chưa trả lời sai câu nào cả!")
+                else:
+                    if f"wrong_chunk_idx_{c_num}" not in st.session_state:
+                        st.session_state[f"wrong_chunk_idx_{c_num}"] = 0
+                    
+                    wc_idx = st.session_state[f"wrong_chunk_idx_{c_num}"]
+                    if wc_idx >= len(wrong_in_chunk):
+                        wc_idx = 0
+                        st.session_state[f"wrong_chunk_idx_{c_num}"] = 0
+                        
+                    wc_item = wrong_in_chunk[wc_idx]
+                    st.write(f"Đang ôn câu sai **{wc_idx + 1}/{len(wrong_in_chunk)}** trong phần này:")
+                    st.markdown(f"#### {wc_item['question']}")
+                    
+                    for opt in wc_item['options']:
+                        if st.button(opt, key=f"btn_wrong_chunk_{c_num}_{wc_idx}_{opt}", use_container_width=True):
+                            if opt.strip().startswith("A."):
+                                st.toast("🎉 Chính xác!", icon="✅")
+                                # Xóa khỏi danh sách câu sai chung nếu đúng
+                                if wc_item in st.session_state["wrong_questions"]:
+                                    st.session_state["wrong_questions"].remove(wc_item)
+                            else:
+                                st.toast("❌ Vẫn chưa chính xác!", icon="⚠️")
+                            st.rerun()
 
     elif mode == "📝 Thi thử (Mock Test)":
         st.title("📝 Chế Độ Thi Thử (Mock Test)")

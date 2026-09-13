@@ -4,7 +4,6 @@ import os
 
 st.set_page_config(page_title="Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện", page_icon="⚡", layout="wide")
 
-# --- ĐỌC DỮ LIỆU EXCEL ---
 @st.cache_data
 def load_data():
     file_name = "PL1. Tong hop ngan hang cau hoi an toan nam 2025 fn (1).xlsx"
@@ -22,7 +21,6 @@ def load_data():
 
 sheets_data, error_message = load_data()
 
-# --- SIDEBAR MENU ---
 st.sidebar.title("⚡ Menu Ôn Tập")
 st.sidebar.markdown("**Chọn chế độ:**")
 mode = st.sidebar.radio(
@@ -46,11 +44,11 @@ else:
         selected_sheet = st.sidebar.selectbox("", sheet_list, label_visibility="collapsed")
         
         df_current = sheets_data[selected_sheet]
-        col_q = df_current.columns[0]
-        valid_df = df_current.dropna(subset=[col_q]).reset_index(drop=True)
+        
+        # Lọc các dòng có câu hỏi (giả sử cột chứa câu hỏi là cột có chứa text hoặc lấy các cột từ 1 đến 5 làm câu hỏi và đáp án)
+        valid_df = df_current.dropna(how="all").reset_index(drop=True)
         total_q = len(valid_df)
         
-        # Quản lý state cho từng chuyên đề riêng biệt
         if f"q_idx_{selected_sheet}" not in st.session_state:
             st.session_state[f"q_idx_{selected_sheet}"] = 0
         if f"done_{selected_sheet}" not in st.session_state:
@@ -65,7 +63,6 @@ else:
             st.session_state[f"done_{selected_sheet}"] = 0
             st.rerun()
 
-        # --- GIAO DIỆN CHÍNH ---
         st.title("⚡ Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện")
         
         idx = st.session_state[f"q_idx_{selected_sheet}"]
@@ -73,24 +70,26 @@ else:
             idx = 0
             st.session_state[f"q_idx_{selected_sheet}"] = 0
 
+        row = valid_df.iloc[idx]
+        
+        # Lấy nội dung câu hỏi (thường ở cột 0 hoặc cột 1) và các đáp án ở các cột kế tiếp
+        cols = list(valid_df.columns)
+        q_text = row[cols[0]] if pd.notna(row[cols[0]]) else f"Câu hỏi {idx + 1}"
+        
         st.subheader(f"Chuyên đề: {selected_sheet} (Câu {idx + 1}/{total_q})")
         st.markdown("---")
-
-        row = valid_df.iloc[idx]
-        q_text = row[col_q]
-
         st.markdown(f"#### {q_text}")
         st.write("Chọn đáp án của bạn:")
 
-        # Lấy các đáp án từ các cột tiếp theo trong hàng Excel
+        # Lấy tất cả các ô có dữ liệu trong dòng này làm phương án lựa chọn
         options = []
-        for c in valid_df.columns[1:5]:
+        for c in cols[1:]:
             val = row[c]
-            if pd.notna(val):
+            if pd.notna(val) and str(val).strip() != "":
                 options.append(str(val))
-
+                
         if not options:
-            options = ["A. Đang cập nhật đáp án", "B. Đang cập nhật đáp án", "C. Đang cập nhật đáp án", "D. Đang cập nhật đáp án"]
+            options = ["A. Không có dữ liệu đáp án", "B. Kiểm tra lại file Excel", "C. ---", "D. ---"]
 
         choice = st.radio("Đáp án", options, key=f"radio_{selected_sheet}_{idx}", label_visibility="collapsed")
 

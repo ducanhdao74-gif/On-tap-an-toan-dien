@@ -141,6 +141,8 @@ if "bookmarked_questions" not in st.session_state:
   st.session_state["bookmarked_questions"] = []
 if "completed_chunks" not in st.session_state:
   st.session_state["completed_chunks"] = set()
+if "passed_tests" not in st.session_state:
+  st.session_state["passed_tests"] = set()
 
 st.sidebar.title("⚡ Menu Ôn Tập")
 st.sidebar.markdown("**Chọn chế độ:**")
@@ -338,11 +340,12 @@ else:
 
       chunk_names = []
       for i in range(total_chunks):
-        prefix = (
-            "✅ [ĐÃ HOÀN THÀNH] "
-            if i in st.session_state["completed_chunks"]
-            else ""
+        # Kiểm tra nếu phần này đã hoàn thành ôn tập hoặc đã thi thử xong
+        is_done = (
+            i in st.session_state["completed_chunks"]
+            or i in st.session_state["passed_tests"]
         )
+        prefix = "✅ [ĐÃ HOÀN THÀNH] " if is_done else ""
         chunk_names.append(f"{prefix}Phần {i+1} (Hỗn hợp chuyên đề)")
 
       selected_chunk_name = st.sidebar.selectbox(
@@ -520,6 +523,7 @@ else:
               st.session_state[f"test_user_answers_{c_num}"] = user_answers
               st.session_state[submitted_key] = True
               st.session_state["completed_chunks"].add(c_num)
+              st.session_state["passed_tests"].add(c_num)
               st.rerun()
         else:
           c_correct = st.session_state.get(f"result_correct_{c_num}", 0)
@@ -539,7 +543,6 @@ else:
 
           st.markdown("---")
           
-          # PHẦN XEM LẠI CÁC CÂU SAI ĐÃ ĐƯỢC FIX CHUẨN SỐ LƯỢNG
           st.markdown("### 🔍 Xem Lại Chi Tiết Các Câu Trả Lời Sai")
           user_answers = st.session_state.get(f"test_user_answers_{c_num}", {})
           wrong_items_in_test = []
@@ -581,6 +584,8 @@ else:
             st.session_state[submitted_key] = False
             if f"test_user_answers_{c_num}" in st.session_state:
               del st.session_state[f"test_user_answers_{c_num}"]
+            if c_num in st.session_state["passed_tests"]:
+              st.session_state["passed_tests"].remove(c_num)
             st.rerun()
 
       elif sub_mode == "🔄 Làm lại phần này (Ôn tập lại từ đầu)":
@@ -591,6 +596,8 @@ else:
           del st.session_state[f"test_user_answers_{c_num}"]
         if c_num in st.session_state["completed_chunks"]:
           st.session_state["completed_chunks"].remove(c_num)
+        if c_num in st.session_state["passed_tests"]:
+          st.session_state["passed_tests"].remove(c_num)
         st.success(
             f"Đã reset và xóa trạng thái hoàn thành của Phần {c_num + 1}"
             " thành công!"

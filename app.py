@@ -19,8 +19,8 @@ def load_saved_progress():
     except:
       pass
   return {
-      "completed_chunks": [],
-      "passed_tests": [],
+      "completed_chunks": [0],
+      "passed_tests": [0],
       "bookmarked_questions": [],
       "wrong_questions": [],
   }
@@ -166,8 +166,46 @@ def load_data():
     return None, f"Lỗi đọc file: {str(e)}"
 
 
-sheets_data, error_message = load_data()
+# Hàm trộn đáp án cố định theo session
+def get_shuffled_options(q_item, session_key):
+  if session_key not in st.session_state:
+    orig_options = q_item["options"]
+    if not orig_options:
+      orig_options = ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
 
+    correct_letter = q_item.get("correct", "A").strip().upper()
+
+    opts_with_status = []
+    for opt in orig_options:
+      opt_prefix = opt[:1].strip().upper()
+      is_corr = opt_prefix == correct_letter
+      clean_text = (
+          opt[2:].strip() if len(opt) > 2 and opt[1] in [".", ")"] else opt
+      )
+      opts_with_status.append({"text": clean_text, "is_correct": is_corr})
+
+    random.shuffle(opts_with_status)
+
+    labels = ["A", "B", "C", "D"]
+    shuffled_options = []
+    new_correct_letter = "A"
+
+    for i, item in enumerate(opts_with_status):
+      lbl = labels[i] if i < len(labels) else str(i + 1)
+      formatted_opt = f"{lbl}. {item['text']}"
+      shuffled_options.append(formatted_opt)
+      if item["is_correct"]:
+        new_correct_letter = lbl
+
+    st.session_state[session_key] = {
+        "options": shuffled_options,
+        "correct": new_correct_letter,
+    }
+
+  return st.session_state[session_key]
+
+
+sheets_data, error_message = load_data()
 saved_prog = load_saved_progress()
 
 if "wrong_questions" not in st.session_state:
@@ -180,7 +218,6 @@ if "completed_chunks" not in st.session_state:
   st.session_state["completed_chunks"] = set(
       saved_prog.get("completed_chunks", [])
   )
-
 if "passed_tests" not in st.session_state:
   st.session_state["passed_tests"] = set(saved_prog.get("passed_tests", []))
 
@@ -225,9 +262,17 @@ else:
         f"**Đã làm**\n### {st.session_state[f'done_{selected_sheet}']}"
     )
 
-    if st.sidebar.button("🔄 Đặt lại tiến độ chuyên đề này"):
+    if st.sidebar.button("🔄 Đặt lại tiến độ & Xáo trộn lại chuyên đề"):
       st.session_state[f"q_idx_{selected_sheet}"] = 0
       st.session_state[f"done_{selected_sheet}"] = 0
+      keys_to_del = [
+          k
+          for k in st.session_state.keys()
+          if k.startswith(f"shuff_chuande_{selected_sheet}_")
+          or k.startswith(f"user_ans_chuande_{selected_sheet}_")
+      ]
+      for k in keys_to_del:
+        del st.session_state[k]
       st.rerun()
 
     st.title("⚡ Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện")
@@ -276,17 +321,30 @@ else:
         save_current_progress()
         st.rerun()
 
-      options = q_item["options"]
-      if not options:
-        options = ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
+      shuff_data = get_shuffled_options(
+          q_item, f"shuff_chuande_{selected_sheet}_{idx}"
+      )
+      options = shuff_data["options"]
+      correct_letter = shuff_data["correct"]
 
-      ans_key = f"ans_chuande_{selected_sheet}_{idx}"
+      ans_storage_key = f"user_ans_chuande_{selected_sheet}_{idx}"
+
+      # Xác định index mặc định nếu người dùng đã từng chọn đáp án này trước đó
+      default_idx = None
+      current_saved_ans = st.session_state.get(ans_storage_key, None)
+      if current_saved_ans in options:
+        default_idx = options.index(current_saved_ans)
+
       selected_opt = st.radio(
-          "Chọn đáp án của bạn:", options, index=None, key=ans_key
+          "Chọn đáp án của bạn:",
+          options,
+          index=default_idx,
+          key=f"radio_chuande_{selected_sheet}_{idx}",
       )
 
+      # Lưu lại trạng thái lựa chọn ngay khi người dùng click chọn
       if selected_opt is not None:
-        correct_letter = q_item.get("correct", "A").strip().upper()
+        st.session_state[ans_storage_key] = selected_opt
         is_correct = selected_opt.strip().upper().startswith(correct_letter)
         if is_correct:
           st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
@@ -349,14 +407,23 @@ else:
           unsafe_allow_html=True,
       )
 
+      shuff_data = get_shuffled_options(w_item, f"shuff_wrong_{w_idx}")
+      options = shuff_data["options"]
+      correct_letter = shuff_data["correct"]
+
+      w_storage_key = f"user_ans_wrong_{w_idx}"
+      w_default_idx = None
+      if st.session_state.get(w_storage_key) in options:
+        w_default_idx = options.index(st.session_state.get(w_storage_key))
+
       w_choice = st.radio(
           "Chọn đáp án của bạn:",
-          w_item["options"],
-          index=None,
+          options,
+          index=w_default_idx,
           key=f"radio_wrong_{w_idx}",
       )
       if w_choice is not None:
-        correct_letter = w_item.get("correct", "A").strip().upper()
+        st.session_state[w_storage_key] = w_choice
         if w_choice.strip().upper().startswith(correct_letter):
           st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
           wrong_list = [
@@ -557,19 +624,24 @@ else:
           save_current_progress()
           st.rerun()
 
-        options = q_item["options"]
-        if not options:
-          options = ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
+        shuff_data = get_shuffled_options(q_item, f"shuff_gop_{c_num}_{g_idx}")
+        options = shuff_data["options"]
+        correct_letter = shuff_data["correct"]
+
+        gop_storage_key = f"user_ans_gop_{c_num}_{g_idx}"
+        gop_default_idx = None
+        if st.session_state.get(gop_storage_key) in options:
+          gop_default_idx = options.index(st.session_state.get(gop_storage_key))
 
         g_choice = st.radio(
             "Chọn đáp án của bạn:",
             options,
-            index=None,
+            index=gop_default_idx,
             key=f"radio_gop_{c_num}_{g_idx}",
         )
 
         if g_choice is not None:
-          correct_letter = q_item.get("correct", "A").strip().upper()
+          st.session_state[gop_storage_key] = g_choice
           is_correct = g_choice.strip().upper().startswith(correct_letter)
           if is_correct:
             st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
@@ -619,17 +691,19 @@ else:
                         """,
                 unsafe_allow_html=True,
             )
-            options = (
-                q["options"]
-                if q["options"]
-                else ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
-            )
+            shuff_data = get_shuffled_options(q, f"shuff_test_{c_num}_{i}")
+            options = shuff_data["options"]
 
+            test_ans_key = f"test_chunk_{c_num}_{i}"
             ans = st.radio(
                 "Chọn đáp án:",
                 options,
-                index=None,
-                key=f"test_chunk_{c_num}_{i}",
+                index=(
+                    options.index(st.session_state[test_ans_key])
+                    if st.session_state.get(test_ans_key) in options
+                    else None
+                ),
+                key=test_ans_key,
             )
             user_answers[i] = ans
             st.markdown("---")
@@ -648,7 +722,11 @@ else:
               wrong_count = 0
               for i, q in enumerate(current_chunk_questions):
                 selected = user_answers[i]
-                correct_letter = q.get("correct", "A").strip().upper()
+                shuff_data = st.session_state.get(
+                    f"shuff_test_{c_num}_{i}", {"correct": "A"}
+                )
+                correct_letter = shuff_data["correct"]
+
                 if selected and selected.strip().upper().startswith(
                     correct_letter
                 ):
@@ -686,18 +764,21 @@ else:
           col3.metric("Trạng thái", "Đã hoàn thành ✅")
 
           st.markdown("---")
-
           st.markdown("### 🔍 Xem Lại Chi Tiết Các Câu Trả Lời Sai")
           user_answers = st.session_state.get(f"test_user_answers_{c_num}", {})
           wrong_items_in_test = []
           for i, q in enumerate(current_chunk_questions):
             selected = user_answers.get(i)
-            correct_letter = q.get("correct", "A").strip().upper()
+            shuff_data = st.session_state.get(
+                f"shuff_test_{c_num}_{i}", {"correct": "A"}
+            )
+            correct_letter = shuff_data["correct"]
+
             is_correct = selected and selected.strip().upper().startswith(
                 correct_letter
             )
             if not is_correct:
-              wrong_items_in_test.append((i, q, selected))
+              wrong_items_in_test.append((i, q, selected, shuff_data))
 
           if not wrong_items_in_test:
             st.info(
@@ -710,17 +791,17 @@ else:
                 " là chi tiết các câu sai, đáp án ông đã chọn và đáp án đúng"
                 " chuẩn:"
             )
-            for q_idx, q_item, user_sel in wrong_items_in_test:
+            for q_idx, q_item, user_sel, shuff_info in wrong_items_in_test:
               st.markdown(
                   f"**Câu {q_idx + 1}** *(Thuộc chuyên đề: {q_item['sheet']})*"
               )
               st.markdown(f"> **{q_item['question']}**")
 
-              correct_letter = q_item.get("correct", "A").strip().upper()
+              correct_letter = shuff_info["correct"]
 
-              for opt in q_item["options"]:
-                opt_letter = opt.strip().upper()
-                is_this_correct = opt_letter.startswith(correct_letter)
+              for opt in shuff_info["options"]:
+                opt_letter = opt.strip().upper()[:1]
+                is_this_correct = opt_letter == correct_letter
                 is_user_chosen = user_sel and opt.strip() == user_sel.strip()
 
                 if is_this_correct:
@@ -737,6 +818,15 @@ else:
 
           if st.button("🔄 Làm lại bài kiểm tra này"):
             st.session_state[submitted_key] = False
+            keys_to_del = [
+                k
+                for k in st.session_state.keys()
+                if k.startswith(f"shuff_test_{c_num}_")
+                or k.startswith(f"test_chunk_{c_num}_")
+            ]
+            for k in keys_to_del:
+              del st.session_state[k]
+
             if f"test_user_answers_{c_num}" in st.session_state:
               del st.session_state[f"test_user_answers_{c_num}"]
             if c_num in st.session_state["completed_chunks"]:
@@ -748,6 +838,17 @@ else:
 
       elif sub_mode == "🔄 Làm lại phần này (Ôn tập lại từ đầu)":
         st.session_state[f"gop_idx_{c_num}"] = 0
+        keys_to_del = [
+            k
+            for k in st.session_state.keys()
+            if k.startswith(f"shuff_gop_{c_num}_")
+            or k.startswith(f"shuff_test_{c_num}_")
+            or k.startswith(f"user_ans_gop_{c_num}_")
+            or k.startswith(f"test_chunk_{c_num}_")
+        ]
+        for k in keys_to_del:
+          del st.session_state[k]
+
         if f"submitted_test_{c_num}" in st.session_state:
           st.session_state[f"submitted_test_{c_num}"] = False
         if f"test_user_answers_{c_num}" in st.session_state:
@@ -758,7 +859,7 @@ else:
           st.session_state["passed_tests"].remove(c_num)
         save_current_progress()
         st.success(
-            f"Đã reset và xóa trạng thái hoàn thành của Phần {c_num + 1}"
+            f"Đã reset và xáo trộn lại vị trí đáp án của Phần {c_num + 1}"
             " thành công!"
         )
         st.rerun()
@@ -799,14 +900,25 @@ else:
               unsafe_allow_html=True,
           )
 
+          shuff_data = get_shuffled_options(
+              wc_item, f"shuff_wc_{c_num}_{wc_idx}"
+          )
+          options = shuff_data["options"]
+          correct_letter = shuff_data["correct"]
+
+          wc_storage_key = f"user_ans_wc_{c_num}_{wc_idx}"
+          wc_default_idx = None
+          if st.session_state.get(wc_storage_key) in options:
+            wc_default_idx = options.index(st.session_state.get(wc_storage_key))
+
           wc_choice = st.radio(
               "Chọn đáp án của bạn:",
-              wc_item["options"],
-              index=None,
+              options,
+              index=wc_default_idx,
               key=f"radio_wc_{c_num}_{wc_idx}",
           )
           if wc_choice is not None:
-            correct_letter = wc_item.get("correct", "A").strip().upper()
+            st.session_state[wc_storage_key] = wc_choice
             if wc_choice.strip().upper().startswith(correct_letter):
               st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
               st.session_state["wrong_questions"] = [
@@ -853,6 +965,13 @@ else:
             all_questions, min(50, len(all_questions))
         )
         st.session_state["mock_answers"] = {}
+        keys_to_del = [
+            k
+            for k in st.session_state.keys()
+            if k.startswith("shuff_mock_") or k.startswith("mock_q_")
+        ]
+        for k in keys_to_del:
+          del st.session_state[k]
         st.rerun()
     else:
       mock_qs = st.session_state["mock_questions"]
@@ -867,13 +986,20 @@ else:
                 """,
             unsafe_allow_html=True,
         )
-        options = (
-            q["options"]
-            if q["options"]
-            else ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
-        )
+        shuff_data = get_shuffled_options(q, f"shuff_mock_{i}")
+        options = shuff_data["options"]
 
-        ans = st.radio("Chọn đáp án:", options, index=None, key=f"mock_q_{i}")
+        mock_ans_key = f"mock_q_{i}"
+        ans = st.radio(
+            "Chọn đáp án:",
+            options,
+            index=(
+                options.index(st.session_state[mock_ans_key])
+                if st.session_state.get(mock_ans_key) in options
+                else None
+            ),
+            key=mock_ans_key,
+        )
         st.session_state["mock_answers"][i] = ans
         st.markdown("---")
 

@@ -7,8 +7,7 @@ st.set_page_config(page_title="Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện
 
 @st.cache_data
 def load_data():
-    file_name = "PL1. Tong hop ngan hang cau hoi an توan nam 2025 fn (1).xlsx"
-    # Fallback nếu tên file không dấu/có dấu khác nhau trên server
+    file_name = "PL1. Tong hop ngan hang cau hoi an toan nam 2025 fn (1).xlsx"
     if not os.path.exists(file_name):
         for f in os.listdir('.'):
             if f.endswith('.xlsx') and 'ngan hang cau hoi' in f.lower():
@@ -137,25 +136,22 @@ else:
             if not options:
                 options = ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
 
-            choice = st.radio("Chọn đáp án của bạn:", options, index=None, key=f"radio_chuande_{idx}")
+            ans_key = f"ans_chuande_{selected_sheet}_{idx}"
+            selected_opt = st.radio("Chọn đáp án:", options, index=None, key=ans_key)
             
-            col_sub, col_next = st.columns([1, 4])
-            with col_sub:
-                if st.button("Xác nhận", type="primary", key=f"sub_chuande_{idx}"):
-                    if choice is None:
-                        st.warning("Vui lòng chọn một đáp án!")
-                    else:
-                        is_correct = choice.strip().startswith("A.")
-                        if is_correct:
-                            st.success("🎉 Chính xác!")
-                        else:
-                            st.error("❌ Sai rồi! Đáp án đúng là A.")
-                            if q_item not in st.session_state["wrong_questions"]:
-                                st.session_state["wrong_questions"].append(q_item)
-                        
-                        st.session_state[f"done_{selected_sheet}"] = min(total_q, st.session_state[f"done_{selected_sheet}"] + 1)
+            if selected_opt is not None:
+                is_correct = selected_opt.strip().startswith("A.")
+                if is_correct:
+                    st.success("🎉 Chính xác! Đáp án đúng là A.")
+                else:
+                    st.error("❌ Sai rồi! Đáp án đúng là A.")
+                    if q_item not in st.session_state["wrong_questions"]:
+                        st.session_state["wrong_questions"].append(q_item)
+                
+                st.session_state[f"done_{selected_sheet}"] = min(total_q, max(st.session_state[f"done_{selected_sheet}"], idx + 1))
 
-            if st.button("Câu tiếp theo ➡️", key=f"next_chuande_{idx}"):
+            st.markdown("---")
+            if st.button("Câu tiếp theo ➡️", type="primary", key=f"next_chuande_{idx}"):
                 if st.session_state[f"q_idx_{selected_sheet}"] < total_q - 1:
                     st.session_state[f"q_idx_{selected_sheet}"] += 1
                 else:
@@ -184,17 +180,22 @@ else:
             st.markdown(f"#### {w_item['question']}")
             
             w_choice = st.radio("Chọn đáp án:", w_item['options'], index=None, key=f"radio_wrong_{w_idx}")
-            if st.button("Xác nhận đáp án", type="primary", key=f"sub_wrong_{w_idx}"):
-                if w_choice is None:
-                    st.warning("Vui lòng chọn đáp án!")
-                else:
-                    if w_choice.strip().startswith("A."):
-                        st.success("🎉 Chính xác! Đã xóa khỏi danh sách câu sai.")
-                        wrong_list.pop(w_idx)
+            if w_choice is not None:
+                if w_choice.strip().startswith("A."):
+                    st.success("🎉 Chính xác! Đáp án đúng là A.")
+                    if w_item in wrong_list:
+                        wrong_list.remove(w_item)
                         st.session_state["wrong_questions"] = wrong_list
-                        st.rerun()
-                    else:
-                        st.error("❌ Vẫn chưa chính xác! Đáp án đúng là A.")
+                else:
+                    st.error("❌ Sai rồi! Đáp án đúng là A.")
+
+            st.markdown("---")
+            if st.button("Câu tiếp theo ➡️", type="primary", key=f"next_wrong_{w_idx}"):
+                if st.session_state["wrong_idx"] < len(wrong_list) - 1:
+                    st.session_state["wrong_idx"] += 1
+                else:
+                    st.session_state["wrong_idx"] = 0
+                st.rerun()
 
     elif mode == "📂 Ôn gộp tất cả (50 câu/phần)":
         st.title("📂 Ôn Gộp Tất Cả Chuyên Đề (Trộn Đều & Chia Phần 50 Câu)")
@@ -283,17 +284,14 @@ else:
 
                 g_choice = st.radio("Chọn đáp án:", options, index=None, key=f"radio_gop_{c_num}_{g_idx}")
                 
-                if st.button("Xác nhận đáp án", type="primary", key=f"sub_btn_gop_{c_num}_{g_idx}"):
-                    if g_choice is None:
-                        st.warning("Vui lòng chọn đáp án!")
+                if g_choice is not None:
+                    is_correct = g_choice.strip().startswith("A.")
+                    if is_correct:
+                        st.success("🎉 Chính xác! Đáp án đúng là A.")
                     else:
-                        is_correct = g_choice.strip().startswith("A.")
-                        if is_correct:
-                            st.success("🎉 Chính xác!")
-                        else:
-                            st.error("❌ Sai rồi! Đáp án đúng là A.")
-                            if q_item not in st.session_state["wrong_questions"]:
-                                st.session_state["wrong_questions"].append(q_item)
+                        st.error("❌ Sai rồi! Đáp án đúng là A.")
+                        if q_item not in st.session_state["wrong_questions"]:
+                            st.session_state["wrong_questions"].append(q_item)
 
                 st.markdown("---")
                 col_prev, col_next = st.columns(2)
@@ -305,7 +303,7 @@ else:
                             st.session_state[f"gop_idx_{c_num}"] = actual_chunk_len - 1
                         st.rerun()
                 with col_next:
-                    if st.button("Câu tiếp theo ➡️"):
+                    if st.button("Câu tiếp theo ➡️", type="primary"):
                         if st.session_state[f"gop_idx_{c_num}"] < actual_chunk_len - 1:
                             st.session_state[f"gop_idx_{c_num}"] += 1
                         else:
@@ -403,17 +401,21 @@ else:
                     st.markdown(f"#### {wc_item['question']}")
                     
                     wc_choice = st.radio("Chọn đáp án:", wc_item['options'], index=None, key=f"radio_wc_{c_num}_{wc_idx}")
-                    if st.button("Xác nhận đáp án", type="primary", key=f"sub_wc_{c_num}_{wc_idx}"):
-                        if wc_choice is None:
-                            st.warning("Vui lòng chọn đáp án!")
+                    if wc_choice is not None:
+                        if wc_choice.strip().startswith("A."):
+                            st.success("🎉 Chính xác! Đáp án đúng là A.")
+                            if wc_item in st.session_state["wrong_questions"]:
+                                st.session_state["wrong_questions"].remove(wc_item)
                         else:
-                            if wc_choice.strip().startswith("A."):
-                                st.success("🎉 Chính xác! Đã loại bỏ câu này khỏi danh sách sai.")
-                                if wc_item in st.session_state["wrong_questions"]:
-                                    st.session_state["wrong_questions"].remove(wc_item)
-                                st.rerun()
-                            else:
-                                st.error("❌ Vẫn chưa chính xác! Đáp án đúng là A.")
+                            st.error("❌ Sai rồi! Đáp án đúng là A.")
+
+                    st.markdown("---")
+                    if st.button("Câu tiếp theo ➡️", type="primary", key=f"next_wc_{c_num}_{wc_idx}"):
+                        if st.session_state[f"wrong_chunk_idx_{c_num}"] < len(wrong_in_chunk) - 1:
+                            st.session_state[f"wrong_chunk_idx_{c_num}"] += 1
+                        else:
+                            st.session_state[f"wrong_chunk_idx_{c_num}"] = 0
+                        st.rerun()
 
             elif sub_mode == "⭐ Câu hỏi cần ghi nhớ":
                 st.markdown(f"### ⭐ Danh Sách Câu Hỏi Cần Ghi Nhớ (Phần {c_num + 1})")
@@ -441,14 +443,19 @@ else:
                         st.rerun()
                         
                     bmc_choice = st.radio("Chọn đáp án:", bmc_item['options'], index=None, key=f"radio_bm_{c_num}_{bmc_idx}")
-                    if st.button("Xác nhận đáp án", type="primary", key=f"sub_bm_{c_num}_{bmc_idx}"):
-                        if bmc_choice is None:
-                            st.warning("Vui lòng chọn đáp án!")
+                    if bmc_choice is not None:
+                        if bmc_choice.strip().startswith("A."):
+                            st.success("🎉 Chính xác! Đáp án đúng là A.")
                         else:
-                            if bmc_choice.strip().startswith("A."):
-                                st.success("🎉 Chính xác!")
-                            else:
-                                st.error("❌ Chưa chính xác! Đáp án đúng là A.")
+                            st.error("❌ Sai rồi! Đáp án đúng là A.")
+
+                    st.markdown("---")
+                    if st.button("Câu tiếp theo ➡️", type="primary", key=f"next_bm_{c_num}_{bmc_idx}"):
+                        if st.session_state[f"bm_chunk_idx_{c_num}"] < len(bm_in_chunk) - 1:
+                            st.session_state[f"bm_chunk_idx_{c_num}"] += 1
+                        else:
+                            st.session_state[f"bm_chunk_idx_{c_num}"] = 0
+                        st.rerun()
 
     elif mode == "📝 Thi thử (Mock Test)":
         st.title("📝 Chế Độ Thi Thử (Mock Test)")

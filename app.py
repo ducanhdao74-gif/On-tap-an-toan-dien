@@ -177,10 +177,10 @@ if "bookmarked_questions" not in st.session_state:
       "bookmarked_questions", []
   )
 if "completed_chunks" not in st.session_state:
-  completed_list = saved_prog.get("completed_chunks", [])
-  if 0 not in completed_list:
-    completed_list.append(0)
-  st.session_state["completed_chunks"] = set(completed_list)
+  # KHÔNG tự động add phần 0 nữa, chỉ lấy đúng những gì đã lưu thực tế
+  st.session_state["completed_chunks"] = set(
+      saved_prog.get("completed_chunks", [])
+  )
 
 if "passed_tests" not in st.session_state:
   st.session_state["passed_tests"] = set(saved_prog.get("passed_tests", []))

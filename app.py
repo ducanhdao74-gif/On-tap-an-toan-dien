@@ -10,7 +10,18 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    /* Bỏ khung phần câu hỏi */
+    /* Trả lại menu chọn chế độ ngang ban đầu (không bị ảnh hưởng căn giữa) */
+    div[data-testid="stHorizontalBlock"] div.stRadio [role="radiogroup"] {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: stretch !important;
+    }
+    div[data-testid="stHorizontalBlock"] div.stRadio [role="radiogroup"] label {
+        text-align: left !important;
+        font-size: 1rem !important;
+    }
+
+    /* Bỏ khung câu hỏi */
     .question-box {
         background-color: transparent !important;
         border: none !important;
@@ -25,14 +36,14 @@ st.markdown(
         font-weight: 600;
     }
     
-    /* Bỏ khung đáp án, căn giữa và tăng kích thước chữ */
-    div.stRadio > label {
+    /* Chỉ định riêng cho phần câu hỏi trắc nghiệm bên dưới: Căn giữa và tăng chữ lên 18px */
+    div:not([data-testid="stHorizontalBlock"]) div.stRadio > label {
         font-size: 1.1rem !important;
         font-weight: bold;
         color: #38bdf8 !important;
         margin-bottom: 10px;
     }
-    div.stRadio [role="radiogroup"] {
+    div:not([data-testid="stHorizontalBlock"]) div.stRadio [role="radiogroup"] {
         background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
@@ -41,9 +52,9 @@ st.markdown(
         flex-direction: column;
         align-items: center; /* Căn giữa các lựa chọn đáp án */
     }
-    div.stRadio [role="radiogroup"] label {
-        font-size: 1.15rem !important; /* Tăng chữ to lên xíu */
-        padding: 6px 0;
+    div:not([data-testid="stHorizontalBlock"]) div.stRadio [role="radiogroup"] label {
+        font-size: 18px !important; /* Tăng chữ lên đúng 18px */
+        padding: 8px 0;
         color: #e2e8f0 !important;
         text-align: center !important;
         width: 100%;

@@ -47,7 +47,6 @@ st.markdown(
 )
 
 
-@st.cache_data
 def load_data():
   file_name = "PL1. Tong hop ngan hang cau hoi an toan nam 2025 fn (1).xlsx"
   if not os.path.exists(file_name):
@@ -58,7 +57,6 @@ def load_data():
   if not os.path.exists(file_name):
     return None, f"Không tìm thấy file Excel trong thư mục!"
   try:
-    # Sử dụng openpyxl để đọc màu sắc chữ nhằm phát hiện đáp án đúng (màu đỏ)
     import openpyxl
 
     wb = openpyxl.load_workbook(file_name, data_only=True)
@@ -69,19 +67,57 @@ def load_data():
       questions = []
       current_q = None
       current_opts = []
-      correct_ans = "A."  # Mặc định A
+      correct_ans = "A."
 
       for row in ws.iter_rows(values_only=False):
         cell = row[0]
         val = cell.value
         if val is not None:
           val_str = str(val).strip()
-          # Kiểm tra nếu chữ có màu đỏ (ví dụ: FF0000 hoặc đống format màu đỏ của Excel)
+
+          # Kiểm tra màu đỏ chính xác từ mã màu hoặc theme màu của Excel
           is_red = False
-          if cell.font and cell.font.color and cell.font.color.rgb:
-            rgb = str(cell.font.color.rgb).upper()
-            if "FF0000" in rgb or "RGB(255" in rgb or rgb.endswith("FF0000"):
+          if cell.font and cell.font.color:
+            c = cell.font.color
+            # Kiểm tra qua giá trị rgb hoặc argb
+            if c.rgb:
+              rgb_str = str(c.rgb).upper()
+              # Các mã màu đỏ phổ biến trong Excel (FF0000, C00000, ED1C24, hoặc có thành phần kênh đỏ cao vượt trội)
+              if (
+                  any(
+                      x in rgb_str for x in ["FF0000", "ED1C24", "C00000", "RED"]
+                  )
+                  or rgb_str.endswith("FF0000")
+                  or rgb_str.endswith("C00000")
+                  or rgb_str.startswith("FF")
+                  and not rgb_str.startswith("FF00FF")
+                  and not rgb_str == "FFFFFFFF"
+              ):
+                # Kiểm tra thêm nếu mã ARGB có dạng FF[Đỏ][XanhLá][XanhDương] mà sắc đỏ lớn hơn hẳn
+                if len(rgb_str) == 8:
+                  r_hex = rgb_str[2:4]
+                  g_hex = rgb_str[4:6]
+                  b_hex = rgb_str[6:8]
+                  try:
+                    r_val = int(r_hex, 16)
+                    g_val = int(g_hex, 16)
+                    b_val = int(b_hex, 16)
+                    if r_val > 150 and g_val < 80 and b_val < 80:
+                      is_red = True
+                  except:
+                    pass
+                elif (
+                    "FF0000" in rgb_str
+                    or "C00000" in rgb_str
+                    or "ED1C24" in rgb_str
+                ):
+                  is_red = True
+            # Trường hợp dùng theme hoặc index màu cơ bản của excel
+            if hasattr(c, "theme") and c.theme == 1:  # Thường là màu đỏ/accent
               is_red = True
+
+          # Kiểm tra thêm trường hợp in đậm (bold) nếu có file dùng bold thay vì màu
+          is_bold = bool(cell.font and cell.font.bold)
 
           if val_str.lower().startswith("câu"):
             if current_q:
@@ -93,11 +129,12 @@ def load_data():
               })
             current_q = val_str
             current_opts = []
-            correct_ans = "A."  # Reset lại mặc định cho câu mới
+            correct_ans = "A."
           elif val_str.lower().startswith(("a.", "b.", "c.", "d.")):
             current_opts.append(val_str)
-            if is_red:
-              correct_ans = val_str[:2].strip().upper()  # Lấy "A.", "B.", "C." hoặc "D."
+            # Nếu dòng đáp án có màu đỏ hoặc in đậm -> đó chính là đáp án chính xác
+            if is_red or is_bold:
+              correct_ans = val_str[:2].strip().upper()
           else:
             if current_q and not current_opts:
               current_q += " " + val_str
@@ -112,68 +149,10 @@ def load_data():
             "sheet": sheet,
         })
 
-      # Fallback nếu file cấu trúc khác dùng pandas thuần
-      if not questions:
-        df = pd.read_excel(file_name, sheet_name=sheet)
-        col = df.columns[0]
-        # Xử lý tương tự nếu ko dùng openpyxl
-        for val in df[col].dropna():
-          val_str = str(val).strip()
-          if val_str.lower().startswith("câu"):
-            if current_q:
-              questions.append({
-                  "question": current_q,
-                  "options": current_opts,
-                  "correct": "A.",
-                  "sheet": sheet,
-              })
-            current_q = val_str
-            current_opts = []
-          elif val_str.lower().startswith(("a.", "b.", "c.", "d.")):
-            current_opts.append(val_str)
-        if current_q:
-          questions.append({
-              "question": current_q,
-              "options": current_opts,
-              "correct": "A.",
-              "sheet": sheet,
-          })
-
       sheets_data[sheet] = questions
     return sheets_data, None
   except Exception as e:
-    # Fallback an toàn bằng pandas nếu lỗi thư viện phụ trợ
-    xls = pd.ExcelFile(file_name)
-    sheets_data = {}
-    for sheet in xls.sheet_names:
-      df = pd.read_excel(xls, sheet_name=sheet)
-      col = df.columns[0]
-      questions = []
-      current_q = None
-      current_opts = []
-      for val in df[col].dropna():
-        val_str = str(val).strip()
-        if val_str.lower().startswith("câu"):
-          if current_q:
-            questions.append({
-                "question": current_q,
-                "options": current_opts,
-                "correct": "A.",
-                "sheet": sheet,
-            })
-          current_q = val_str
-          current_opts = []
-        elif val_str.lower().startswith(("a.", "b.", "c.", "d.")):
-          current_opts.append(val_str)
-      if current_q:
-        questions.append({
-            "question": current_q,
-            "options": current_opts,
-            "correct": "A.",
-            "sheet": sheet,
-        })
-      sheets_data[sheet] = questions
-    return sheets_data, None
+    return None, f"Lỗi đọc file: {str(e)}"
 
 
 sheets_data, error_message = load_data()

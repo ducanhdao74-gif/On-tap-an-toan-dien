@@ -177,7 +177,6 @@ if "bookmarked_questions" not in st.session_state:
       "bookmarked_questions", []
   )
 if "completed_chunks" not in st.session_state:
-  # KHÔNG tự động add phần 0 nữa, chỉ lấy đúng những gì đã lưu thực tế
   st.session_state["completed_chunks"] = set(
       saved_prog.get("completed_chunks", [])
   )
@@ -430,18 +429,15 @@ else:
       if not options:
         options = ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
 
-      gbm_choice = st.radio(
-          "Chọn đáp án của bạn:",
-          options,
-          index=None,
-          key=f"radio_global_bm_{gbm_idx}",
-      )
-      if gbm_choice is not None:
-        correct_letter = bm_item.get("correct", "A").strip().upper()
-        if gbm_choice.strip().upper().startswith(correct_letter):
-          st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
+      correct_letter = bm_item.get("correct", "A").strip().upper()
+
+      st.markdown("##### 💡 Đáp án chuẩn:")
+      for opt in options:
+        opt_letter = opt.strip().upper()
+        if opt_letter.startswith(correct_letter):
+          st.markdown(f"- ✅ **{opt}** *(Đáp án đúng)*")
         else:
-          st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
+          st.markdown(f"- {opt}")
 
       st.markdown("---")
       if st.button(

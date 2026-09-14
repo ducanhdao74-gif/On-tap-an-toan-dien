@@ -195,6 +195,7 @@ mode = st.sidebar.radio(
         "📖 Ôn tập theo chuyên đề",
         "🔄 Ôn lại câu trả lời sai",
         "📂 Ôn gộp tất cả (50 câu/phần)",
+        "⭐ Tất cả câu hỏi cần ghi nhớ",
         "📝 Thi thử (Mock Test)",
     ],
     label_visibility="collapsed",
@@ -255,13 +256,20 @@ else:
           unsafe_allow_html=True,
       )
 
-      is_bm = q_item in st.session_state["bookmarked_questions"]
+      is_bm = any(
+          b.get("question") == q_item["question"]
+          for b in st.session_state["bookmarked_questions"]
+      )
       bm_label = (
           "⭐ Đã đánh dấu ghi nhớ" if is_bm else "☆ Đánh dấu câu cần ghi nhớ"
       )
       if st.button(bm_label, key=f"bm_chuande_{idx}"):
         if is_bm:
-          st.session_state["bookmarked_questions"].remove(q_item)
+          st.session_state["bookmarked_questions"] = [
+              b
+              for b in st.session_state["bookmarked_questions"]
+              if b.get("question") != q_item["question"]
+          ]
           st.toast("Đã bỏ đánh dấu câu hỏi!", icon="ℹ️")
         else:
           st.session_state["bookmarked_questions"].append(q_item)
@@ -285,7 +293,10 @@ else:
           st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
         else:
           st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
-          if q_item not in st.session_state["wrong_questions"]:
+          if not any(
+              w.get("question") == q_item["question"]
+              for w in st.session_state["wrong_questions"]
+          ):
             st.session_state["wrong_questions"].append(q_item)
             save_current_progress()
 
@@ -326,7 +337,7 @@ else:
 
       w_item = wrong_list[w_idx]
       st.subheader(
-          f"Nguồn: {w_item['sheet']} (Câu {w_idx + 1}/{len(wrong_list)})"
+          f"Nguồn: {w_item.get('sheet', 'N/A')} (Câu {w_idx + 1}/{len(wrong_list)})"
       )
       st.markdown("---")
 
@@ -349,10 +360,13 @@ else:
         correct_letter = w_item.get("correct", "A").strip().upper()
         if w_choice.strip().upper().startswith(correct_letter):
           st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
-          if w_item in wrong_list:
-            wrong_list.remove(w_item)
-            st.session_state["wrong_questions"] = wrong_list
-            save_current_progress()
+          wrong_list = [
+              w
+              for w in wrong_list
+              if w.get("question") != w_item.get("question")
+          ]
+          st.session_state["wrong_questions"] = wrong_list
+          save_current_progress()
         else:
           st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
 
@@ -362,6 +376,81 @@ else:
           st.session_state["wrong_idx"] += 1
         else:
           st.session_state["wrong_idx"] = 0
+        st.rerun()
+
+  elif mode == "⭐ Tất cả câu hỏi cần ghi nhớ":
+    st.title("⭐ Tất Cả Câu Hỏi Cần Ghi Nhớ (Toàn Bộ Ngân Hàng)")
+    st.markdown("---")
+
+    bm_list = st.session_state["bookmarked_questions"]
+    if not bm_list:
+      st.info(
+          "⭐ Bạn chưa đánh dấu câu hỏi nào cần ghi nhớ cả. Hãy bấm 'Đánh dấu"
+          " câu cần ghi nhớ' trong lúc làm bài để lưu lại nhé!"
+      )
+    else:
+      st.write(
+          f"Tổng số câu bạn đã đánh dấu ghi nhớ: **{len(bm_list)}** câu."
+      )
+      if "global_bm_idx" not in st.session_state:
+        st.session_state["global_bm_idx"] = 0
+
+      gbm_idx = st.session_state["global_bm_idx"]
+      if gbm_idx >= len(bm_list):
+        gbm_idx = 0
+        st.session_state["global_bm_idx"] = 0
+
+      bm_item = bm_list[gbm_idx]
+      st.subheader(
+          f"Nguồn chuyên đề: {bm_item.get('sheet', 'N/A')} (Câu đánh dấu"
+          f" {gbm_idx + 1}/{len(bm_list)})"
+      )
+      st.markdown("---")
+
+      st.markdown(
+          f"""
+                <div class="question-box">
+                    <h4>{bm_item['question']}</h4>
+                </div>
+            """,
+          unsafe_allow_html=True,
+      )
+
+      if st.button("❌ Bỏ đánh dấu câu này", key=f"remove_global_bm_{gbm_idx}"):
+        st.session_state["bookmarked_questions"] = [
+            b
+            for b in st.session_state["bookmarked_questions"]
+            if b.get("question") != bm_item.get("question")
+        ]
+        save_current_progress()
+        st.toast("Đã xóa khỏi danh sách ghi nhớ!", icon="ℹ️")
+        st.rerun()
+
+      options = bm_item["options"]
+      if not options:
+        options = ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
+
+      gbm_choice = st.radio(
+          "Chọn đáp án của bạn:",
+          options,
+          index=None,
+          key=f"radio_global_bm_{gbm_idx}",
+      )
+      if gbm_choice is not None:
+        correct_letter = bm_item.get("correct", "A").strip().upper()
+        if gbm_choice.strip().upper().startswith(correct_letter):
+          st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
+        else:
+          st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
+
+      st.markdown("---")
+      if st.button(
+          "Câu tiếp theo ➡️", type="primary", key=f"next_global_bm_{gbm_idx}"
+      ):
+        if st.session_state["global_bm_idx"] < len(bm_list) - 1:
+          st.session_state["global_bm_idx"] += 1
+        else:
+          st.session_state["global_bm_idx"] = 0
         st.rerun()
 
   elif mode == "📂 Ôn gộp tất cả (50 câu/phần)":
@@ -419,7 +508,6 @@ else:
               "📝 Bài kiểm tra chốt kiến thức phần này",
               "🔄 Làm lại phần này (Ôn tập lại từ đầu)",
               "⚠️ Làm lại các câu sai trong phần này",
-              "⭐ Câu hỏi cần ghi nhớ",
           ],
           horizontal=True,
           label_visibility="collapsed",
@@ -452,13 +540,20 @@ else:
             unsafe_allow_html=True,
         )
 
-        is_bm = q_item in st.session_state["bookmarked_questions"]
+        is_bm = any(
+            b.get("question") == q_item["question"]
+            for b in st.session_state["bookmarked_questions"]
+        )
         bm_label = (
             "⭐ Đã đánh dấu ghi nhớ" if is_bm else "☆ Đánh dấu câu cần ghi nhớ"
         )
         if st.button(bm_label, key=f"bm_gop_{c_num}_{g_idx}"):
           if is_bm:
-            st.session_state["bookmarked_questions"].remove(q_item)
+            st.session_state["bookmarked_questions"] = [
+                b
+                for b in st.session_state["bookmarked_questions"]
+                if b.get("question") != q_item["question"]
+            ]
             st.toast("Đã bỏ đánh dấu câu hỏi!", icon="ℹ️")
           else:
             st.session_state["bookmarked_questions"].append(q_item)
@@ -484,7 +579,10 @@ else:
             st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
           else:
             st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
-            if q_item not in st.session_state["wrong_questions"]:
+            if not any(
+                w.get("question") == q_item["question"]
+                for w in st.session_state["wrong_questions"]
+            ):
               st.session_state["wrong_questions"].append(q_item)
               save_current_progress()
 
@@ -563,7 +661,10 @@ else:
                   correct_count += 1
                 else:
                   wrong_count += 1
-                  if q not in st.session_state["wrong_questions"]:
+                  if not any(
+                      w.get("question") == q["question"]
+                      for w in st.session_state["wrong_questions"]
+                  ):
                     st.session_state["wrong_questions"].append(q)
 
               st.session_state[f"result_correct_{c_num}"] = correct_count
@@ -668,11 +769,11 @@ else:
 
       elif sub_mode == "⚠️ Làm lại các câu sai trong phần này":
         st.markdown(f"### Ôn lại các câu sai trong Phần {c_num + 1}")
-        chunk_questions_set = set(id(q) for q in current_chunk_questions)
+        chunk_questions_texts = set(q["question"] for q in current_chunk_questions)
         wrong_in_chunk = [
             q
             for q in st.session_state["wrong_questions"]
-            if id(q) in chunk_questions_set
+            if q.get("question") in chunk_questions_texts
         ]
 
         if not wrong_in_chunk:
@@ -712,9 +813,12 @@ else:
             correct_letter = wc_item.get("correct", "A").strip().upper()
             if wc_choice.strip().upper().startswith(correct_letter):
               st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
-              if wc_item in st.session_state["wrong_questions"]:
-                st.session_state["wrong_questions"].remove(wc_item)
-                save_current_progress()
+              st.session_state["wrong_questions"] = [
+                  w
+                  for w in st.session_state["wrong_questions"]
+                  if w.get("question") != wc_item.get("question")
+              ]
+              save_current_progress()
             else:
               st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
 
@@ -729,80 +833,6 @@ else:
               st.session_state[f"wrong_chunk_idx_{c_num}"] += 1
             else:
               st.session_state[f"wrong_chunk_idx_{c_num}"] = 0
-            st.rerun()
-
-      elif sub_mode == "⭐ Câu hỏi cần ghi nhớ":
-        st.markdown(
-            f"### ⭐ Danh Sách Câu Hỏi Cần Ghi Nhớ (Phần {c_num + 1})"
-        )
-        chunk_questions_set = set(id(q) for q in current_chunk_questions)
-        bm_in_chunk = [
-            q
-            for q in st.session_state["bookmarked_questions"]
-            if id(q) in chunk_questions_set
-        ]
-
-        if not bm_in_chunk:
-          st.info(
-              "⭐ Phần này bạn chưa đánh dấu câu hỏi nào cần ghi nhớ cả."
-          )
-        else:
-          if f"bm_chunk_idx_{c_num}" not in st.session_state:
-            st.session_state[f"bm_chunk_idx_{c_num}"] = 0
-
-          bmc_idx = st.session_state[f"bm_chunk_idx_{c_num}"]
-          if bmc_idx >= len(bm_in_chunk):
-            bmc_idx = 0
-            st.session_state[f"bm_chunk_idx_{c_num}"] = 0
-
-          bmc_item = bm_in_chunk[bmc_idx]
-          st.write(
-              f"Đang xem câu ghi nhớ **{bmc_idx + 1}/{len(bm_in_chunk)}** trong"
-              " phần này:"
-          )
-          st.markdown("---")
-
-          st.markdown(
-              f"""
-                        <div class="question-box">
-                            <h4>{bmc_item['question']}</h4>
-                        </div>
-                    """,
-              unsafe_allow_html=True,
-          )
-
-          if st.button(
-              "❌ Bỏ đánh dấu câu này", key=f"remove_bm_{c_num}_{bmc_idx}"
-          ):
-            st.session_state["bookmarked_questions"].remove(bmc_item)
-            save_current_progress()
-            st.toast("Đã xóa khỏi danh sách ghi nhớ!", icon="ℹ️")
-            st.rerun()
-
-          bmc_choice = st.radio(
-              "Chọn đáp án của bạn:",
-              bmc_item["options"],
-              index=None,
-              key=f"radio_bm_{c_num}_{bmc_idx}",
-          )
-          if bmc_choice is not None:
-            correct_letter = bmc_item.get("correct", "A").strip().upper()
-            if bmc_choice.strip().upper().startswith(correct_letter):
-              st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
-            else:
-              st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
-
-          st.markdown("---")
-          if st.button(
-              "Câu tiếp theo ➡️", type="primary", key=f"next_bm_{c_num}_{bmc_idx}"
-          ):
-            if (
-                st.session_state[f"bm_chunk_idx_{c_num}"]
-                < len(bm_in_chunk) - 1
-            ):
-              st.session_state[f"bm_chunk_idx_{c_num}"] += 1
-            else:
-              st.session_state[f"bm_chunk_idx_{c_num}"] = 0
             st.rerun()
 
   elif mode == "📝 Thi thử (Mock Test)":

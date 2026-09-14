@@ -5,7 +5,6 @@ import random
 
 st.set_page_config(page_title="Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện", page_icon="⚡", layout="wide")
 
-# CSS tùy chỉnh giao diện: Tăng kích thước chữ, đóng khung đẹp, căn giữa đáp án
 st.markdown("""
     <style>
     /* Tăng cỡ chữ và tạo khung cho câu hỏi */
@@ -160,7 +159,6 @@ else:
             st.subheader(f"Chuyên đề: {selected_sheet} (Câu {idx + 1}/{total_q})")
             st.markdown("---")
             
-            # Khung chứa câu hỏi lớn, rõ ràng
             st.markdown(f"""
                 <div class="question-box">
                     <h4>{q_item['question']}</h4>
@@ -168,7 +166,7 @@ else:
             """, unsafe_allow_html=True)
             
             is_bm = q_item in st.session_state["bookmarked_questions"]
-            bm_label = "⭐ Đã đánh dấu ghi nhớ" else "☆ Đánh dấu câu cần ghi nhớ" if not is_bm else "⭐ Đã đánh dấu ghi nhớ"
+            bm_label = "⭐ Đã đánh dấu ghi nhớ" if is_bm else "☆ Đánh dấu câu cần ghi nhớ"
             if st.button(bm_label, key=f"bm_chuande_{idx}"):
                 if is_bm:
                     st.session_state["bookmarked_questions"].remove(q_item)

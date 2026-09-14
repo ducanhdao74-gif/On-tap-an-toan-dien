@@ -539,7 +539,7 @@ else:
 
           st.markdown("---")
           
-          # PHẦN XEM LẠI CÁC CÂU SAI MỚI THÊM VÀO
+          # PHẦN XEM LẠI CÁC CÂU SAI ĐÃ ĐƯỢC FIX CHUẨN SỐ LƯỢNG
           st.markdown("### 🔍 Xem Lại Chi Tiết Các Câu Trả Lời Sai")
           user_answers = st.session_state.get(f"test_user_answers_{c_num}", {})
           wrong_items_in_test = []

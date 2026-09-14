@@ -49,7 +49,7 @@ st.markdown(
 
 @st.cache_data
 def load_data():
-  file_name = "PL1. Tong hop ngan hang cau hoi an toan nam 2025 fn (1).xlsx"
+  file_name = "PL1. Tong hop ngan hang cau hoi an toàn nam 2025 fn (1).xlsx"
   if not os.path.exists(file_name):
     for f in os.listdir("."):
       if f.endswith(".xlsx") and "ngan hang cau hoi" in f.lower():
@@ -68,7 +68,7 @@ def load_data():
       questions = []
       current_q = None
       current_opts = []
-      correct_ans = "A."
+      correct_ans = "A"
 
       for row in ws.iter_rows(values_only=False):
         cell = row[0]
@@ -76,32 +76,33 @@ def load_data():
         if val is not None:
           val_str = str(val).strip()
 
+          # Kiểm tra chuẩn xác màu chữ đỏ trong Excel
           is_red = False
           if cell.font and cell.font.color:
             c = cell.font.color
+            # 1. Kiểm tra qua giá trị rgb / argb trực tiếp
             if c.rgb:
               rgb_str = str(c.rgb).upper()
-              if (
-                  any(
-                      x in rgb_str for x in ["FF0000", "ED1C24", "C00000", "RED"]
-                  )
-                  or rgb_str.endswith("FF0000")
-                  or rgb_str.endswith("C00000")
+              # Các mã đỏ phổ biến: FF0000, 00FF0000, C00000, ED1C24, FF000055...
+              if any(
+                  x in rgb_str for x in ["FF0000", "ED1C24", "C00000", "RED"]
               ):
                 is_red = True
-              elif len(rgb_str) == 8:
+              elif len(rgb_str) >= 6:
                 try:
-                  r_val = int(rgb_str[2:4], 16)
-                  g_val = int(rgb_str[4:6], 16)
-                  b_val = int(rgb_str[6:8], 16)
+                  # Lấy 6 ký tự cuối hoặc 2-8 tùy định dạng ARGB/RGB
+                  hex_val = rgb_str[-6:]
+                  r_val = int(hex_val[0:2], 16)
+                  g_val = int(hex_val[2:4], 16)
+                  b_val = int(hex_val[4:6], 16)
+                  # Nếu kênh Đỏ áp đảo (R > 150) và Xanh lá, Xanh dương thấp (dưới 80) -> Chắc chắn là màu đỏ
                   if r_val > 150 and g_val < 80 and b_val < 80:
                     is_red = True
                 except:
                   pass
-            if hasattr(c, "theme") and c.theme == 1:
+            # 2. Kiểm tra bảng màu indexed (index 10 hoặc 2 thường là màu đỏ chuẩn trong Excel)
+            if hasattr(c, "indexed") and c.indexed in [10, 2]:
               is_red = True
-
-          is_bold = bool(cell.font and cell.font.bold)
 
           if val_str.lower().startswith("câu"):
             if current_q:
@@ -113,11 +114,12 @@ def load_data():
               })
             current_q = val_str
             current_opts = []
-            correct_ans = "A."
+            correct_ans = "A"  # Mặc định tạm thời, sẽ được ghi đè ngay khi gặp dòng đáp án đỏ
           elif val_str.lower().startswith(("a.", "b.", "c.", "d.")):
             current_opts.append(val_str)
-            if is_red or is_bold:
-              correct_ans = val_str[:2].strip().upper()
+            # Nếu dòng đáp án này được tô màu đỏ trong Excel -> Lấy chính xác chữ cái đầu làm đáp án đúng
+            if is_red:
+              correct_ans = val_str[0].upper()
           else:
             if current_q and not current_opts:
               current_q += " " + val_str
@@ -238,7 +240,7 @@ else:
       )
 
       if selected_opt is not None:
-        correct_letter = q_item.get("correct", "A.").strip().upper()
+        correct_letter = q_item.get("correct", "A").strip().upper()
         is_correct = selected_opt.strip().upper().startswith(correct_letter)
         if is_correct:
           st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
@@ -304,7 +306,7 @@ else:
           key=f"radio_wrong_{w_idx}",
       )
       if w_choice is not None:
-        correct_letter = w_item.get("correct", "A.").strip().upper()
+        correct_letter = w_item.get("correct", "A").strip().upper()
         if w_choice.strip().upper().startswith(correct_letter):
           st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
           if w_item in wrong_list:
@@ -434,7 +436,7 @@ else:
         )
 
         if g_choice is not None:
-          correct_letter = q_item.get("correct", "A.").strip().upper()
+          correct_letter = q_item.get("correct", "A").strip().upper()
           is_correct = g_choice.strip().upper().startswith(correct_letter)
           if is_correct:
             st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
@@ -510,7 +512,7 @@ else:
               wrong_count = 0
               for i, q in enumerate(current_chunk_questions):
                 selected = user_answers[i]
-                correct_letter = q.get("correct", "A.").strip().upper()
+                correct_letter = q.get("correct", "A").strip().upper()
                 if selected and selected.strip().upper().startswith(
                     correct_letter
                 ):
@@ -601,7 +603,7 @@ else:
               key=f"radio_wc_{c_num}_{wc_idx}",
           )
           if wc_choice is not None:
-            correct_letter = wc_item.get("correct", "A.").strip().upper()
+            correct_letter = wc_item.get("correct", "A").strip().upper()
             if wc_choice.strip().upper().startswith(correct_letter):
               st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
               if wc_item in st.session_state["wrong_questions"]:
@@ -671,7 +673,7 @@ else:
               key=f"radio_bm_{c_num}_{bmc_idx}",
           )
           if bmc_choice is not None:
-            correct_letter = bmc_item.get("correct", "A.").strip().upper()
+            correct_letter = bmc_item.get("correct", "A").strip().upper()
             if bmc_choice.strip().upper().startswith(correct_letter):
               st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
             else:

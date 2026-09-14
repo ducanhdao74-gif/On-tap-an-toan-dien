@@ -166,7 +166,6 @@ def load_data():
     return None, f"Lỗi đọc file: {str(e)}"
 
 
-# Hàm trộn đáp án cố định theo session
 def get_shuffled_options(q_item, session_key):
   if session_key not in st.session_state:
     orig_options = q_item["options"]
@@ -328,8 +327,6 @@ else:
       correct_letter = shuff_data["correct"]
 
       ans_storage_key = f"user_ans_chuande_{selected_sheet}_{idx}"
-
-      # Xác định index mặc định nếu người dùng đã từng chọn đáp án này trước đó
       default_idx = None
       current_saved_ans = st.session_state.get(ans_storage_key, None)
       if current_saved_ans in options:
@@ -342,7 +339,6 @@ else:
           key=f"radio_chuande_{selected_sheet}_{idx}",
       )
 
-      # Lưu lại trạng thái lựa chọn ngay khi người dùng click chọn
       if selected_opt is not None:
         st.session_state[ans_storage_key] = selected_opt
         is_correct = selected_opt.strip().upper().startswith(correct_letter)
@@ -482,7 +478,7 @@ else:
           unsafe_allow_html=True,
       )
 
-      if st.button("❌ Bỏ đánh dấu câu này", key=f"remove_global_bm_{gbm_idx}"):
+      if st.button("❌ Bỏ đánh dấu câu này", key=f"remove_global_bm_{gbm_idx}__"):
         st.session_state["bookmarked_questions"] = [
             b
             for b in st.session_state["bookmarked_questions"]
@@ -570,7 +566,7 @@ else:
               "📖 Ôn tập từng câu trong phần",
               "📝 Bài kiểm tra chốt kiến thức phần này",
               "🔄 Làm lại phần này (Ôn tập lại từ đầu)",
-              "⚠️ Làm lại các câu sai trong phần này",
+              "⚠️ Làm lại các câu sai trong phầnนี้",
           ],
           horizontal=True,
           label_visibility="collapsed",
@@ -582,96 +578,132 @@ else:
           st.session_state[f"gop_idx_{c_num}"] = 0
 
         g_idx = st.session_state[f"gop_idx_{c_num}"]
+
+        # KIỂM TRA NẾU ĐÃ LÀM XONG HẾT CÁC CÂU TRONG PHẦN
         if g_idx >= actual_chunk_len:
-          g_idx = 0
-          st.session_state[f"gop_idx_{c_num}"] = 0
-
-        q_item = current_chunk_questions[g_idx]
-
-        st.markdown(
-            f"### Đang ôn: Phần {c_num + 1} (Hỗn hợp chuyên đề) — *(Thuộc"
-            f" chuyên đề: {q_item['sheet']})*"
-        )
-        st.markdown("---")
-
-        st.markdown(
-            f"""
-                    <div class="question-box">
-                        <h4>Câu {g_idx + 1}/{actual_chunk_len} (Toàn hệ thống #{start_idx + g_idx + 1}): {q_item['question']}</h4>
-                    </div>
-                """,
-            unsafe_allow_html=True,
-        )
-
-        is_bm = any(
-            b.get("question") == q_item["question"]
-            for b in st.session_state["bookmarked_questions"]
-        )
-        bm_label = (
-            "⭐ Đã đánh dấu ghi nhớ" if is_bm else "☆ Đánh dấu câu cần ghi nhớ"
-        )
-        if st.button(bm_label, key=f"bm_gop_{c_num}_{g_idx}"):
-          if is_bm:
-            st.session_state["bookmarked_questions"] = [
-                b
-                for b in st.session_state["bookmarked_questions"]
-                if b.get("question") != q_item["question"]
-            ]
-            st.toast("Đã bỏ đánh dấu câu hỏi!", icon="ℹ️")
-          else:
-            st.session_state["bookmarked_questions"].append(q_item)
-            st.toast("Đã thêm vào danh sách cần ghi nhớ!", icon="⭐")
-          save_current_progress()
-          st.rerun()
-
-        shuff_data = get_shuffled_options(q_item, f"shuff_gop_{c_num}_{g_idx}")
-        options = shuff_data["options"]
-        correct_letter = shuff_data["correct"]
-
-        gop_storage_key = f"user_ans_gop_{c_num}_{g_idx}"
-        gop_default_idx = None
-        if st.session_state.get(gop_storage_key) in options:
-          gop_default_idx = options.index(st.session_state.get(gop_storage_key))
-
-        g_choice = st.radio(
-            "Chọn đáp án của bạn:",
-            options,
-            index=gop_default_idx,
-            key=f"radio_gop_{c_num}_{g_idx}",
-        )
-
-        if g_choice is not None:
-          st.session_state[gop_storage_key] = g_choice
-          is_correct = g_choice.strip().upper().startswith(correct_letter)
-          if is_correct:
-            st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
-          else:
-            st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
-            if not any(
-                w.get("question") == q_item["question"]
-                for w in st.session_state["wrong_questions"]
-            ):
-              st.session_state["wrong_questions"].append(q_item)
-              save_current_progress()
-
-        st.markdown("---")
-        col_prev, col_next = st.columns(2)
-        with col_prev:
-          if st.button("⬅️ Câu trước"):
-            if st.session_state[f"gop_idx_{c_num}"] > 0:
-              st.session_state[f"gop_idx_{c_num}"] -= 1
-            else:
-              st.session_state[f"gop_idx_{c_num}"] = actual_chunk_len - 1
-            st.rerun()
-        with col_next:
-          if st.button("Câu tiếp theo ➡️", type="primary"):
-            if st.session_state[f"gop_idx_{c_num}"] < actual_chunk_len - 1:
-              st.session_state[f"gop_idx_{c_num}"] += 1
-            else:
+          st.success(
+              f"🎉 Bạn đã hoàn thành phần ôn tập! (Phần {c_num + 1} - Tổng số"
+              f" {actual_chunk_len} câu)"
+          )
+          st.markdown("---")
+          col_btn1, col_btn2 = st.columns(2)
+          with col_btn1:
+            if st.button("🔄 Ôn lại (Làm lại từ đầu)", type="secondary"):
               st.session_state[f"gop_idx_{c_num}"] = 0
+              keys_to_del = [
+                  k
+                  for k in st.session_state.keys()
+                  if k.startswith(f"shuff_gop_{c_num}_")
+                  or k.startswith(f"user_ans_gop_{c_num}_")
+              ]
+              for k in keys_to_del:
+                del st.session_state[k]
+              st.rerun()
+          with col_btn2:
+            if st.button(
+                "📝 Bước đến bài thi (Kiểm tra chốt kiến thức)", type="primary"
+            ):
+              # Chuyển trực tiếp sang sub_mode bài kiểm tra
+              # Streamlit không cho thay đổi radio index trực tiếp dễ dàng ngoài việc dùng session_state cho selectbox/radio hoặc hiển thị trực tiếp.
+              # Cách tốt nhất là gán cờ hoặc ta tự động chuyển hướng hiển thị phần kiểm tra luôn ở đây.
+              st.session_state[f"auto_switch_test_{c_num}"] = True
+              st.rerun()
+        else:
+          # Kiểm tra nếu cờ auto_switch_test đang bật thì nhảy thẳng vào bài kiểm tra
+          if st.session_state.get(f"auto_switch_test_{c_num}", False):
+            # Reset cờ và chuyển sang tab kiểm tra bằng cách set lại sub_mode giả định
+            st.session_state[f"auto_switch_test_{c_num}"] = False
+            # Ta có thể render thẳng nội dung bài kiểm tra hoặc hướng dẫn người dùng bấm tab bài kiểm tra
+            # Hoặc gán lại session_state để render giao diện kiểm tra luôn:
+            sub_mode = "📝 Bài kiểm tra chốt kiến thức phần này"
+
+        # Nếu sub_mode vẫn là ôn tập từng câu và g_idx < actual_chunk_len
+        if sub_mode == "📖 Ôn tập từng câu trong phần" and g_idx < actual_chunk_len:
+          q_item = current_chunk_questions[g_idx]
+
+          st.markdown(
+              f"### Đang ôn: Phần {c_num + 1} (Hỗn hợp chuyên đề) — *(Thuộc"
+              f" chuyên đề: {q_item['sheet']})*"
+          )
+          st.markdown("---")
+
+          st.markdown(
+              f"""
+                        <div class="question-box">
+                            <h4>Câu {g_idx + 1}/{actual_chunk_len} (Toàn hệ thống #{start_idx + g_idx + 1}): {q_item['question']}</h4>
+                        </div>
+                    """,
+              unsafe_allow_html=True,
+          )
+
+          is_bm = any(
+              b.get("question") == q_item["question"]
+              for b in st.session_state["bookmarked_questions"]
+          )
+          bm_label = (
+              "⭐ Đã đánh dấu ghi nhớ" if is_bm else "☆ Đánh dấu câu cần ghi nhớ"
+          )
+          if st.button(bm_label, key=f"bm_gop_{c_num}_{g_idx}"):
+            if is_bm:
+              st.session_state["bookmarked_questions"] = [
+                  b
+                  for b in st.session_state["bookmarked_questions"]
+                  if b.get("question") != q_item["question"]
+              ]
+              st.toast("Đã bỏ đánh dấu câu hỏi!", icon="ℹ️")
+            else:
+              st.session_state["bookmarked_questions"].append(q_item)
+              st.toast("Đã thêm vào danh sách cần ghi nhớ!", icon="⭐")
+            save_current_progress()
             st.rerun()
 
-      elif sub_mode == "📝 Bài kiểm tra chốt kiến thức phần này":
+          shuff_data = get_shuffled_options(q_item, f"shuff_gop_{c_num}_{g_idx}")
+          options = shuff_data["options"]
+          correct_letter = shuff_data["correct"]
+
+          gop_storage_key = f"user_ans_gop_{c_num}_{g_idx}"
+          gop_default_idx = None
+          if st.session_state.get(gop_storage_key) in options:
+            gop_default_idx = options.index(
+                st.session_state.get(gop_storage_key)
+            )
+
+          g_choice = st.radio(
+              "Chọn đáp án của bạn:",
+              options,
+              index=gop_default_idx,
+              key=f"radio_gop_{c_num}_{g_idx}",
+          )
+
+          if g_choice is not None:
+            st.session_state[gop_storage_key] = g_choice
+            is_correct = g_choice.strip().upper().startswith(correct_letter)
+            if is_correct:
+              st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
+            else:
+              st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
+              if not any(
+                  w.get("question") == q_item["question"]
+                  for w in st.session_state["wrong_questions"]
+              ):
+                st.session_state["wrong_questions"].append(q_item)
+                save_current_progress()
+
+          st.markdown("---")
+          col_prev, col_next = st.columns(2)
+          with col_prev:
+            if st.button("⬅️ Câu trước"):
+              if st.session_state[f"gop_idx_{c_num}"] > 0:
+                st.session_state[f"gop_idx_{c_num}"] -= 1
+              else:
+                st.session_state[f"gop_idx_{c_num}"] = actual_chunk_len - 1
+              st.rerun()
+          with col_next:
+            if st.button("Câu tiếp theo ➡️", type="primary"):
+              st.session_state[f"gop_idx_{c_num}"] += 1
+              st.rerun()
+
+      if sub_mode == "📝 Bài kiểm tra chốt kiến thức phần này":
         st.markdown(
             f"### Bài kiểm tra - Phần {c_num + 1} ({actual_chunk_len} câu)"
         )

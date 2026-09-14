@@ -28,10 +28,10 @@ def load_saved_progress():
 
 def save_current_progress():
   data = {
-      "completed_chunks": list(st.session_state["completed_chunks"]),
-      "passed_tests": list(st.session_state["passed_tests"]),
-      "bookmarked_questions": st.session_state["bookmarked_questions"],
-      "wrong_questions": st.session_state["wrong_questions"],
+      "completed_chunks": list(st.session_state.get("completed_chunks", [])),
+      "passed_tests": list(st.session_state.get("passed_tests", [])),
+      "bookmarked_questions": st.session_state.get("bookmarked_questions", []),
+      "wrong_questions": st.session_state.get("wrong_questions", []),
   }
   try:
     with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
@@ -178,14 +178,14 @@ if "bookmarked_questions" not in st.session_state:
   )
 if "completed_chunks" not in st.session_state:
   completed_list = saved_prog.get("completed_chunks", [])
-  # ĐÁNH DẤU PHẦN 1 (index 0) ĐÃ HOÀN THÀNH LUÔN Ở ĐÂY CHO ÔNG
   if 0 not in completed_list:
     completed_list.append(0)
   st.session_state["completed_chunks"] = set(completed_list)
-  save_current_progress()
 
 if "passed_tests" not in st.session_state:
   st.session_state["passed_tests"] = set(saved_prog.get("passed_tests", []))
+
+save_current_progress()
 
 st.sidebar.title("⚡ Menu Ôn Tập")
 st.sidebar.markdown("**Chọn chế độ:**")

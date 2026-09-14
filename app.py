@@ -601,8 +601,6 @@ else:
               st.session_state[f"gop_idx_{c_num}"] += 1
             else:
               st.session_state[f"gop_idx_{c_num}"] = 0
-              st.session_state["completed_chunks"].add(c_num)
-              save_current_progress()
             st.rerun()
 
       elif sub_mode == "📝 Bài kiểm tra chốt kiến thức phần này":
@@ -745,6 +743,8 @@ else:
             st.session_state[submitted_key] = False
             if f"test_user_answers_{c_num}" in st.session_state:
               del st.session_state[f"test_user_answers_{c_num}"]
+            if c_num in st.session_state["completed_chunks"]:
+              st.session_state["completed_chunks"].remove(c_num)
             if c_num in st.session_state["passed_tests"]:
               st.session_state["passed_tests"].remove(c_num)
             save_current_progress()

@@ -36,45 +36,32 @@ st.markdown(
         font-weight: 600;
     }
     
-    /* Ép toàn bộ khung chứa các lựa chọn đáp án ra chính giữa và tăng kích thước chữ to lên (26px) */
-    div:not([data-testid="stHorizontalBlock"]) div.stRadio > label {
-        font-size: 1.2rem !important;
-        font-weight: bold;
-        color: #38bdf8 !important;
-        margin-bottom: 15px;
-        text-align: center !important;
-        display: block !important;
+    /* Ép toàn bộ khung đáp án ra chính giữa và tăng kích thước chữ lên 26px */
+    div[data-testid="stRadio"] > div[role="radiogroup"] {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        width: 100% !important;
     }
     
-    div:not([data-testid="stHorizontalBlock"]) div.stRadio [role="radiogroup"] {
-        background-color: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0px !important;
-        display: flex;
-        flex-direction: column;
-        align-items: center !important; /* Căn giữa toàn bộ cụm đáp án ra giữa màn hình */
-        width: 100%;
-    }
-    
-    div:not([data-testid="stHorizontalBlock"]) div.stRadio [role="radiogroup"] label {
-        font-size: 26px !important; /* Tăng chữ phần câu trả lời to hơn nữa */
-        line-height: 1.5 !important;
-        padding: 14px 20px !important;
-        color: #f1f5f9 !important;
-        text-align: left !important; /* Chữ trong từng đáp án căn trái để dễ đọc, nhưng cả dòng nằm ở giữa */
+    div[data-testid="stRadio"] > div[role="radiogroup"] > label {
+        width: 100% !important;
+        max-width: 950px !important;
+        margin: 8px auto !important;
+        padding: 12px 16px !important;
         display: flex !important;
         justify-content: flex-start !important;
         align-items: center !important;
-        width: 100% !important;
-        max-width: 950px !important;
-        margin: 6px auto !important;
     }
-
-    /* Căn chỉnh lại thẻ chứa text bên trong radio label của Streamlit */
-    div:not([data-testid="stHorizontalBlock"]) div.stRadio [role="radiogroup"] label div {
+    
+    /* Tăng kích thước chữ bên trong các lựa chọn đáp án lên 26px và đổi màu nổi bật */
+    div[data-testid="stRadio"] > div[role="radiogroup"] > label p,
+    div[data-testid="stRadio"] > div[role="radiogroup"] > label span,
+    div[data-testid="stRadio"] > div[role="radiogroup"] > label div {
+        font-size: 26px !important;
+        line-height: 1.5 !important;
+        color: #f1f5f9 !important;
         text-align: left !important;
-        width: 100% !important;
     }
     </style>
 """,

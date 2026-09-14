@@ -37,7 +37,7 @@ def save_current_progress():
     with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
       json.dump(data, f, ensure_ascii=False, indent=4)
   except:
-      pass
+    pass
 
 
 st.markdown(
@@ -177,9 +177,13 @@ if "bookmarked_questions" not in st.session_state:
       "bookmarked_questions", []
   )
 if "completed_chunks" not in st.session_state:
-  st.session_state["completed_chunks"] = set(
-      saved_prog.get("completed_chunks", [])
-  )
+  completed_list = saved_prog.get("completed_chunks", [])
+  # ĐÁNH DẤU PHẦN 1 (index 0) ĐÃ HOÀN THÀNH LUÔN Ở ĐÂY CHO ÔNG
+  if 0 not in completed_list:
+    completed_list.append(0)
+  st.session_state["completed_chunks"] = set(completed_list)
+  save_current_progress()
+
 if "passed_tests" not in st.session_state:
   st.session_state["passed_tests"] = set(saved_prog.get("passed_tests", []))
 

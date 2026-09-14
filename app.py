@@ -5,6 +5,46 @@ import random
 
 st.set_page_config(page_title="Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện", page_icon="⚡", layout="wide")
 
+# CSS tùy chỉnh giao diện: Tăng kích thước chữ, đóng khung đẹp, căn giữa đáp án
+st.markdown("""
+    <style>
+    /* Tăng cỡ chữ và tạo khung cho câu hỏi */
+    .question-box {
+        background-color: #1e293b;
+        border: 2px solid #334155;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .question-box h4 {
+        font-size: 1.3rem !important;
+        line-height: 1.6;
+        color: #f8fafc !important;
+        font-weight: 600;
+    }
+    
+    /* Đóng khung và căn giữa nhóm đáp án radio */
+    div.stRadio > label {
+        font-size: 1.1rem !important;
+        font-weight: bold;
+        color: #38bdf8 !important;
+        margin-bottom: 10px;
+    }
+    div.stRadio [role="radiogroup"] {
+        background-color: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        padding: 15px 20px;
+    }
+    div.stRadio [role="radiogroup"] label {
+        font-size: 1.05rem !important;
+        padding: 8px 0;
+        color: #e2e8f0 !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 @st.cache_data
 def load_data():
     file_name = "PL1. Tong hop ngan hang cau hoi an toan nam 2025 fn (1).xlsx"
@@ -119,10 +159,16 @@ else:
             q_item = q_list[idx]
             st.subheader(f"Chuyên đề: {selected_sheet} (Câu {idx + 1}/{total_q})")
             st.markdown("---")
-            st.markdown(f"#### {q_item['question']}")
+            
+            # Khung chứa câu hỏi lớn, rõ ràng
+            st.markdown(f"""
+                <div class="question-box">
+                    <h4>{q_item['question']}</h4>
+                </div>
+            """, unsafe_allow_html=True)
             
             is_bm = q_item in st.session_state["bookmarked_questions"]
-            bm_label = "⭐ Đã đánh dấu ghi nhớ" if is_bm else "☆ Đánh dấu câu cần ghi nhớ"
+            bm_label = "⭐ Đã đánh dấu ghi nhớ" else "☆ Đánh dấu câu cần ghi nhớ" if not is_bm else "⭐ Đã đánh dấu ghi nhớ"
             if st.button(bm_label, key=f"bm_chuande_{idx}"):
                 if is_bm:
                     st.session_state["bookmarked_questions"].remove(q_item)
@@ -137,7 +183,7 @@ else:
                 options = ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
 
             ans_key = f"ans_chuande_{selected_sheet}_{idx}"
-            selected_opt = st.radio("Chọn đáp án:", options, index=None, key=ans_key)
+            selected_opt = st.radio("Chọn đáp án của bạn:", options, index=None, key=ans_key)
             
             if selected_opt is not None:
                 is_correct = selected_opt.strip().startswith("A.")
@@ -177,9 +223,15 @@ else:
                 
             w_item = wrong_list[w_idx]
             st.subheader(f"Nguồn: {w_item['sheet']} (Câu {w_idx + 1}/{len(wrong_list)})")
-            st.markdown(f"#### {w_item['question']}")
+            st.markdown("---")
             
-            w_choice = st.radio("Chọn đáp án:", w_item['options'], index=None, key=f"radio_wrong_{w_idx}")
+            st.markdown(f"""
+                <div class="question-box">
+                    <h4>{w_item['question']}</h4>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            w_choice = st.radio("Chọn đáp án của bạn:", w_item['options'], index=None, key=f"radio_wrong_{w_idx}")
             if w_choice is not None:
                 if w_choice.strip().startswith("A."):
                     st.success("🎉 Chính xác! Đáp án đúng là A.")
@@ -263,9 +315,14 @@ else:
                     
                 q_item = current_chunk_questions[g_idx]
                 
-                st.markdown(f"### Đang ôn: Phần {c_num + 1} (Hỗn hợp chuyên đề)")
-                st.markdown(f"*(Thuộc chuyên đề: {q_item['sheet']})*")
-                st.markdown(f"#### Câu {g_idx + 1}/{actual_chunk_len} (Toàn hệ thống #{start_idx + g_idx + 1}): {q_item['question']}")
+                st.markdown(f"### Đang ôn: Phần {c_num + 1} (Hỗn hợp chuyên đề) — *(Thuộc chuyên đề: {q_item['sheet']})*")
+                st.markdown("---")
+                
+                st.markdown(f"""
+                    <div class="question-box">
+                        <h4>Câu {g_idx + 1}/{actual_chunk_len} (Toàn hệ thống #{start_idx + g_idx + 1}): {q_item['question']}</h4>
+                    </div>
+                """, unsafe_allow_html=True)
                 
                 is_bm = q_item in st.session_state["bookmarked_questions"]
                 bm_label = "⭐ Đã đánh dấu ghi nhớ" if is_bm else "☆ Đánh dấu câu cần ghi nhớ"
@@ -282,7 +339,7 @@ else:
                 if not options:
                     options = ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
 
-                g_choice = st.radio("Chọn đáp án:", options, index=None, key=f"radio_gop_{c_num}_{g_idx}")
+                g_choice = st.radio("Chọn đáp án của bạn:", options, index=None, key=f"radio_gop_{c_num}_{g_idx}")
                 
                 if g_choice is not None:
                     is_correct = g_choice.strip().startswith("A.")
@@ -321,7 +378,11 @@ else:
                 if not st.session_state[submitted_key]:
                     user_answers = {}
                     for i, q in enumerate(current_chunk_questions):
-                        st.markdown(f"**Câu {i+1}** *(Thuộc: {q['sheet']})*: {q['question']}")
+                        st.markdown(f"""
+                            <div class="question-box">
+                                <h4>Câu {i+1} *(Thuộc: {q['sheet']})*: {q['question']}</h4>
+                            </div>
+                        """, unsafe_allow_html=True)
                         options = q['options'] if q['options'] else ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
                         
                         ans = st.radio(
@@ -398,9 +459,15 @@ else:
                         
                     wc_item = wrong_in_chunk[wc_idx]
                     st.write(f"Đang ôn câu sai **{wc_idx + 1}/{len(wrong_in_chunk)}** trong phần này:")
-                    st.markdown(f"#### {wc_item['question']}")
+                    st.markdown("---")
                     
-                    wc_choice = st.radio("Chọn đáp án:", wc_item['options'], index=None, key=f"radio_wc_{c_num}_{wc_idx}")
+                    st.markdown(f"""
+                        <div class="question-box">
+                            <h4>{wc_item['question']}</h4>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    wc_choice = st.radio("Chọn đáp án của bạn:", wc_item['options'], index=None, key=f"radio_wc_{c_num}_{wc_idx}")
                     if wc_choice is not None:
                         if wc_choice.strip().startswith("A."):
                             st.success("🎉 Chính xác! Đáp án đúng là A.")
@@ -435,14 +502,20 @@ else:
                         
                     bmc_item = bm_in_chunk[bmc_idx]
                     st.write(f"Đang xem câu ghi nhớ **{bmc_idx + 1}/{len(bm_in_chunk)}** trong phần này:")
-                    st.markdown(f"#### {bmc_item['question']}")
+                    st.markdown("---")
+                    
+                    st.markdown(f"""
+                        <div class="question-box">
+                            <h4>{bmc_item['question']}</h4>
+                        </div>
+                    """, unsafe_allow_html=True)
                     
                     if st.button("❌ Bỏ đánh dấu câu này", key=f"remove_bm_{c_num}_{bmc_idx}"):
                         st.session_state["bookmarked_questions"].remove(bmc_item)
                         st.toast("Đã xóa khỏi danh sách ghi nhớ!", icon="ℹ️")
                         st.rerun()
                         
-                    bmc_choice = st.radio("Chọn đáp án:", bmc_item['options'], index=None, key=f"radio_bm_{c_num}_{bmc_idx}")
+                    bmc_choice = st.radio("Chọn đáp án của bạn:", bmc_item['options'], index=None, key=f"radio_bm_{c_num}_{bmc_idx}")
                     if bmc_choice is not None:
                         if bmc_choice.strip().startswith("A."):
                             st.success("🎉 Chính xác! Đáp án đúng là A.")
@@ -480,7 +553,11 @@ else:
             st.write(f"Đang làm bài thi thử ({len(mock_qs)} câu).")
             
             for i, q in enumerate(mock_qs):
-                st.markdown(f"**Câu {i+1}: {q['question']}**")
+                st.markdown(f"""
+                    <div class="question-box">
+                        <h4>Câu {i+1}: {q['question']}</h4>
+                    </div>
+                """, unsafe_allow_html=True)
                 options = q['options'] if q['options'] else ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
                 
                 ans = st.radio(

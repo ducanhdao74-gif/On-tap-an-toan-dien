@@ -30,38 +30,19 @@ st.markdown(
         margin-bottom: 15px;
     }
     .question-box h4 {
-        font-size: 1.35rem !important;
+        font-size: 1.2rem !important;
         line-height: 1.6;
         color: #f8fafc !important;
         font-weight: 600;
     }
     
-    /* Ép toàn bộ khung đáp án ra chính giữa và tăng kích thước chữ lên 26px */
-    div[data-testid="stRadio"] > div[role="radiogroup"] {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        width: 100% !important;
-    }
-    
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label {
-        width: 100% !important;
-        max-width: 950px !important;
-        margin: 8px auto !important;
-        padding: 12px 16px !important;
-        display: flex !important;
-        justify-content: flex-start !important;
-        align-items: center !important;
-    }
-    
-    /* Tăng kích thước chữ bên trong các lựa chọn đáp án lên 26px và đổi màu nổi bật */
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label p,
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label span,
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label div {
-        font-size: 26px !important;
+    /* Giữ nguyên layout căn trái cũ, chỉ tăng nhẹ chữ đáp án lên khoảng 19px cho dễ đọc */
+    div[data-testid="stRadio"] > div[role="radiogroup"] label p,
+    div[data-testid="stRadio"] > div[role="radiogroup"] label span,
+    div[data-testid="stRadio"] > div[role="radiogroup"] label div {
+        font-size: 19px !important;
         line-height: 1.5 !important;
         color: #f1f5f9 !important;
-        text-align: left !important;
     }
     </style>
 """,

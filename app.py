@@ -76,31 +76,25 @@ def load_data():
         if val is not None:
           val_str = str(val).strip()
 
-          # Kiểm tra chuẩn xác màu chữ đỏ trong Excel
           is_red = False
           if cell.font and cell.font.color:
             c = cell.font.color
-            # 1. Kiểm tra qua giá trị rgb / argb trực tiếp
             if c.rgb:
               rgb_str = str(c.rgb).upper()
-              # Các mã đỏ phổ biến: FF0000, 00FF0000, C00000, ED1C24, FF000055...
               if any(
                   x in rgb_str for x in ["FF0000", "ED1C24", "C00000", "RED"]
               ):
                 is_red = True
               elif len(rgb_str) >= 6:
                 try:
-                  # Lấy 6 ký tự cuối hoặc 2-8 tùy định dạng ARGB/RGB
                   hex_val = rgb_str[-6:]
                   r_val = int(hex_val[0:2], 16)
                   g_val = int(hex_val[2:4], 16)
                   b_val = int(hex_val[4:6], 16)
-                  # Nếu kênh Đỏ áp đảo (R > 150) và Xanh lá, Xanh dương thấp (dưới 80) -> Chắc chắn là màu đỏ
                   if r_val > 150 and g_val < 80 and b_val < 80:
                     is_red = True
                 except:
                   pass
-            # 2. Kiểm tra bảng màu indexed (index 10 hoặc 2 thường là màu đỏ chuẩn trong Excel)
             if hasattr(c, "indexed") and c.indexed in [10, 2]:
               is_red = True
 
@@ -114,10 +108,9 @@ def load_data():
               })
             current_q = val_str
             current_opts = []
-            correct_ans = "A"  # Mặc định tạm thời, sẽ được ghi đè ngay khi gặp dòng đáp án đỏ
+            correct_ans = "A"
           elif val_str.lower().startswith(("a.", "b.", "c.", "d.")):
             current_opts.append(val_str)
-            # Nếu dòng đáp án này được tô màu đỏ trong Excel -> Lấy chính xác chữ cái đầu làm đáp án đúng
             if is_red:
               correct_ans = val_str[0].upper()
           else:
@@ -524,6 +517,7 @@ else:
 
               st.session_state[f"result_correct_{c_num}"] = correct_count
               st.session_state[f"result_wrong_{c_num}"] = wrong_count
+              st.session_state[f"test_user_answers_{c_num}"] = user_answers
               st.session_state[submitted_key] = True
               st.session_state["completed_chunks"].add(c_num)
               st.rerun()
@@ -544,14 +538,57 @@ else:
           col3.metric("Trạng thái", "Đã hoàn thành ✅")
 
           st.markdown("---")
+          
+          # PHẦN XEM LẠI CÁC CÂU SAI MỚI THÊM VÀO
+          st.markdown("### 🔍 Xem Lại Chi Tiết Các Câu Trả Lời Sai")
+          user_answers = st.session_state.get(f"test_user_answers_{c_num}", {})
+          wrong_items_in_test = []
+          for i, q in enumerate(current_chunk_questions):
+            selected = user_answers.get(i)
+            correct_letter = q.get("correct", "A").strip().upper()
+            is_correct = selected and selected.strip().upper().startswith(correct_letter)
+            if not is_correct:
+              wrong_items_in_test.append((i, q, selected))
+
+          if not wrong_items_in_test:
+            st.info("🎉 Tuyệt vời! Ông đã trả lời đúng tất cả các câu trong phần này.")
+          else:
+            st.write(f"Ông trả lời sai **{len(wrong_items_in_test)}** câu. Dưới đây là chi tiết các câu sai, đáp án ông đã chọn và đáp án đúng chuẩn:")
+            for q_idx, q_item, user_sel in wrong_items_in_test:
+              st.markdown(f"**Câu {q_idx + 1}** *(Thuộc chuyên đề: {q_item['sheet']})*")
+              st.markdown(f"> **{q_item['question']}**")
+              
+              correct_letter = q_item.get("correct", "A").strip().upper()
+              
+              for opt in q_item["options"]:
+                opt_letter = opt.strip().upper()
+                is_this_correct = opt_letter.startswith(correct_letter)
+                is_user_chosen = user_sel and opt.strip() == user_sel.strip()
+                
+                if is_this_correct:
+                  st.markdown(f"- ✅ **{opt}** *(Đáp án đúng)*")
+                elif is_user_chosen:
+                  st.markdown(f"- ❌ ~~{opt}~~ *(Ông đã chọn)*")
+                else:
+                  st.markdown(f"- {opt}")
+              
+              if not user_sel:
+                st.markdown("👉 *Ông chưa chọn đáp án nào cho câu này.*")
+              
+              st.markdown("---")
+
           if st.button("🔄 Làm lại bài kiểm tra này"):
             st.session_state[submitted_key] = False
+            if f"test_user_answers_{c_num}" in st.session_state:
+              del st.session_state[f"test_user_answers_{c_num}"]
             st.rerun()
 
       elif sub_mode == "🔄 Làm lại phần này (Ôn tập lại từ đầu)":
         st.session_state[f"gop_idx_{c_num}"] = 0
         if f"submitted_test_{c_num}" in st.session_state:
           st.session_state[f"submitted_test_{c_num}"] = False
+        if f"test_user_answers_{c_num}" in st.session_state:
+          del st.session_state[f"test_user_answers_{c_num}"]
         if c_num in st.session_state["completed_chunks"]:
           st.session_state["completed_chunks"].remove(c_num)
         st.success(

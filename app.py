@@ -47,6 +47,7 @@ st.markdown(
 )
 
 
+@st.cache_data
 def load_data():
   file_name = "PL1. Tong hop ngan hang cau hoi an toan nam 2025 fn (1).xlsx"
   if not os.path.exists(file_name):
@@ -75,48 +76,31 @@ def load_data():
         if val is not None:
           val_str = str(val).strip()
 
-          # Kiểm tra màu đỏ chính xác từ mã màu hoặc theme màu của Excel
           is_red = False
           if cell.font and cell.font.color:
             c = cell.font.color
-            # Kiểm tra qua giá trị rgb hoặc argb
             if c.rgb:
               rgb_str = str(c.rgb).upper()
-              # Các mã màu đỏ phổ biến trong Excel (FF0000, C00000, ED1C24, hoặc có thành phần kênh đỏ cao vượt trội)
               if (
                   any(
                       x in rgb_str for x in ["FF0000", "ED1C24", "C00000", "RED"]
                   )
                   or rgb_str.endswith("FF0000")
                   or rgb_str.endswith("C00000")
-                  or rgb_str.startswith("FF")
-                  and not rgb_str.startswith("FF00FF")
-                  and not rgb_str == "FFFFFFFF"
               ):
-                # Kiểm tra thêm nếu mã ARGB có dạng FF[Đỏ][XanhLá][XanhDương] mà sắc đỏ lớn hơn hẳn
-                if len(rgb_str) == 8:
-                  r_hex = rgb_str[2:4]
-                  g_hex = rgb_str[4:6]
-                  b_hex = rgb_str[6:8]
-                  try:
-                    r_val = int(r_hex, 16)
-                    g_val = int(g_hex, 16)
-                    b_val = int(b_hex, 16)
-                    if r_val > 150 and g_val < 80 and b_val < 80:
-                      is_red = True
-                  except:
-                    pass
-                elif (
-                    "FF0000" in rgb_str
-                    or "C00000" in rgb_str
-                    or "ED1C24" in rgb_str
-                ):
-                  is_red = True
-            # Trường hợp dùng theme hoặc index màu cơ bản của excel
-            if hasattr(c, "theme") and c.theme == 1:  # Thường là màu đỏ/accent
+                is_red = True
+              elif len(rgb_str) == 8:
+                try:
+                  r_val = int(rgb_str[2:4], 16)
+                  g_val = int(rgb_str[4:6], 16)
+                  b_val = int(rgb_str[6:8], 16)
+                  if r_val > 150 and g_val < 80 and b_val < 80:
+                    is_red = True
+                except:
+                  pass
+            if hasattr(c, "theme") and c.theme == 1:
               is_red = True
 
-          # Kiểm tra thêm trường hợp in đậm (bold) nếu có file dùng bold thay vì màu
           is_bold = bool(cell.font and cell.font.bold)
 
           if val_str.lower().startswith("câu"):
@@ -132,7 +116,6 @@ def load_data():
             correct_ans = "A."
           elif val_str.lower().startswith(("a.", "b.", "c.", "d.")):
             current_opts.append(val_str)
-            # Nếu dòng đáp án có màu đỏ hoặc in đậm -> đó chính là đáp án chính xác
             if is_red or is_bold:
               correct_ans = val_str[:2].strip().upper()
           else:

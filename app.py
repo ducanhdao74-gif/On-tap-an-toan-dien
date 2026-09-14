@@ -1,3 +1,4 @@
+import json
 import os
 import random
 import pandas as pd
@@ -6,6 +7,38 @@ import streamlit as st
 st.set_page_config(
     page_title="Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện", page_icon="⚡", layout="wide"
 )
+
+PROGRESS_FILE = "quiz_progress.json"
+
+
+def load_saved_progress():
+  if os.path.exists(PROGRESS_FILE):
+    try:
+      with open(PROGRESS_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+    except:
+      pass
+  return {
+      "completed_chunks": [],
+      "passed_tests": [],
+      "bookmarked_questions": [],
+      "wrong_questions": [],
+  }
+
+
+def save_current_progress():
+  data = {
+      "completed_chunks": list(st.session_state["completed_chunks"]),
+      "passed_tests": list(st.session_state["passed_tests"]),
+      "bookmarked_questions": st.session_state["bookmarked_questions"],
+      "wrong_questions": st.session_state["wrong_questions"],
+  }
+  try:
+    with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
+      json.dump(data, f, ensure_ascii=False, indent=4)
+  except:
+      pass
+
 
 st.markdown(
     """
@@ -135,14 +168,20 @@ def load_data():
 
 sheets_data, error_message = load_data()
 
+saved_prog = load_saved_progress()
+
 if "wrong_questions" not in st.session_state:
-  st.session_state["wrong_questions"] = []
+  st.session_state["wrong_questions"] = saved_prog.get("wrong_questions", [])
 if "bookmarked_questions" not in st.session_state:
-  st.session_state["bookmarked_questions"] = []
+  st.session_state["bookmarked_questions"] = saved_prog.get(
+      "bookmarked_questions", []
+  )
 if "completed_chunks" not in st.session_state:
-  st.session_state["completed_chunks"] = set()
+  st.session_state["completed_chunks"] = set(
+      saved_prog.get("completed_chunks", [])
+  )
 if "passed_tests" not in st.session_state:
-  st.session_state["passed_tests"] = set()
+  st.session_state["passed_tests"] = set(saved_prog.get("passed_tests", []))
 
 st.sidebar.title("⚡ Menu Ôn Tập")
 st.sidebar.markdown("**Chọn chế độ:**")
@@ -223,6 +262,7 @@ else:
         else:
           st.session_state["bookmarked_questions"].append(q_item)
           st.toast("Đã thêm vào danh sách cần ghi nhớ!", icon="⭐")
+        save_current_progress()
         st.rerun()
 
       options = q_item["options"]
@@ -243,6 +283,7 @@ else:
           st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
           if q_item not in st.session_state["wrong_questions"]:
             st.session_state["wrong_questions"].append(q_item)
+            save_current_progress()
 
         st.session_state[f"done_{selected_sheet}"] = min(
             total_q,
@@ -307,6 +348,7 @@ else:
           if w_item in wrong_list:
             wrong_list.remove(w_item)
             st.session_state["wrong_questions"] = wrong_list
+            save_current_progress()
         else:
           st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
 
@@ -340,7 +382,6 @@ else:
 
       chunk_names = []
       for i in range(total_chunks):
-        # Kiểm tra nếu phần này đã hoàn thành ôn tập hoặc đã thi thử xong
         is_done = (
             i in st.session_state["completed_chunks"]
             or i in st.session_state["passed_tests"]
@@ -418,6 +459,7 @@ else:
           else:
             st.session_state["bookmarked_questions"].append(q_item)
             st.toast("Đã thêm vào danh sách cần ghi nhớ!", icon="⭐")
+          save_current_progress()
           st.rerun()
 
         options = q_item["options"]
@@ -440,6 +482,7 @@ else:
             st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
             if q_item not in st.session_state["wrong_questions"]:
               st.session_state["wrong_questions"].append(q_item)
+              save_current_progress()
 
         st.markdown("---")
         col_prev, col_next = st.columns(2)
@@ -457,6 +500,7 @@ else:
             else:
               st.session_state[f"gop_idx_{c_num}"] = 0
               st.session_state["completed_chunks"].add(c_num)
+              save_current_progress()
             st.rerun()
 
       elif sub_mode == "📝 Bài kiểm tra chốt kiến thức phần này":
@@ -524,6 +568,7 @@ else:
               st.session_state[submitted_key] = True
               st.session_state["completed_chunks"].add(c_num)
               st.session_state["passed_tests"].add(c_num)
+              save_current_progress()
               st.rerun()
         else:
           c_correct = st.session_state.get(f"result_correct_{c_num}", 0)
@@ -542,42 +587,53 @@ else:
           col3.metric("Trạng thái", "Đã hoàn thành ✅")
 
           st.markdown("---")
-          
+
           st.markdown("### 🔍 Xem Lại Chi Tiết Các Câu Trả Lời Sai")
           user_answers = st.session_state.get(f"test_user_answers_{c_num}", {})
           wrong_items_in_test = []
           for i, q in enumerate(current_chunk_questions):
             selected = user_answers.get(i)
             correct_letter = q.get("correct", "A").strip().upper()
-            is_correct = selected and selected.strip().upper().startswith(correct_letter)
+            is_correct = selected and selected.strip().upper().startswith(
+                correct_letter
+            )
             if not is_correct:
               wrong_items_in_test.append((i, q, selected))
 
           if not wrong_items_in_test:
-            st.info("🎉 Tuyệt vời! Ông đã trả lời đúng tất cả các câu trong phần này.")
+            st.info(
+                "🎉 Tuyệt vời! Ông đã trả lời đúng tất cả các câu trong phần"
+                " này."
+            )
           else:
-            st.write(f"Ông trả lời sai **{len(wrong_items_in_test)}** câu. Dưới đây là chi tiết các câu sai, đáp án ông đã chọn và đáp án đúng chuẩn:")
+            st.write(
+                f"Ông trả lời sai **{len(wrong_items_in_test)}** câu. Dưới đây"
+                " là chi tiết các câu sai, đáp án ông đã chọn và đáp án đúng"
+                " chuẩn:"
+            )
             for q_idx, q_item, user_sel in wrong_items_in_test:
-              st.markdown(f"**Câu {q_idx + 1}** *(Thuộc chuyên đề: {q_item['sheet']})*")
+              st.markdown(
+                  f"**Câu {q_idx + 1}** *(Thuộc chuyên đề: {q_item['sheet']})*"
+              )
               st.markdown(f"> **{q_item['question']}**")
-              
+
               correct_letter = q_item.get("correct", "A").strip().upper()
-              
+
               for opt in q_item["options"]:
                 opt_letter = opt.strip().upper()
                 is_this_correct = opt_letter.startswith(correct_letter)
                 is_user_chosen = user_sel and opt.strip() == user_sel.strip()
-                
+
                 if is_this_correct:
                   st.markdown(f"- ✅ **{opt}** *(Đáp án đúng)*")
                 elif is_user_chosen:
                   st.markdown(f"- ❌ ~~{opt}~~ *(Ông đã chọn)*")
                 else:
                   st.markdown(f"- {opt}")
-              
+
               if not user_sel:
                 st.markdown("👉 *Ông chưa chọn đáp án nào cho câu này.*")
-              
+
               st.markdown("---")
 
           if st.button("🔄 Làm lại bài kiểm tra này"):
@@ -586,6 +642,7 @@ else:
               del st.session_state[f"test_user_answers_{c_num}"]
             if c_num in st.session_state["passed_tests"]:
               st.session_state["passed_tests"].remove(c_num)
+            save_current_progress()
             st.rerun()
 
       elif sub_mode == "🔄 Làm lại phần này (Ôn tập lại từ đầu)":
@@ -598,6 +655,7 @@ else:
           st.session_state["completed_chunks"].remove(c_num)
         if c_num in st.session_state["passed_tests"]:
           st.session_state["passed_tests"].remove(c_num)
+        save_current_progress()
         st.success(
             f"Đã reset và xóa trạng thái hoàn thành của Phần {c_num + 1}"
             " thành công!"
@@ -652,6 +710,7 @@ else:
               st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
               if wc_item in st.session_state["wrong_questions"]:
                 st.session_state["wrong_questions"].remove(wc_item)
+                save_current_progress()
             else:
               st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
 
@@ -659,7 +718,10 @@ else:
           if st.button(
               "Câu tiếp theo ➡️", type="primary", key=f"next_wc_{c_num}_{wc_idx}"
           ):
-            if st.session_state[f"wrong_chunk_idx_{c_num}"] < len(wrong_in_chunk) - 1:
+            if (
+                st.session_state[f"wrong_chunk_idx_{c_num}"]
+                < len(wrong_in_chunk) - 1
+            ):
               st.session_state[f"wrong_chunk_idx_{c_num}"] += 1
             else:
               st.session_state[f"wrong_chunk_idx_{c_num}"] = 0
@@ -705,8 +767,11 @@ else:
               unsafe_allow_html=True,
           )
 
-          if st.button("❌ Bỏ đánh dấu câu này", key=f"remove_bm_{c_num}_{bmc_idx}"):
+          if st.button(
+              "❌ Bỏ đánh dấu câu này", key=f"remove_bm_{c_num}_{bmc_idx}"
+          ):
             st.session_state["bookmarked_questions"].remove(bmc_item)
+            save_current_progress()
             st.toast("Đã xóa khỏi danh sách ghi nhớ!", icon="ℹ️")
             st.rerun()
 
@@ -727,7 +792,10 @@ else:
           if st.button(
               "Câu tiếp theo ➡️", type="primary", key=f"next_bm_{c_num}_{bmc_idx}"
           ):
-            if st.session_state[f"bm_chunk_idx_{c_num}"] < len(bm_in_chunk) - 1:
+            if (
+                st.session_state[f"bm_chunk_idx_{c_num}"]
+                < len(bm_in_chunk) - 1
+            ):
               st.session_state[f"bm_chunk_idx_{c_num}"] += 1
             else:
               st.session_state[f"bm_chunk_idx_{c_num}"] = 0

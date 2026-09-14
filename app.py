@@ -10,7 +10,6 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    /* Giữ nguyên menu chọn chế độ ngang ban đầu */
     div[data-testid="stHorizontalBlock"] div.stRadio [role="radiogroup"] {
         display: flex !important;
         flex-direction: row !important;
@@ -21,7 +20,6 @@ st.markdown(
         font-size: 1rem !important;
     }
 
-    /* Bỏ khung câu hỏi */
     .question-box {
         background-color: transparent !important;
         border: none !important;
@@ -36,7 +34,6 @@ st.markdown(
         font-weight: 600;
     }
     
-    /* Giữ nguyên layout căn trái cũ, chỉ tăng nhẹ chữ đáp án lên khoảng 19px cho dễ đọc */
     div[data-testid="stRadio"] > div[role="radiogroup"] label p,
     div[data-testid="stRadio"] > div[role="radiogroup"] label span,
     div[data-testid="stRadio"] > div[role="radiogroup"] label div {
@@ -61,16 +58,99 @@ def load_data():
   if not os.path.exists(file_name):
     return None, f"Không tìm thấy file Excel trong thư mục!"
   try:
+    # Sử dụng openpyxl để đọc màu sắc chữ nhằm phát hiện đáp án đúng (màu đỏ)
+    import openpyxl
+
+    wb = openpyxl.load_workbook(file_name, data_only=True)
+    sheets_data = {}
+
+    for sheet in wb.sheetnames:
+      ws = wb[sheet]
+      questions = []
+      current_q = None
+      current_opts = []
+      correct_ans = "A."  # Mặc định A
+
+      for row in ws.iter_rows(values_only=False):
+        cell = row[0]
+        val = cell.value
+        if val is not None:
+          val_str = str(val).strip()
+          # Kiểm tra nếu chữ có màu đỏ (ví dụ: FF0000 hoặc đống format màu đỏ của Excel)
+          is_red = False
+          if cell.font and cell.font.color and cell.font.color.rgb:
+            rgb = str(cell.font.color.rgb).upper()
+            if "FF0000" in rgb or "RGB(255" in rgb or rgb.endswith("FF0000"):
+              is_red = True
+
+          if val_str.lower().startswith("câu"):
+            if current_q:
+              questions.append({
+                  "question": current_q,
+                  "options": current_opts,
+                  "correct": correct_ans,
+                  "sheet": sheet,
+              })
+            current_q = val_str
+            current_opts = []
+            correct_ans = "A."  # Reset lại mặc định cho câu mới
+          elif val_str.lower().startswith(("a.", "b.", "c.", "d.")):
+            current_opts.append(val_str)
+            if is_red:
+              correct_ans = val_str[:2].strip().upper()  # Lấy "A.", "B.", "C." hoặc "D."
+          else:
+            if current_q and not current_opts:
+              current_q += " " + val_str
+            elif current_opts:
+              current_opts[-1] += " " + val_str
+
+      if current_q:
+        questions.append({
+            "question": current_q,
+            "options": current_opts,
+            "correct": correct_ans,
+            "sheet": sheet,
+        })
+
+      # Fallback nếu file cấu trúc khác dùng pandas thuần
+      if not questions:
+        df = pd.read_excel(file_name, sheet_name=sheet)
+        col = df.columns[0]
+        # Xử lý tương tự nếu ko dùng openpyxl
+        for val in df[col].dropna():
+          val_str = str(val).strip()
+          if val_str.lower().startswith("câu"):
+            if current_q:
+              questions.append({
+                  "question": current_q,
+                  "options": current_opts,
+                  "correct": "A.",
+                  "sheet": sheet,
+              })
+            current_q = val_str
+            current_opts = []
+          elif val_str.lower().startswith(("a.", "b.", "c.", "d.")):
+            current_opts.append(val_str)
+        if current_q:
+          questions.append({
+              "question": current_q,
+              "options": current_opts,
+              "correct": "A.",
+              "sheet": sheet,
+          })
+
+      sheets_data[sheet] = questions
+    return sheets_data, None
+  except Exception as e:
+    # Fallback an toàn bằng pandas nếu lỗi thư viện phụ trợ
     xls = pd.ExcelFile(file_name)
     sheets_data = {}
     for sheet in xls.sheet_names:
       df = pd.read_excel(xls, sheet_name=sheet)
       col = df.columns[0]
-
       questions = []
       current_q = None
       current_opts = []
-
       for val in df[col].dropna():
         val_str = str(val).strip()
         if val_str.lower().startswith("câu"):
@@ -78,42 +158,22 @@ def load_data():
             questions.append({
                 "question": current_q,
                 "options": current_opts,
+                "correct": "A.",
                 "sheet": sheet,
             })
           current_q = val_str
           current_opts = []
         elif val_str.lower().startswith(("a.", "b.", "c.", "d.")):
           current_opts.append(val_str)
-        else:
-          if current_q and not current_opts:
-            current_q += " " + val_str
-          elif current_opts:
-            current_opts[-1] += " " + val_str
       if current_q:
         questions.append({
             "question": current_q,
             "options": current_opts,
+            "correct": "A.",
             "sheet": sheet,
         })
-
-      if not questions:
-        for idx, row in df.iterrows():
-          row_vals = [str(x) for x in row.values if pd.notna(x)]
-          if row_vals:
-            questions.append({
-                "question": row_vals[0],
-                "options": (
-                    row_vals[1:]
-                    if len(row_vals) > 1
-                    else ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
-                ),
-                "sheet": sheet,
-            })
-
       sheets_data[sheet] = questions
     return sheets_data, None
-  except Exception as e:
-    return None, f"Lỗi khi đọc file Excel: {e}"
 
 
 sheets_data, error_message = load_data()
@@ -216,11 +276,12 @@ else:
       )
 
       if selected_opt is not None:
-        is_correct = selected_opt.strip().startswith("A.")
+        correct_letter = q_item.get("correct", "A.").strip().upper()
+        is_correct = selected_opt.strip().upper().startswith(correct_letter)
         if is_correct:
-          st.success("🎉 Chính xác! Đáp án đúng là A.")
+          st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
         else:
-          st.error("❌ Sai rồi! Đáp án đúng là A.")
+          st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
           if q_item not in st.session_state["wrong_questions"]:
             st.session_state["wrong_questions"].append(q_item)
 
@@ -281,13 +342,14 @@ else:
           key=f"radio_wrong_{w_idx}",
       )
       if w_choice is not None:
-        if w_choice.strip().startswith("A."):
-          st.success("🎉 Chính xác! Đáp án đúng là A.")
+        correct_letter = w_item.get("correct", "A.").strip().upper()
+        if w_choice.strip().upper().startswith(correct_letter):
+          st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
           if w_item in wrong_list:
             wrong_list.remove(w_item)
             st.session_state["wrong_questions"] = wrong_list
         else:
-          st.error("❌ Sai rồi! Đáp án đúng là A.")
+          st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
 
       st.markdown("---")
       if st.button("Câu tiếp theo ➡️", type="primary", key=f"next_wrong_{w_idx}"):
@@ -410,11 +472,12 @@ else:
         )
 
         if g_choice is not None:
-          is_correct = g_choice.strip().startswith("A.")
+          correct_letter = q_item.get("correct", "A.").strip().upper()
+          is_correct = g_choice.strip().upper().startswith(correct_letter)
           if is_correct:
-            st.success("🎉 Chính xác! Đáp án đúng là A.")
+            st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
           else:
-            st.error("❌ Sai rồi! Đáp án đúng là A.")
+            st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
             if q_item not in st.session_state["wrong_questions"]:
               st.session_state["wrong_questions"].append(q_item)
 
@@ -485,7 +548,10 @@ else:
               wrong_count = 0
               for i, q in enumerate(current_chunk_questions):
                 selected = user_answers[i]
-                if selected and selected.strip().startswith("A."):
+                correct_letter = q.get("correct", "A.").strip().upper()
+                if selected and selected.strip().upper().startswith(
+                    correct_letter
+                ):
                   correct_count += 1
                 else:
                   wrong_count += 1
@@ -573,12 +639,13 @@ else:
               key=f"radio_wc_{c_num}_{wc_idx}",
           )
           if wc_choice is not None:
-            if wc_choice.strip().startswith("A."):
-              st.success("🎉 Chính xác! Đáp án đúng là A.")
+            correct_letter = wc_item.get("correct", "A.").strip().upper()
+            if wc_choice.strip().upper().startswith(correct_letter):
+              st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
               if wc_item in st.session_state["wrong_questions"]:
                 st.session_state["wrong_questions"].remove(wc_item)
             else:
-              st.error("❌ Sai rồi! Đáp án đúng là A.")
+              st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
 
           st.markdown("---")
           if st.button(
@@ -642,10 +709,11 @@ else:
               key=f"radio_bm_{c_num}_{bmc_idx}",
           )
           if bmc_choice is not None:
-            if bmc_choice.strip().startswith("A."):
-              st.success("🎉 Chính xác! Đáp án đúng là A.")
+            correct_letter = bmc_item.get("correct", "A.").strip().upper()
+            if bmc_choice.strip().upper().startswith(correct_letter):
+              st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
             else:
-              st.error("❌ Sai rồi! Đáp án đúng là A.")
+              st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
 
           st.markdown("---")
           if st.button(

@@ -49,10 +49,9 @@ def send_daily_reminder_email(
     server.login(SENDER_EMAIL, SENDER_PASSWORD)
     server.sendmail(SENDER_EMAIL, receiver_email, message.as_string())
     server.quit()
-    return True
+    return True, "Thành công"
   except Exception as e:
-    print(f"Lỗi gửi mail: {e}")
-    return False
+    return False, str(e)
 
 
 def load_saved_progress():
@@ -305,10 +304,13 @@ if st.sidebar.button("📧 Gửi Email nhắc nhở ngay", use_container_width=T
           st.session_state["passed_tests"]
       )
   )
-  if send_daily_reminder_email(SENDER_EMAIL, bm_cnt, wr_cnt, comp_cnt):
+  success, err_msg = send_daily_reminder_email(
+      SENDER_EMAIL, bm_cnt, wr_cnt, comp_cnt
+  )
+  if success:
     st.sidebar.success("✅ Đã gửi email nhắc nhở vào Gmail của ông!")
   else:
-    st.sidebar.error("❌ Gửi mail thất bại!")
+    st.sidebar.error(f"❌ Gửi mail thất bại: {err_msg}")
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Chọn chế độ:**")

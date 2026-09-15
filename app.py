@@ -19,7 +19,6 @@ st.set_page_config(
 
 PROGRESS_FILE = "quiz_progress.json"
 
-# --- CẤU HÌNH GMAIL GỬI THÔNG BÁO ---
 SENDER_EMAIL = "ducanhdao74@gmail.com"
 SENDER_PASSWORD = "ospeifebafqlufpi"
 
@@ -254,7 +253,6 @@ st.markdown("""
         padding: 15px;
         margin-bottom: 15px;
     }
-    
     .main-header-card {
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
         border-left: 5px solid #38bdf8;
@@ -288,7 +286,6 @@ st.markdown("""
         font-weight: 600;
         border: 1px solid rgba(56, 189, 248, 0.3);
     }
-    
     div[data-testid="stRadio"] > div[role="radiogroup"] label p,
     div[data-testid="stRadio"] > div[role="radiogroup"] label span,
     div[data-testid="stRadio"] > div[role="radiogroup"] label div {
@@ -741,6 +738,7 @@ else:
                             </div>
                         """, unsafe_allow_html=True)
                         
+                        # ĐÃ XÓA KHUNG THỪA Ở ĐÂY, CHỈ RENDER NỘI DUNG VÀ QUESTION-CARD TRỰC TIẾP
                         st.markdown('<div class="question-card">', unsafe_allow_html=True)
                         
                         is_bm = any(b.get("question") == q_item["question"] for b in st.session_state["bookmarked_questions"])

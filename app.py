@@ -14,6 +14,7 @@ st.set_page_config(
     layout="wide"
 )
 
+import json
 from google.oauth2.service_account import Credentials
 import gspread
 import streamlit as st
@@ -26,8 +27,9 @@ def init_connection():
         "https://www.googleapis.com/auth/drive"
     ]
     
-    # Biến toàn bộ section trong secrets thành dictionary tiêu chuẩn
-    creds_dict = dict(st.secrets["gcp_service_account"])
+    # Đọc khối chuỗi JSON an toàn và chuyển thành dictionary
+    json_str = st.secrets["gcp_service_account"]["json_key"]
+    creds_dict = json.loads(json_str)
     
     creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
     client = gspread.authorize(creds)

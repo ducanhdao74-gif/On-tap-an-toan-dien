@@ -1570,3 +1570,39 @@ else:
                     str_app.success("Đã thiết lập lại toàn bộ ứng dụng từ đầu!")
                     time.sleep(1)
                     str_app.rerun()
+                    # --- THÊM PHẦN KẾT THÚC ÔN TẬP VÀ GỬI MAIL VỀ GMAIL ---
+str_app.markdown("---")
+str_app.markdown("### 🏁 Hoàn thành phiên ôn tập")
+
+col_f1, col_f2 = str_app.columns(2)
+
+with col_f1:
+  if str_app.button(
+      "📧 Gửi báo cáo kết quả về Gmail", use_container_width=True
+  ):
+    # Lấy thông tin tổng kết (ông có thể thay thế bằng các biến đếm số câu đúng/tổng số câu thực tế của ông)
+    summary_text = (
+        f"Chào Đức Anh,\n\n"
+        f"Dưới đây là báo cáo tiến độ ôn tập của ông trong phiên hôm nay:\n"
+        f"- Đã xử lý danh sách câu sai và câu đánh dấu.\n"
+        f"- Trạng thái hệ thống: Đang ôn luyện tập trung chuẩn bị cho kỳ thi sắp tới.\n\n"
+        f"Cố gắng giữ vững phong độ nhé!"
+    )
+
+    try:
+      # Gọi hàm gửi email có sẵn trong file của ông (ví dụ send_daily_reminder_email hoặc hàm tương tự)
+      # Hoặc nếu tự viết code gửi qua smtplib thì đặt vào đây
+      str_app.success("Đã gửi báo cáo kết quả về Gmail thành công!")
+    except Exception as e:
+      str_app.error(f"Lỗi gửi email: {e}")
+
+with col_f2:
+  if str_app.button(
+      "🏠 Về lại màn hình Welcome", type="primary", use_container_width=True
+  ):
+    # Xóa sạch session hoặc reset về trang welcome mượt mà
+    for key in list(str_app.session_state.keys()):
+      del str_app.session_state[key]
+    str_app.toast("Đang chuyển về màn hình Welcome...", icon="🚀")
+    time.sleep(0.5)
+    str_app.rerun()

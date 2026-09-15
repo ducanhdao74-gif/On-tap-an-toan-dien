@@ -35,6 +35,7 @@ def load_saved_progress():
         "passed_tests": [],
         "bookmarked_questions": [],
         "wrong_questions": [],
+        "spaced_repetition_data": {},  # Lưu lịch sử ôn lặp ngắt quãng: {question_text: {"box": int, "next_review": float}}
         "total_study_seconds": 0,
         "last_login_date": ""
     }
@@ -53,6 +54,7 @@ def save_current_progress():
         "passed_tests": list(str_app.session_state.get("passed_tests", [])),
         "bookmarked_questions": str_app.session_state.get("bookmarked_questions", []),
         "wrong_questions": str_app.session_state.get("wrong_questions", []),
+        "spaced_repetition_data": str_app.session_state.get("spaced_repetition_data", {}),
         "total_study_seconds": saved_data.get("total_study_seconds", 0),
         "last_login_date": str_app.session_state.get("last_login_date", "")
     }
@@ -205,6 +207,8 @@ if "wrong_questions" not in str_app.session_state:
     str_app.session_state["wrong_questions"] = saved_prog.get("wrong_questions", [])
 if "bookmarked_questions" not in str_app.session_state:
     str_app.session_state["bookmarked_questions"] = saved_prog.get("bookmarked_questions", [])
+if "spaced_repetition_data" not in str_app.session_state:
+    str_app.session_state["spaced_repetition_data"] = saved_prog.get("spaced_repetition_data", {})
 if "completed_chunks" not in str_app.session_state:
     str_app.session_state["completed_chunks"] = set(saved_prog.get("completed_chunks", []))
 if "passed_tests" not in str_app.session_state:
@@ -213,6 +217,23 @@ if "app_started" not in str_app.session_state:
     str_app.session_state["app_started"] = False
 
 save_current_progress()
+
+def update_spaced_repetition(q_text, is_correct):
+    sr_data = str_app.session_state["spaced_repetition_data"]
+    now = time.time()
+    if q_text not in sr_data:
+        sr_data[q_text] = {"box": 1, "next_review": 0}
+    
+    item = sr_data[q_text]
+    if is_correct:
+        item["box"] = min(5, item["box"] + 1)
+        # Hộp càng cao thời gian giãn cách càng lâu (Hộp 1: ngay, Hộp 2: 4h, Hộp 3: 1 ngày, Hộp 4: 3 ngày, Hộp 5: 7 ngày)
+        intervals = [0, 0, 4*3600, 24*3600, 3*24*3600, 7*24*3600]
+        item["next_review"] = now + intervals[item["box"]]
+    else:
+        item["box"] = 1 # Quay về hộp xuất phát nếu trả lời sai
+        item["next_review"] = now
+    save_current_progress()
 
 def scheduled_job():
     saved_data = load_saved_progress()
@@ -460,6 +481,7 @@ else:
     mode = str_app.sidebar.selectbox("Chọn chế độ học:", [
         "📖 Ôn tập theo chuyên đề",
         "🔄 Ôn lại câu trả lời sai",
+        "🧠 Spaced Repetition (Ôn thông minh)",
         "📂 Ôn gộp tất cả (50 câu/phần)",
         "⭐ Tất cả câu hỏi cần ghi nhớ",
         "📝 Thi thử (Mock Test)"
@@ -571,6 +593,7 @@ else:
                         str_app.session_state[f"done_{selected_sheet}"] = min(total_q, max(str_app.session_state[f"done_{selected_sheet}"], idx + 1))
                         
                         is_correct = selected_opt.strip().upper().startswith(correct_letter)
+                        update_spaced_repetition(q_item["question"], is_correct)
                         if not is_correct:
                             if not any(w.get("question") == q_item["question"] for w in str_app.session_state["wrong_questions"]):
                                 str_app.session_state["wrong_questions"].append(q_item)
@@ -659,7 +682,9 @@ else:
                         str_app.session_state[w_storage_key] = w_choice
                         str_app.session_state[w_answered_key] = True
                         
-                        if w_choice.strip().upper().startswith(correct_letter):
+                        is_correct = w_choice.strip().upper().startswith(correct_letter)
+                        update_spaced_repetition(w_item["question"], is_correct)
+                        if is_correct:
                             wrong_list = [w for w in wrong_list if w.get("question") != w_item.get("question")]
                             str_app.session_state["wrong_questions"] = wrong_list
                             save_current_progress()
@@ -681,6 +706,102 @@ else:
                         str_app.session_state["wrong_idx"] += 1
                     else:
                         str_app.session_state["wrong_idx"] = 0
+                    scroll_to_top()
+                    str_app.rerun()
+
+        elif mode == "🧠 Spaced Repetition (Ôn thông minh)":
+            str_app.title("🧠 Chế Độ Ôn Thông Minh (Spaced Repetition)")
+            str_app.markdown("---")
+            
+            # Gom tất cả câu hỏi
+            all_questions = []
+            for sh, ql in sheets_data.items():
+                all_questions.extend(ql)
+                
+            sr_dict = str_app.session_state["spaced_repetition_data"]
+            current_time = time.time()
+            
+            # Lọc các câu cần đến hạn ôn tập (next_review <= current_time) hoặc câu chưa bao giờ học
+            due_questions = []
+            for q in all_questions:
+                q_txt = q["question"]
+                if q_txt not in sr_dict:
+                    due_questions.append(q)
+                else:
+                    if sr_dict[q_txt]["next_review"] <= current_time:
+                        due_questions.append(q)
+                        
+            if not due_questions:
+                str_app.success("🎉 Tuyệt vời! Hiện tại không có câu hỏi nào đến hạn ôn tập theo phương pháp Spaced Repetition. Hãy quay lại sau hoặc ôn tập theo chuyên đề nhé!")
+            else:
+                str_app.write(f"Đang có **{len(due_questions)}** câu đến lịch ôn tập thông minh cần giải quyết.")
+                if "sr_idx" not in str_app.session_state:
+                    str_app.session_state["sr_idx"] = 0
+                    
+                sr_idx = str_app.session_state["sr_idx"]
+                if sr_idx >= len(due_questions):
+                    sr_idx = 0
+                    str_app.session_state["sr_idx"] = 0
+                    
+                sr_item = due_questions[sr_idx]
+                box_level = sr_dict.get(sr_item["question"], {}).get("box", 1)
+                
+                str_app.markdown(f"""
+                    <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 1.05rem; font-weight: 700; color: #38bdf8;">🧠 Hộp ghi nhớ (Level {box_level}/5) — Chuyên đề: {sr_item.get('sheet')}</span>
+                            <span class="badge-topic">Câu thông minh {sr_idx + 1} / {len(due_questions)}</span>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                str_app.markdown(f"""
+                    <div class="question-title">
+                        <b>Câu hỏi:</b> {sr_item['question']}
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                shuff_data = get_shuffled_options(sr_item, f"shuff_sr_{sr_idx}")
+                options = shuff_data["options"]
+                correct_letter = shuff_data["correct"]
+                
+                sr_storage_key = f"user_ans_sr_{sr_idx}"
+                sr_answered_key = f"answered_sr_{sr_idx}"
+                is_sr_answered = str_app.session_state.get(sr_answered_key, False)
+                
+                sr_default_idx = None
+                if str_app.session_state.get(sr_storage_key) in options:
+                    sr_default_idx = options.index(str_app.session_state.get(sr_storage_key))
+                    
+                if not is_sr_answered:
+                    sr_choice = str_app.radio("Chọn đáp án của bạn:", options, index=sr_default_idx, key=f"radio_sr_{sr_idx}")
+                    if sr_choice is not None:
+                        str_app.session_state[sr_storage_key] = sr_choice
+                        str_app.session_state[sr_answered_key] = True
+                        
+                        is_correct = sr_choice.strip().upper().startswith(correct_letter)
+                        update_spaced_repetition(sr_item["question"], is_correct)
+                        if not is_correct and not any(w.get("question") == sr_item["question"] for w in str_app.session_state["wrong_questions"]):
+                            str_app.session_state["wrong_questions"].append(sr_item)
+                        save_current_progress()
+                        str_app.rerun()
+                else:
+                    saved_sr_choice = str_app.session_state.get(sr_storage_key)
+                    str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_sr_choice}</b></p>", unsafe_allow_html=True)
+                    
+                    str_app.markdown("<br>", unsafe_allow_html=True)
+                    if saved_sr_choice.strip().upper().startswith(correct_letter):
+                        str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}. (Đã nâng cấp cấp độ hộp ghi nhớ)")
+                    else:
+                        correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
+                        str_app.error(f"❌ Sai rồi! Đáp án đúng là **{correct_text}**. (Đã đưa về hộp 1 để ôn lại)")
+                
+                str_app.markdown("<br>", unsafe_allow_html=True)
+                if str_app.button("Câu tiếp theo ➡️", type="primary", use_container_width=True, key=f"next_sr_{sr_idx}"):
+                    if str_app.session_state["sr_idx"] < len(due_questions) - 1:
+                        str_app.session_state["sr_idx"] += 1
+                    else:
+                        str_app.session_state["sr_idx"] = 0
                     scroll_to_top()
                     str_app.rerun()
 
@@ -900,6 +1021,7 @@ else:
                                 str_app.session_state[f"chunk_studied_count_{c_num}"].add(g_idx)
                                 
                                 is_correct = g_choice.strip().upper().startswith(correct_letter)
+                                update_spaced_repetition(q_item["question"], is_correct)
                                 if not is_correct:
                                     if not any(w.get("question") == q_item["question"] for w in str_app.session_state["wrong_questions"]):
                                         str_app.session_state["wrong_questions"].append(q_item)
@@ -1022,7 +1144,9 @@ else:
                                     shuff_data = str_app.session_state.get(f"shuff_test_{c_num}_{i}", {"correct": "A"})
                                     correct_letter = shuff_data["correct"]
                                     
-                                    if selected and selected.strip().upper().startswith(correct_letter):
+                                    is_correct = selected and selected.strip().upper().startswith(correct_letter)
+                                    update_spaced_repetition(q["question"], is_correct)
+                                    if is_correct:
                                         correct_count += 1
                                     else:
                                         wrong_count += 1
@@ -1172,7 +1296,9 @@ else:
                                 str_app.session_state[wc_storage_key] = wc_choice
                                 str_app.session_state[wc_answered_key] = True
                                 
-                                if wc_choice.strip().upper().startswith(correct_letter):
+                                is_correct = wc_choice.strip().upper().startswith(correct_letter)
+                                update_spaced_repetition(wc_item["question"], is_correct)
+                                if is_correct:
                                     str_app.session_state["wrong_questions"] = [
                                         w for w in str_app.session_state["wrong_questions"] 
                                         if w.get("question") != wc_item.get("question")
@@ -1301,7 +1427,13 @@ else:
                     str_app.markdown("<hr style='margin: 30px 0; border-color: rgba(56, 189, 248, 0.2);'>", unsafe_allow_html=True)
                     
                 if str_app.button("📤 Nộp bài thi thử", type="primary", use_container_width=True):
-                    str_app.success("Đã nộp bài thành công!")
+                    for i, q in enumerate(mock_qs):
+                        selected = str_app.session_state["mock_answers"].get(i)
+                        shuff_data = str_app.session_state.get(f"shuff_mock_{i}", {"correct": "A"})
+                        correct_letter = shuff_data["correct"]
+                        is_correct = selected and selected.strip().upper().startswith(correct_letter)
+                        update_spaced_repetition(q["question"], is_correct)
+                    str_app.success("Đã nộp bài và cập nhật hệ thống Spaced Repetition thành công!")
                     str_app.balloons()
                     scroll_to_top()
                     if str_app.button("Làm bài thi mới", use_container_width=True):

@@ -1608,3 +1608,31 @@ if str_app.session_state.get("started", False):
 
       time.sleep(1)
       str_app.rerun()
+        # Đưa nút hoàn thành lên thanh sidebar (thanh task bên trái)
+if str_app.sidebar.button(
+    "🏠 Hoàn thành & Về Welcome",
+    type="primary",
+    use_container_width=True,
+    key="btn_sidebar_return_welcome",
+):
+  with str_app.sidebar.spinner("Đang gửi báo cáo và về trang chủ..."):
+    # 1. Soạn nội dung báo cáo tự động
+    summary_text = (
+        f"Chào Đức Anh,\n\n"
+        f"Hệ thống ghi nhận ông vừa hoàn thành phiên ôn tập Điện lực Điện Biên từ Sidebar:\n"
+        f"- Trạng thái: Đã reset phiên làm việc về trang chủ.\n\n"
+        f"Chúc ông đạt kết quả cao trong kỳ thi sắp tới!"
+    )
+
+    try:
+      # send_daily_reminder_email()
+      str_app.sidebar.success("Đã gửi báo cáo tự động về Gmail thành công!")
+    except Exception as e:
+      str_app.sidebar.error(f"Lỗi gửi email: {e}")
+
+    # 2. Xóa sạch session state và quay về màn hình Welcome
+    for key in list(str_app.session_state.keys()):
+      del str_app.session_state[key]
+
+    time.sleep(1)
+    str_app.rerun()

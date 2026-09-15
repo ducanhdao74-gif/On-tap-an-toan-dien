@@ -40,14 +40,23 @@ def load_saved_progress():
     "last_login_date": ""
 }
 
-def save_current_progress():
-    if "start_session_time" in str_app.session_state:
-        elapsed = time.time() - str_app.session_state["start_session_time"]
-        str_app.session_state["start_session_time"] = time.time()
-        saved_data = load_saved_progress()
-        saved_data["total_study_seconds"] = saved_data.get("total_study_seconds", 0) + elapsed
-    else:
-        saved_data = load_saved_progress()
+import subprocess
+
+def save_current_progress_and_sync_github():
+    # 1. Gọi lại logic lưu dữ liệu hiện tại
+    save_current_progress()
+    
+    # 2. Tự động Git commit & push lên GitHub
+    try:
+        subprocess.run(["git", "config", "--global", "user.email", "ducanh@bot.com"], check=False)
+        subprocess.run(["git", "config", "--global", "user.name", "Quiz Bot Auto Sync"], check=False)
+        subprocess.run(["git", "add", PROGRESS_FILE], check=True)
+        commit_result = subprocess.run(["git", "commit", "-m", "Auto-update quiz progress json"], capture_output=True, text=True)
+        
+        if "nothing to commit" not in commit_result.stdout:
+            subprocess.run(["git", "push"], check=True)
+    except Exception as e:
+        print(f"Lỗi đồng bộ Git tự động: {e}")
 
     data = {
         "completed_chunks": list(str_app.session_state.get("completed_chunks", [])),

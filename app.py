@@ -738,7 +738,6 @@ else:
                             </div>
                         """, unsafe_allow_html=True)
                         
-                        # ĐÃ XÓA KHUNG THỪA Ở ĐÂY, CHỈ RENDER NỘI DUNG VÀ QUESTION-CARD TRỰC TIẾP
                         st.markdown('<div class="question-card">', unsafe_allow_html=True)
                         
                         is_bm = any(b.get("question") == q_item["question"] for b in st.session_state["bookmarked_questions"])

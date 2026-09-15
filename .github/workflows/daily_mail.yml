@@ -2,8 +2,8 @@ name: Daily Email Reminder
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Chạy lúc 0:00 UTC tức là 7:00 sáng giờ Việt Nam mỗi ngày
-  workflow_dispatch: # Cho phép bấm nút chạy thử thủ công bất cứ lúc nào
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
 jobs:
   send-mail:

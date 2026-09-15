@@ -1627,7 +1627,7 @@ if str_app.sidebar.button(
     try:
       # 2. Sử dụng str_app.session_state thay vì st.session_state để đồng bộ với app của ông
       send_daily_reminder_email(
-          receiver_email="ducanh.work2026@gmail.com",
+          receiver_email="ducanhdao74@gmail.com",
           completed_questions_count=str_app.session_state.get(
               "completed_count", 0
           ),

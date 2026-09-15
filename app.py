@@ -678,12 +678,24 @@ else:
                 st.sidebar.markdown("---")
                 st.sidebar.metric("Tổng số câu của phần", actual_chunk_len)
                 
-                sub_mode = st.radio("Chế độ học trong phần:", [
-                    "📖 Ôn tập từng câu",
-                    "📝 Bài kiểm tra chốt kiến thức",
-                    "🔄 Làm lại phần này",
-                    "⚠️ Ôn các câu sai"
-                ], horizontal=True, label_visibility="collapsed")
+                # Khởi tạo trạng thái theo dõi đã học hết phần này chưa
+                if f"chunk_studied_count_{c_num}" not in st.session_state:
+                    st.session_state[f"chunk_studied_count_{c_num}"] = set()
+
+                studied_set = st.session_state[f"chunk_studied_count_{c_num}"]
+                is_fully_studied = len(studied_set) >= actual_chunk_len
+
+                # Danh sách các tab phụ
+                sub_modes = ["📖 Ôn tập từng câu", "🔄 Làm lại phần này", "⚠️ Ôn các câu sai"]
+                if is_fully_studied or (c_num in st.session_state["completed_chunks"]):
+                    sub_modes.insert(1, "📝 Bài kiểm tra chốt kiến thức")
+                
+                sub_mode = st.radio("Chế độ học trong phần:", sub_modes, horizontal=True, label_visibility="collapsed")
+                
+                if sub_mode == "📝 Bài kiểm tra chốt kiến thức" and not is_fully_studied and (c_num not in st.session_state["completed_chunks"]):
+                    st.warning("⚠️ Ông chưa ôn tập hết các câu trong phần này! Hãy hoàn thành phần 'Ôn tập từng câu' trước khi làm bài kiểm tra chốt.")
+                    sub_mode = "📖 Ôn tập từng câu"
+
                 st.markdown("---")
                 
                 if sub_mode == "📖 Ôn tập từng câu":
@@ -693,33 +705,34 @@ else:
                     g_idx = st.session_state[f"gop_idx_{c_num}"]
                     
                     if g_idx >= actual_chunk_len:
-                        st.success(f"🎉 Bạn đã hoàn thành phần ôn tập (Phần {c_num + 1})!")
+                        st.success(f"🎉 Ông đã ôn tập xong toàn bộ {actual_chunk_len} câu của Phần {c_num + 1}! Bây giờ có thể chuyển sang Bài kiểm tra chốt kiến thức.")
                         st.markdown("---")
                         col_btn1, col_btn2 = st.columns(2)
                         with col_btn1:
                             if st.button("🔄 Ôn lại từ đầu", type="secondary", use_container_width=True):
                                 st.session_state[f"gop_idx_{c_num}"] = 0
+                                st.session_state[f"chunk_studied_count_{c_num}"] = set()
                                 keys_to_del = [k for k in st.session_state.keys() if k.startswith(f"shuff_gop_{c_num}_") or k.startswith(f"user_ans_gop_{c_num}_")]
                                 for k in keys_to_del:
                                     del st.session_state[k]
                                 st.rerun()
                         with col_btn2:
-                            if st.button("📝 Bắt đầu bài kiểm tra chốt", type="primary", use_container_width=True):
+                            if st.button("📝 Mở khóa & Bắt đầu bài kiểm tra chốt", type="primary", use_container_width=True):
                                 st.session_state[f"auto_switch_test_{c_num}"] = True
                                 st.rerun()
                     else:
                         if st.session_state.get(f"auto_switch_test_{c_num}", False):
                             st.session_state[f"auto_switch_test_{c_num}"] = False
-                            sub_mode = "📝 Bài kiểm tra chốt kiến thức"
+                            st.rerun()
 
-                    if sub_mode == "📖 Ôn tập từng câu" and g_idx < actual_chunk_len:
+                    if g_idx < actual_chunk_len:
                         q_item = current_chunk_questions[g_idx]
                         
                         st.markdown(f"""
                             <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <span style="font-size: 1.05rem; font-weight: 700; color: #38bdf8;">📂 Phần {c_num + 1} — Chuyên đề: {q_item['sheet']}</span>
-                                    <span class="badge-topic">Câu {g_idx + 1} / {actual_chunk_len}</span>
+                                    <span class="badge-topic">Câu {g_idx + 1} / {actual_chunk_len} (Đã ôn: {len(studied_set)}/{actual_chunk_len})</span>
                                 </div>
                             </div>
                         """, unsafe_allow_html=True)
@@ -758,6 +771,9 @@ else:
                         
                         if g_choice is not None:
                             st.session_state[gop_storage_key] = g_choice
+                            # Đánh dấu câu này đã được tương tác/ôn tập
+                            st.session_state[f"chunk_studied_count_{c_num}"].add(g_idx)
+                            
                             is_correct = g_choice.strip().upper().startswith(correct_letter)
                             st.markdown("<br>", unsafe_allow_html=True)
                             if is_correct:
@@ -779,7 +795,10 @@ else:
                                 st.rerun()
                         with col_next:
                             if st.button("Câu tiếp theo ➡️", type="primary", use_container_width=True):
-                                st.session_state[f"gop_idx_{c_num}"] += 1
+                                # Tự động tính câu hiện tại đã được duyệt ôn tập
+                                st.session_state[f"chunk_studied_count_{c_num}"].add(g_idx)
+                                if st.session_state[f"gop_idx_{c_num}"] < actual_chunk_len:
+                                    st.session_state[f"gop_idx_{c_num}"] += 1
                                 st.rerun()
 
                 elif sub_mode == "📝 Bài kiểm tra chốt kiến thức":
@@ -947,6 +966,7 @@ else:
 
                 elif sub_mode == "🔄 Làm lại phần này":
                     st.session_state[f"gop_idx_{c_num}"] = 0
+                    st.session_state[f"chunk_studied_count_{c_num}"] = set()
                     keys_to_del = [k for k in st.session_state.keys() if k.startswith(f"shuff_gop_{c_num}_") or k.startswith(f"shuff_test_{c_num}_") or k.startswith(f"user_ans_gop_{c_num}_") or k.startswith(f"test_chunk_{c_num}_")]
                     for k in keys_to_del:
                         del st.session_state[k]

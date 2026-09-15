@@ -210,11 +210,17 @@ if "bookmarked_questions" not in str_app.session_state:
 if "spaced_repetition_data" not in str_app.session_state:
     str_app.session_state["spaced_repetition_data"] = saved_prog.get("spaced_repetition_data", {})
 if "completed_chunks" not in str_app.session_state:
-    str_app.session_state["completed_chunks"] = set(saved_prog.get("completed_chunks", []))
+  # Thêm trực tiếp [0, 1, 2] vào để ép nhận 3 phần đầu đã hoàn thành
+  saved_chunks = saved_prog.get("completed_chunks", [])
+  if not saved_chunks:
+    saved_chunks = [0, 1, 2]
+  str_app.session_state["completed_chunks"] = set(saved_chunks)
+
 if "passed_tests" not in str_app.session_state:
-    str_app.session_state["passed_tests"] = set(saved_prog.get("passed_tests", []))
-if "app_started" not in str_app.session_state:
-    str_app.session_state["app_started"] = False
+  saved_passed = saved_prog.get("passed_tests", [])
+  if not saved_passed:
+    saved_passed = [0, 1, 2]
+  str_app.session_state["passed_tests"] = set(saved_passed)
 
 save_current_progress()
 

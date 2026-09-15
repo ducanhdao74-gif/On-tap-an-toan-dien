@@ -321,7 +321,6 @@ str_app.markdown("""
         box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         backdrop-filter: blur(8px);
     }
-    /* Khung thẻ câu hỏi */
     .question-card {
         background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.75));
         border: 1px solid rgba(56, 189, 248, 0.25);
@@ -503,7 +502,8 @@ else:
         "🧠 Spaced Repetition (Ôn thông minh)",
         "📂 Ôn gộp tất cả (50 câu/phần)",
         "⭐ Tất cả câu hỏi cần ghi nhớ",
-        "📝 Thi thử (Mock Test)"
+        "📝 Thi thử (Mock Test)",
+        "⚙️ Quản lý kho lưu trữ & Dữ liệu"
     ], label_visibility="collapsed", key="sidebar_mode_select")
     
     str_app.sidebar.markdown("</div>", unsafe_allow_html=True)
@@ -1477,3 +1477,82 @@ else:
                         str_app.session_state["mock_started"] = False
                         scroll_to_top()
                         str_app.rerun()
+
+        elif mode == "⚙️ Quản lý kho lưu trữ & Dữ liệu":
+            str_app.title("⚙️ Trung Tâm Quản Lý Trạng Thái & Kho Lưu Trữ")
+            str_app.markdown("---")
+            
+            str_app.markdown("""
+                <div class="welcome-card" style="text-align: left; padding: 25px;">
+                    <h3>💾 Quản lý bộ nhớ ứng dụng & Tiến độ học tập</h3>
+                    <p style="color: #cbd5e1; font-size: 1.05rem; margin-top: 10px;">
+                        Hệ thống tự động lưu trữ toàn bộ tiến độ, lịch sử ôn tập, danh sách câu sai và trạng thái Spaced Repetition vào tệp cục bộ (<code>quiz_progress.json</code>).
+                        Bạn có thể tải xuống tệp dữ liệu để dự phòng hoặc tải lên để khôi phục bất cứ lúc nào.
+                    </p>
+                </div>
+            """, unsafe_allow_html=True)
+            str_app.markdown("<br>", unsafe_allow_html=True)
+            
+            col_st1, col_st2 = str_app.columns(2)
+            
+            with col_st1:
+                str_app.markdown("### 📥 Sao lưu & Xuất dữ liệu")
+                str_app.markdown("Tải tệp tiến độ hiện tại về máy tính để làm bản sao lưu an toàn.")
+                
+                # Tạo chuỗi JSON từ trạng thái hiện tại
+                current_saved_data = load_saved_progress()
+                json_str = json.dumps(current_saved_data, ensure_ascii=False, indent=4)
+                
+                str_app.download_button(
+                    label="📥 Tải xuống tệp tiến độ (.json)",
+                    data=json_str,
+                    file_name="quiz_progress_backup.json",
+                    mime="application/json",
+                    type="primary",
+                    use_container_width=True
+                )
+                
+            with col_st2:
+                str_app.markdown("### 📤 Khôi phục & Nhập dữ liệu")
+                str_app.markdown("Tải lên tệp sao lưu `.json` để khôi phục toàn bộ tiến độ học trước đó.")
+                
+                uploaded_file = str_app.file_uploader("Chọn tệp sao lưu JSON:", type=["json"], label_visibility="collapsed")
+                if uploaded_file is not None:
+                    try:
+                        imported_data = json.load(uploaded_file)
+                        with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
+                            json.dump(imported_data, f, ensure_ascii=False, indent=4)
+                        str_app.success("✅ Khôi phục dữ liệu thành công! Hãy tải lại trang để áp dụng.")
+                        if str_app.button("🔄 Tải lại ứng dụng ngay", use_container_width=True):
+                            str_app.rerun()
+                    except Exception as e:
+                        str_app.error(f"❌ Tệp JSON không hợp lệ: {str(e)}")
+            
+            str_app.markdown("---")
+            str_app.markdown("### ⚠️ Vùng Nguy Hiểm (Quản lý trạng thái nhanh)")
+            
+            col_d1, col_d2, col_d3 = str_app.columns(3)
+            
+            with col_d1:
+                if str_app.button("🧹 Xóa danh sách câu sai", use_container_width=True):
+                    str_app.session_state["wrong_questions"] = []
+                    save_current_progress()
+                    str_app.toast("Đã dọn sạch danh sách câu sai!", icon="🗑️")
+                    str_app.rerun()
+                    
+            with col_d2:
+                if str_app.button("⭐ Xóa tất cả câu đã lưu", use_container_width=True):
+                    str_app.session_state["bookmarked_questions"] = []
+                    save_current_progress()
+                    str_app.toast("Đã xóa danh sách ghi nhớ!", icon="🗑️")
+                    str_app.rerun()
+                    
+            with col_d3:
+                if str_app.button("🔄 Reset toàn bộ tiến độ", type="primary", use_container_width=True):
+                    if os.path.exists(PROGRESS_FILE):
+                        os.remove(PROGRESS_FILE)
+                    for key in list(str_app.session_state.keys()):
+                        del str_app.session_state[key]
+                    str_app.success("Đã thiết lập lại toàn bộ ứng dụng từ đầu!")
+                    time.sleep(1)
+                    str_app.rerun()

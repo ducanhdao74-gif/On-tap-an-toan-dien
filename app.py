@@ -63,7 +63,6 @@ def save_current_progress():
     except:
         return False
 
-# Hàm tối ưu hóa cuộn mượt siêu tốc (giảm delay xuống 10ms để loại bỏ hoàn toàn độ khựng)
 def scroll_to_top():
     components.html("""
         <script>
@@ -575,7 +574,8 @@ else:
                     if is_correct:
                         str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
                     else:
-                        str_app.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
+                        correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
+                        str_app.error(f"❌ Sai rồi! Đáp án đúng là **{correct_text}**.")
                 
                 str_app.markdown("<br>", unsafe_allow_html=True)
                 col_prev, col_next = str_app.columns([1, 1])
@@ -661,7 +661,8 @@ else:
                     if saved_w_choice.strip().upper().startswith(correct_letter):
                         str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}. (Đã xóa khỏi danh sách câu sai)")
                     else:
-                        str_app.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
+                        correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
+                        str_app.error(f"❌ Sai rồi! Đáp án đúng là **{correct_text}**.")
                 
                 str_app.markdown("<br>", unsafe_allow_html=True)
                 if str_app.button("Câu tiếp theo ➡️", type="primary", use_container_width=True, key=f"next_wrong_{w_idx}"):
@@ -902,7 +903,8 @@ else:
                             if is_correct:
                                 str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
                             else:
-                                str_app.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
+                                correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
+                                str_app.error(f"❌ Sai rồi! Đáp án đúng là **{correct_text}**.")
                                 
                         str_app.markdown("<br>", unsafe_allow_html=True)
                         col_prev, col_next = str_app.columns(2)
@@ -1069,7 +1071,7 @@ else:
                                         str_app.markdown(f"- ❌ ~~{opt}~~ *(Ông đã chọn)*")
                                     else:
                                         str_app.markdown(f"- {opt}")
-                                str_app.markdown("<hr style='margin: 20px 0; border-color: rgba(56, 189, 248, 0.2);'>", str_app.markdown("<br>", unsafe_allow_html=True))
+                                str_app.markdown("<hr style='margin: 20px 0; border-color: rgba(56, 189, 248, 0.2);'>", unsafe_allow_html=True)
                                 
                         if str_app.button("🔄 Làm lại bài kiểm tra này", type="primary", use_container_width=True):
                             str_app.session_state[submitted_key] = False
@@ -1174,7 +1176,8 @@ else:
                             if saved_wc_choice.strip().upper().startswith(correct_letter):
                                 str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}. (Đã xóa khỏi danh sách câu sai)")
                             else:
-                                str_app.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
+                                correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
+                                str_app.error(f"❌ Sai rồi! Đáp án đúng là **{correct_text}**.")
                         
                         str_app.markdown("<br>", unsafe_allow_html=True)
                         if str_app.button("Câu tiếp theo ➡️", type="primary", use_container_width=True, key=f"next_wc_{c_num}_{wc_idx}"):

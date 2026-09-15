@@ -31,14 +31,14 @@ def load_saved_progress():
         except:
             pass
     return {
-        "completed_chunks": [0, 1, 2],
-        "passed_tests": [0, 1, 2],
-        "bookmarked_questions": [],
-        "wrong_questions": [],
-        "spaced_repetition_data": {},
-        "total_study_seconds": 0,
-        "last_login_date": ""
-    }
+    "completed_chunks": [0, 1, 2],
+    "passed_tests": [0, 1, 2],
+    "bookmarked_questions": [],
+    "wrong_questions": [],
+    "spaced_repetition_data": {},
+    "total_study_seconds": 0,
+    "last_login_date": ""
+}
 
 def save_current_progress():
     if "start_session_time" in str_app.session_state:

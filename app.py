@@ -17,7 +17,7 @@ PROGRESS_FILE = "quiz_progress.json"
 
 # --- CẤU HÌNH GMAIL GỬI THÔNG BÁO ---
 SENDER_EMAIL = "ducanhdao74@gmail.com"
-SENDER_PASSWORD = "xhkvxznlejcephcar"
+SENDER_PASSWORD = "ospeifebafqlufpi"
 
 
 def send_daily_reminder_email(

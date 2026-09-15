@@ -678,14 +678,12 @@ else:
                 st.sidebar.markdown("---")
                 st.sidebar.metric("Tổng số câu của phần", actual_chunk_len)
                 
-                # Khởi tạo trạng thái theo dõi đã học hết phần này chưa
                 if f"chunk_studied_count_{c_num}" not in st.session_state:
                     st.session_state[f"chunk_studied_count_{c_num}"] = set()
 
                 studied_set = st.session_state[f"chunk_studied_count_{c_num}"]
                 is_fully_studied = len(studied_set) >= actual_chunk_len
 
-                # Danh sách các tab phụ
                 sub_modes = ["📖 Ôn tập từng câu", "🔄 Làm lại phần này", "⚠️ Ôn các câu sai"]
                 if is_fully_studied or (c_num in st.session_state["completed_chunks"]):
                     sub_modes.insert(1, "📝 Bài kiểm tra chốt kiến thức")
@@ -771,7 +769,6 @@ else:
                         
                         if g_choice is not None:
                             st.session_state[gop_storage_key] = g_choice
-                            # Đánh dấu câu này đã được tương tác/ôn tập
                             st.session_state[f"chunk_studied_count_{c_num}"].add(g_idx)
                             
                             is_correct = g_choice.strip().upper().startswith(correct_letter)
@@ -795,7 +792,6 @@ else:
                                 st.rerun()
                         with col_next:
                             if st.button("Câu tiếp theo ➡️", type="primary", use_container_width=True):
-                                # Tự động tính câu hiện tại đã được duyệt ôn tập
                                 st.session_state[f"chunk_studied_count_{c_num}"].add(g_idx)
                                 if st.session_state[f"gop_idx_{c_num}"] < actual_chunk_len:
                                     st.session_state[f"gop_idx_{c_num}"] += 1

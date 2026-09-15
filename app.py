@@ -251,6 +251,14 @@ st.markdown("""
         text-align: center;
         backdrop-filter: blur(10px);
     }
+    /* Tinh chỉnh sidebar box chuyên nghiệp */
+    .sidebar-card {
+        background: rgba(30, 41, 59, 0.5);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
     div[data-testid="stHorizontalBlock"] div.stRadio [role="radiogroup"] {
         display: flex !important;
         flex-direction: row !important;
@@ -339,7 +347,7 @@ if not st.session_state["app_started"]:
                 st.rerun()
 else:
     # --- GIAO DIỆN CHÍNH SAU KHI BẤM BẮT ĐẦU ---
-    st.sidebar.title("⚡ Menu Ôn Tập")
+    st.sidebar.markdown("### ⚡ Dashboard Ôn Tập")
 
     # --- THANH TIẾN ĐỘ TỔNG QUAN (GLOBAL PROGRESS BAR) ---
     completed_chunks_set = st.session_state["completed_chunks"].union(st.session_state["passed_tests"])
@@ -348,35 +356,40 @@ else:
     completed_est_count = min(len(completed_chunks_set) * chunk_size_calc, total_all_questions)
     progress_ratio = completed_est_count / total_all_questions if total_all_questions > 0 else 0.0
 
-    st.sidebar.markdown("### 📈 Tiến Độ Tổng Quan")
+    st.sidebar.markdown(f"""
+        <div class="sidebar-card">
+            <span style="font-size: 0.9rem; font-weight: 600; color: #38bdf8;">📈 TIẾN ĐỘ TỔNG QUAN</span>
+        </div>
+    """, unsafe_allow_html=True)
     st.sidebar.progress(progress_ratio)
-    st.sidebar.caption(f"Đã hoàn thành khoảng **{completed_est_count}/{total_all_questions}** câu ({progress_ratio * 100:.1f}%)")
-    st.sidebar.markdown("---")
+    st.sidebar.caption(f"Đã hoàn thành: **{completed_est_count}/{total_all_questions}** câu ({progress_ratio * 100:.1f}%)")
 
     current_total_seconds = saved_prog.get("total_study_seconds", 0) + (time.time() - st.session_state["start_session_time"])
     current_total_hours = current_total_seconds / 3600.0
 
-    st.sidebar.info(f"⏱️ Tổng thời gian ôn: **{current_total_hours:.2f} giờ** (~ {int(current_total_seconds // 60)} phút)")
+    st.sidebar.info(f"⏱️ Tổng thời gian: **{current_total_hours:.2f}h** (~{int(current_total_seconds // 60)} phút)")
 
-    if st.sidebar.button("💾 Lưu lại tiến độ hiện tại", type="primary", use_container_width=True):
+    if st.sidebar.button("💾 Lưu lại tiến độ học", type="primary", use_container_width=True):
         if save_current_progress():
-            st.sidebar.success("✅ Đã lưu tiến độ & thời gian học thành công!")
+            st.sidebar.success("✅ Đã lưu tiến độ thành công!")
         else:
             st.sidebar.error("❌ Lỗi khi lưu dữ liệu!")
 
-    if st.sidebar.button("📧 Gửi Email nhắc nhở ngay", use_container_width=True):
+    if st.sidebar.button("📧 Gửi Email nhắc nhở báo cáo", use_container_width=True):
         bm_cnt = len(st.session_state["bookmarked_questions"])
         comp_q_cnt = completed_est_count
         
         success, err_msg = send_daily_reminder_email(SENDER_EMAIL, comp_q_cnt, total_all_questions, bm_cnt, current_total_hours)
         if success:
-            st.sidebar.success("✅ Đã gửi email nhắc nhở kèm tiến độ mới vào Gmail!")
+            st.sidebar.success("✅ Đã gửi email báo cáo vào Gmail!")
         else:
             st.sidebar.error(f"❌ Gửi mail thất bại: {err_msg}")
 
     st.sidebar.markdown("---")
-    st.sidebar.markdown("**Chọn chế độ:**")
-    mode = st.sidebar.radio("", [
+    
+    # --- KHU VỰC CHỌN CHẾ ĐỘ & CHUYÊN ĐỀ GỌN GÀNG ---
+    st.sidebar.markdown("### 🎛️ Điều Hướng Học Tập")
+    mode = st.sidebar.selectbox("Chọn chế độ học:", [
         "📖 Ôn tập theo chuyên đề",
         "🔄 Ôn lại câu trả lời sai",
         "📂 Ôn gộp tất cả (50 câu/phần)",
@@ -389,9 +402,9 @@ else:
     else:
         if mode == "📖 Ôn tập theo chuyên đề":
             st.sidebar.markdown("---")
-            st.sidebar.markdown("### 📂 Chọn Chuyên Đề")
+            st.sidebar.markdown("#### 📂 Chọn Chuyên Đề")
             sheet_list = list(sheets_data.keys())
-            selected_sheet = st.sidebar.selectbox("", sheet_list, label_visibility="collapsed")
+            selected_sheet = st.sidebar.selectbox("Chuyên đề:", sheet_list, label_visibility="collapsed")
             
             q_list = sheets_data[selected_sheet]
             total_q = len(q_list)
@@ -402,10 +415,11 @@ else:
                 st.session_state[f"done_{selected_sheet}"] = 0
                 
             st.sidebar.markdown("---")
-            st.sidebar.markdown(f"**Tổng số câu**\n### {total_q}")
-            st.sidebar.markdown(f"**Đã làm**\n### {st.session_state[f'done_{selected_sheet}']}")
+            col_sb1, col_sb2 = st.sidebar.columns(2)
+            col_sb1.metric("Tổng câu", total_q)
+            col_sb2.metric("Đã làm", st.session_state[f'done_{selected_sheet}'])
             
-            if st.sidebar.button("🔄 Đặt lại tiến độ & Xáo trộn lại chuyên đề"):
+            if st.sidebar.button("🔄 Đặt lại chuyên đề này", use_container_width=True):
                 st.session_state[f"q_idx_{selected_sheet}"] = 0
                 st.session_state[f"done_{selected_sheet}"] = 0
                 keys_to_del = [k for k in st.session_state.keys() if k.startswith(f"shuff_chuande_{selected_sheet}_") or k.startswith(f"user_ans_chuande_{selected_sheet}_")]
@@ -604,16 +618,16 @@ else:
                 total_chunks = (total_all // chunk_size) + (1 if total_all % chunk_size != 0 else 0)
                 
                 st.sidebar.markdown("---")
-                st.sidebar.markdown("### 📂 Chọn Phần Ôn Tập")
+                st.sidebar.markdown("#### 📂 Chọn Phần Ôn Tập")
                 
                 chunk_names = []
                 for i in range(total_chunks):
                     is_done = (i in st.session_state["completed_chunks"] or i in st.session_state["passed_tests"])
-                    prefix = "✅ [ĐÃ HOÀN THÀNH] " if is_done else ""
-                    chunk_names.append(f"{prefix}Phần {i+1} (Hỗn hợp chuyên đề)")
+                    prefix = "✅ " if is_done else "📌 "
+                    chunk_names.append(f"{prefix}Phần {i+1}")
                     
-                selected_chunk_name = st.sidebar.selectbox("", chunk_names, label_visibility="collapsed")
-                c_num = chunk_names.index(selected_chunk_name)
+                selected_chunk_name = st.sidebar.selectbox("Chọn phần:", chunk_names, label_visibility="collapsed")
+                c_num = int(selected_chunk_name.split("Phần")[1].strip()) - 1
                 
                 start_idx = c_num * chunk_size
                 end_idx = min((c_num + 1) * chunk_size, total_all)
@@ -627,7 +641,8 @@ else:
                 current_chunk_questions = st.session_state[f"chunk_q_{c_num}"]
                 actual_chunk_len = len(current_chunk_questions)
                 
-                st.sidebar.markdown(f"**Tổng số câu của phần**\n### {actual_chunk_len}")
+                st.sidebar.markdown("---")
+                st.sidebar.metric("Tổng số câu của phần", actual_chunk_len)
                 
                 sub_mode = st.radio("", [
                     "📖 Ôn tập từng câu trong phần",
@@ -772,7 +787,7 @@ else:
                                 st.session_state["completed_chunks"].add(c_num)
                                 st.session_state["passed_tests"].add(c_num)
                                 save_current_progress()
-                                st.balloons() # Pháo hoa ăn mừng khi nộp bài xong!
+                                st.balloons()
                                 st.rerun()
                     else:
                         c_correct = st.session_state.get(f"result_correct_{c_num}", 0)
@@ -949,7 +964,7 @@ else:
                     
                 if st.button("📤 Nộp bài thi", type="primary"):
                     st.success("Đã nộp bài thành công!")
-                    st.balloons() # Pháo hoa ăn mừng khi nộp bài thi thử!
+                    st.balloons()
                     if st.button("Làm bài thi mới"):
                         st.session_state["mock_started"] = False
                         st.rerun()

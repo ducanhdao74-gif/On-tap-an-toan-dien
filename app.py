@@ -13,7 +13,7 @@ from email.mime.multipart import MIMEMultipart
 from email.header import Header
 
 str_app.set_page_config(
-    page_title="Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện",
+    page_title="⚡ Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện",
     page_icon="⚡",
     layout="wide"
 )
@@ -234,6 +234,7 @@ try:
 except Exception:
     pass
 
+# --- CYBERPUNK / DARK TECH GLASSMORPHISM CSS ---
 str_app.markdown("""
     <style>
     @keyframes shine {
@@ -251,33 +252,35 @@ str_app.markdown("""
         font-size: 2.8rem;
     }
     .welcome-card {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
-        border: 1px solid rgba(56, 189, 248, 0.3);
-        box-shadow: 0 0 25px rgba(56, 189, 248, 0.15);
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.75));
+        border: 1px solid rgba(56, 189, 248, 0.35);
+        box-shadow: 0 0 30px rgba(56, 189, 248, 0.2);
         border-radius: 20px;
         padding: 40px;
         text-align: center;
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(12px);
     }
     .metric-card-container {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
-        border: 1px solid rgba(56, 189, 248, 0.25);
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.7));
+        border: 1px solid rgba(56, 189, 248, 0.3);
         border-radius: 14px;
         padding: 14px;
         text-align: center;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         margin-bottom: 12px;
+        backdrop-filter: blur(8px);
         transition: all 0.3s ease;
     }
     .metric-card-container:hover {
-        border-color: rgba(56, 189, 248, 0.6);
-        box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+        border-color: rgba(56, 189, 248, 0.7);
+        box-shadow: 0 0 25px rgba(56, 189, 248, 0.35);
     }
     .metric-value {
-        font-size: 1.5rem;
+        font-size: 1.6rem;
         font-weight: 800;
         color: #38bdf8;
         margin-top: 2px;
+        text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
     }
     .metric-label {
         font-size: 0.8rem;
@@ -287,12 +290,16 @@ str_app.markdown("""
         letter-spacing: 0.5px;
     }
     .main-header-card {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6));
         border-left: 5px solid #38bdf8;
-        padding: 14px 18px;
-        border-radius: 0 10px 10px 0;
+        border-top: 1px solid rgba(56, 189, 248, 0.2);
+        border-right: 1px solid rgba(56, 189, 248, 0.2);
+        border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+        padding: 16px 20px;
+        border-radius: 0 12px 12px 0;
         margin-bottom: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        backdrop-filter: blur(8px);
     }
     .question-title {
         font-size: 1.25rem !important;
@@ -300,6 +307,10 @@ str_app.markdown("""
         color: #f8fafc !important;
         font-weight: 600;
         margin-bottom: 15px;
+        background: rgba(15, 23, 42, 0.5);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid rgba(56, 189, 248, 0.15);
     }
     .badge-topic {
         background-color: rgba(56, 189, 248, 0.15);
@@ -405,21 +416,21 @@ else:
         str_app.sidebar.markdown(f"""
             <div class="metric-card-container" style="padding: 10px 6px;">
                 <div class="metric-label" style="font-size: 0.7rem;">⭐ Ghi nhớ</div>
-                <div class="metric-value" style="font-size: 1.2rem; color: #eab308;">{bookmarked_count}</div>
+                <div class="metric-value" style="font-size: 1.2rem; color: #eab308; text-shadow: 0 0 10px rgba(234, 179, 8, 0.4);">{bookmarked_count}</div>
             </div>
         """, unsafe_allow_html=True)
     with col_s2:
         str_app.sidebar.markdown(f"""
             <div class="metric-card-container" style="padding: 10px 6px;">
                 <div class="metric-label" style="font-size: 0.7rem;">⚠️ Câu sai</div>
-                <div class="metric-value" style="font-size: 1.2rem; color: #f43f5e;">{wrong_count}</div>
+                <div class="metric-value" style="font-size: 1.2rem; color: #f43f5e; text-shadow: 0 0 10px rgba(244, 63, 94, 0.4);">{wrong_count}</div>
             </div>
         """, unsafe_allow_html=True)
 
     str_app.sidebar.markdown(f"""
         <div class="metric-card-container">
             <div class="metric-label">⏱️ Tổng thời gian ôn</div>
-            <div class="metric-value" style="font-size: 1.4rem; color: #818cf8;">{current_total_hours:.2f}h</div>
+            <div class="metric-value" style="font-size: 1.4rem; color: #818cf8; text-shadow: 0 0 10px rgba(129, 140, 248, 0.4);">{current_total_hours:.2f}h</div>
             <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 2px;">~{int(current_total_seconds // 60)} phút tập trung</div>
         </div>
     """, unsafe_allow_html=True)

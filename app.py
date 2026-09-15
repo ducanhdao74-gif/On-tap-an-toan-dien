@@ -30,12 +30,12 @@ def load_saved_progress():
                 return json.load(f)
         except:
             pass
-    return {
-        "completed_chunks": [],
-        "passed_tests": [],
+   return {
+        "completed_chunks": [0, 1, 2],
+        "passed_tests": [0, 1, 2],
         "bookmarked_questions": [],
         "wrong_questions": [],
-        "spaced_repetition_data": {},
+        "spaced_repetitions": {},
         "total_study_seconds": 0,
         "last_login_date": ""
     }

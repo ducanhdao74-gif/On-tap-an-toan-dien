@@ -35,7 +35,7 @@ def load_saved_progress():
         "passed_tests": [],
         "bookmarked_questions": [],
         "wrong_questions": [],
-        "spaced_repetition_data": {},  # Lưu lịch sử ôn lặp ngắt quãng: {question_text: {"box": int, "next_review": float}}
+        "spaced_repetition_data": {},
         "total_study_seconds": 0,
         "last_login_date": ""
     }
@@ -227,11 +227,10 @@ def update_spaced_repetition(q_text, is_correct):
     item = sr_data[q_text]
     if is_correct:
         item["box"] = min(5, item["box"] + 1)
-        # Hộp càng cao thời gian giãn cách càng lâu (Hộp 1: ngay, Hộp 2: 4h, Hộp 3: 1 ngày, Hộp 4: 3 ngày, Hộp 5: 7 ngày)
         intervals = [0, 0, 4*3600, 24*3600, 3*24*3600, 7*24*3600]
         item["next_review"] = now + intervals[item["box"]]
     else:
-        item["box"] = 1 # Quay về hộp xuất phát nếu trả lời sai
+        item["box"] = 1
         item["next_review"] = now
     save_current_progress()
 
@@ -255,7 +254,7 @@ try:
 except Exception:
     pass
 
-# --- CYBERPUNK / DARK TECH GLASSMORPHISM CSS ---
+# --- CYBERPUNK / DARK TECH GLASSMORPHISM CSS & QUESTION CARD ---
 str_app.markdown("""
     <style>
     @keyframes shine {
@@ -322,25 +321,23 @@ str_app.markdown("""
         box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         backdrop-filter: blur(8px);
     }
+    /* Giao diện khung thẻ câu hỏi (tích hợp từ code mẫu của bạn) */
+    .question-card {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.75));
+        border: 1px solid rgba(56, 189, 248, 0.25);
+        border-left: 6px solid #38bdf8; /* Viền xanh tạo điểm nhấn bên trái */
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        margin-bottom: 20px;
+        backdrop-filter: blur(8px);
+    }
     .question-title {
-        font-size: 1.25rem !important;
+        font-size: 1.15rem !important;
         line-height: 1.6;
         color: #f8fafc !important;
         font-weight: 600;
-        margin-bottom: 15px;
-        background: rgba(15, 23, 42, 0.5);
-        padding: 20px;
-        border-radius: 12px;
-        border: 1px solid rgba(56, 189, 248, 0.15);
-    }
-    .badge-topic {
-        background-color: rgba(56, 189, 248, 0.15);
-        color: #38bdf8;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        border: 1px solid rgba(56, 189, 248, 0.3);
+        margin: 0;
     }
     div[data-testid="stRadio"] > div[role="radiogroup"] label p,
     div[data-testid="stRadio"] > div[role="radiogroup"] label span,
@@ -565,9 +562,12 @@ else:
                     if len(parts) > 1:
                         clean_q_text = parts[1].strip()
 
+                # Áp dụng khung thẻ question-card cho nội dung câu hỏi
                 str_app.markdown(f"""
-                    <div class="question-title">
-                        <b>Câu {idx + 1}:</b> {clean_q_text}
+                    <div class="question-card">
+                        <div class="question-title">
+                            <b>Câu {idx + 1}:</b> {clean_q_text}
+                        </div>
                     </div>
                 """, unsafe_allow_html=True)
                 
@@ -585,7 +585,7 @@ else:
                     default_idx = options.index(current_saved_ans)
                     
                 if not is_already_answered:
-                    selected_opt = str_app.radio("Chọn đáp án của bạn:", options, index=default_idx, key=f"radio_chuande_{selected_sheet}_{idx}")
+                    selected_opt = str_app.radio("Lựa chọn đáp án:", options, index=default_idx, key=f"radio_chuande_{selected_sheet}_{idx}", label_visibility="collapsed")
                     
                     if selected_opt is not None:
                         str_app.session_state[ans_storage_key] = selected_opt
@@ -659,8 +659,10 @@ else:
                 """, unsafe_allow_html=True)
                 
                 str_app.markdown(f"""
-                    <div class="question-title">
-                        <b>Câu {w_idx + 1}:</b> {w_item['question']}
+                    <div class="question-card">
+                        <div class="question-title">
+                            <b>Câu {w_idx + 1}:</b> {w_item['question']}
+                        </div>
                     </div>
                 """, unsafe_allow_html=True)
                 
@@ -677,7 +679,7 @@ else:
                     w_default_idx = options.index(str_app.session_state.get(w_storage_key))
                     
                 if not is_w_answered:
-                    w_choice = str_app.radio("Chọn đáp án của bạn:", options, index=w_default_idx, key=f"radio_wrong_{w_idx}")
+                    w_choice = str_app.radio("Lựa chọn đáp án:", options, index=w_default_idx, key=f"radio_wrong_{w_idx}", label_visibility="collapsed")
                     if w_choice is not None:
                         str_app.session_state[w_storage_key] = w_choice
                         str_app.session_state[w_answered_key] = True
@@ -713,7 +715,6 @@ else:
             str_app.title("🧠 Chế Độ Ôn Thông Minh (Spaced Repetition)")
             str_app.markdown("---")
             
-            # Gom tất cả câu hỏi
             all_questions = []
             for sh, ql in sheets_data.items():
                 all_questions.extend(ql)
@@ -721,7 +722,6 @@ else:
             sr_dict = str_app.session_state["spaced_repetition_data"]
             current_time = time.time()
             
-            # Lọc các câu cần đến hạn ôn tập (next_review <= current_time) hoặc câu chưa bao giờ học
             due_questions = []
             for q in all_questions:
                 q_txt = q["question"]
@@ -756,8 +756,10 @@ else:
                 """, unsafe_allow_html=True)
                 
                 str_app.markdown(f"""
-                    <div class="question-title">
-                        <b>Câu hỏi:</b> {sr_item['question']}
+                    <div class="question-card">
+                        <div class="question-title">
+                            <b>Câu hỏi:</b> {sr_item['question']}
+                        </div>
                     </div>
                 """, unsafe_allow_html=True)
                 
@@ -774,7 +776,7 @@ else:
                     sr_default_idx = options.index(str_app.session_state.get(sr_storage_key))
                     
                 if not is_sr_answered:
-                    sr_choice = str_app.radio("Chọn đáp án của bạn:", options, index=sr_default_idx, key=f"radio_sr_{sr_idx}")
+                    sr_choice = str_app.radio("Lựa chọn đáp án:", options, index=sr_default_idx, key=f"radio_sr_{sr_idx}", label_visibility="collapsed")
                     if sr_choice is not None:
                         str_app.session_state[sr_storage_key] = sr_choice
                         str_app.session_state[sr_answered_key] = True
@@ -842,8 +844,10 @@ else:
                         str_app.rerun()
 
                 str_app.markdown(f"""
-                    <div class="question-title">
-                        <b>Câu hỏi:</b> {bm_item['question']}
+                    <div class="question-card">
+                        <div class="question-title">
+                            <b>Câu hỏi:</b> {bm_item['question']}
+                        </div>
                     </div>
                 """, unsafe_allow_html=True)
                 
@@ -995,8 +999,10 @@ else:
                                 str_app.rerun()
                                 
                         str_app.markdown(f"""
-                            <div class="question-title">
-                                <b>Câu {g_idx + 1}:</b> {q_item['question']}
+                            <div class="question-card">
+                                <div class="question-title">
+                                    <b>Câu {g_idx + 1}:</b> {q_item['question']}
+                                </div>
                             </div>
                         """, unsafe_allow_html=True)
                         
@@ -1013,7 +1019,7 @@ else:
                             gop_default_idx = options.index(str_app.session_state.get(gop_storage_key))
                             
                         if not is_gop_answered:
-                            g_choice = str_app.radio("Chọn đáp án của bạn:", options, index=gop_default_idx, key=f"radio_gop_{c_num}_{g_idx}")
+                            g_choice = str_app.radio("Lựa chọn đáp án:", options, index=gop_default_idx, key=f"radio_gop_{c_num}_{g_idx}", label_visibility="collapsed")
                             
                             if g_choice is not None:
                                 str_app.session_state[gop_storage_key] = g_choice
@@ -1115,12 +1121,14 @@ else:
                         user_answers = {}
                         for i, q in enumerate(current_chunk_questions):
                             str_app.markdown(f"""
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                                     <span class="badge-topic">{q['sheet']}</span>
                                     <span style="color: #94a3b8; font-weight: 600;">Câu {i+1}</span>
                                 </div>
-                                <div class="question-title" style="font-size: 1.1rem !important;">
-                                    {q['question']}
+                                <div class="question-card">
+                                    <div class="question-title">
+                                        {q['question']}
+                                    </div>
                                 </div>
                             """, unsafe_allow_html=True)
                             
@@ -1128,7 +1136,7 @@ else:
                             options = shuff_data["options"]
                             
                             test_ans_key = f"test_chunk_{c_num}_{i}"
-                            ans = str_app.radio("Chọn đáp án:", options, index=(options.index(str_app.session_state[test_ans_key]) if str_app.session_state.get(test_ans_key) in options else None), key=test_ans_key, label_visibility="collapsed")
+                            ans = str_app.radio("Lựa chọn đáp án:", options, index=(options.index(str_app.session_state[test_ans_key]) if str_app.session_state.get(test_ans_key) in options else None), key=test_ans_key, label_visibility="collapsed")
                             user_answers[i] = ans
                             str_app.markdown("<hr style='margin: 30px 0; border-color: rgba(56, 189, 248, 0.2);'>", unsafe_allow_html=True)
                             
@@ -1193,7 +1201,11 @@ else:
                         else:
                             for q_idx, q_item, user_sel, shuff_info in wrong_items_in_test:
                                 str_app.markdown(f"**Câu {q_idx + 1}** *(Thuộc chuyên đề: {q_item['sheet']})*")
-                                str_app.markdown(f"> **{q_item['question']}**")
+                                str_app.markdown(f"""
+                                    <div class="question-card">
+                                        <div class="question-title">{q_item['question']}</div>
+                                    </div>
+                                """, unsafe_allow_html=True)
                                 correct_letter = shuff_info["correct"]
                                 for opt in shuff_info["options"]:
                                     opt_letter = opt.strip().upper()[:1]
@@ -1273,8 +1285,10 @@ else:
                         """, unsafe_allow_html=True)
                         
                         str_app.markdown(f"""
-                            <div class="question-title">
-                                <b>Câu hỏi:</b> {wc_item['question']}
+                            <div class="question-card">
+                                <div class="question-title">
+                                    <b>Câu hỏi:</b> {wc_item['question']}
+                                </div>
                             </div>
                         """, unsafe_allow_html=True)
                         
@@ -1291,7 +1305,7 @@ else:
                             wc_default_idx = options.index(str_app.session_state.get(wc_storage_key))
                             
                         if not is_wc_answered:
-                            wc_choice = str_app.radio("Chọn đáp án của bạn:", options, index=wc_default_idx, key=f"radio_wc_{c_num}_{wc_idx}")
+                            wc_choice = str_app.radio("Lựa chọn đáp án:", options, index=wc_default_idx, key=f"radio_wc_{c_num}_{wc_idx}", label_visibility="collapsed")
                             if wc_choice is not None:
                                 str_app.session_state[wc_storage_key] = wc_choice
                                 str_app.session_state[wc_answered_key] = True
@@ -1409,12 +1423,14 @@ else:
                 
                 for i, q in enumerate(mock_qs):
                     str_app.markdown(f"""
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                             <span class="badge-topic">{q['sheet']}</span>
                             <span style="color: #94a3b8; font-weight: 600;">Câu {i+1} / {len(mock_qs)}</span>
                         </div>
-                        <div class="question-title" style="font-size: 1.1rem !important;">
-                            {q['question']}
+                        <div class="question-card">
+                            <div class="question-title">
+                                {q['question']}
+                            </div>
                         </div>
                     """, unsafe_allow_html=True)
                     
@@ -1422,7 +1438,7 @@ else:
                     options = shuff_data["options"]
                     
                     mock_ans_key = f"mock_q_{i}"
-                    ans = str_app.radio("Chọn đáp án:", options, index=(options.index(str_app.session_state[mock_ans_key]) if str_app.session_state.get(mock_ans_key) in options else None), key=mock_ans_key, label_visibility="collapsed")
+                    ans = str_app.radio("Lựa chọn đáp án:", options, index=(options.index(str_app.session_state[mock_ans_key]) if str_app.session_state.get(mock_ans_key) in options else None), key=mock_ans_key, label_visibility="collapsed")
                     str_app.session_state["mock_answers"][i] = ans
                     str_app.markdown("<hr style='margin: 30px 0; border-color: rgba(56, 189, 248, 0.2);'>", unsafe_allow_html=True)
                     

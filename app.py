@@ -1608,8 +1608,7 @@ if str_app.session_state.get("started", False):
 
       time.sleep(1)
       str_app.rerun()
-        # Đưa nút hoàn thành lên thanh sidebar (thanh task bên trái)
-# Đưa nút hoàn thành lên thanh sidebar (thanh task bên trái)
+       # Đưa nút hoàn thành lên thanh sidebar (thanh task bên trái)
 if str_app.sidebar.button(
     "🏠 Hoàn thành & Về Welcome",
     type="primary",
@@ -1626,16 +1625,17 @@ if str_app.sidebar.button(
     )
 
     try:
-      # 2. Truyền đủ 5 tham số bắt buộc cho hàm gửi email thực tế của ông
-      # (Ông thay đổi các giá trị bên trong cho khớp với biến lưu trong app nếu cần)
+      # 2. Sử dụng str_app.session_state thay vì st.session_state để đồng bộ với app của ông
       send_daily_reminder_email(
           receiver_email="ducanh.work2026@gmail.com",
-          completed_questions_count=st.session_state.get(
+          completed_questions_count=str_app.session_state.get(
               "completed_count", 0
           ),
-          total_questions_count=st.session_state.get("total_questions", 1000),
-          bookmarked_count=st.session_state.get("bookmarked_count", 0),
-          total_study_hours=st.session_state.get("study_hours", 1.0),
+          total_questions_count=str_app.session_state.get(
+              "total_questions", 1000
+          ),
+          bookmarked_count=str_app.session_state.get("bookmarked_count", 0),
+          total_study_hours=str_app.session_state.get("study_hours", 1.0),
       )
       str_app.sidebar.success("Đã gửi báo cáo tự động về Gmail thành công!")
     except Exception as e:

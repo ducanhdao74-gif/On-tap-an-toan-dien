@@ -14,11 +14,6 @@ st.set_page_config(
     layout="wide"
 )
 
-import json
-from google.oauth2.service_account import Credentials
-import gspread
-import streamlit as st
-
 # --- KẾT NỐI GOOGLE SHEETS ---
 @st.cache_resource
 def init_connection():
@@ -31,6 +26,10 @@ def init_connection():
     json_str = st.secrets["gcp_service_account"]["json_key"]
     creds_dict = json.loads(json_str)
     
+    # Sửa lỗi format private_key bị mất ký tự xuống dòng chuẩn
+    if "private_key" in creds_dict:
+        creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+        
     creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
     client = gspread.authorize(creds)
     return client
@@ -153,7 +152,7 @@ def update_spaced_repetition(question_text, is_correct):
     st.session_state["spaced_repetition_data"] = sr_data
     save_current_progress()
 
-# --- TẢI DỮ LIỆU EXCEL (HỖ TRỢ KHO HƠN 1000 CÂU HỎI) ---
+# --- TẢI DỮ LIỆU EXCEL ---
 st.sidebar.title("⚡ Menu Điều Hướng")
 uploaded_file = st.sidebar.file_uploader("📂 Tải lên tệp Excel câu hỏi (.xlsx)", type=["xlsx"])
 
@@ -165,7 +164,6 @@ if uploaded_file is not None:
             df = excel_file.parse(sheet_name)
             q_list = []
             for _, row in df.iterrows():
-                # Giả định cấu trúc cột: Câu hỏi, Đáp án A, B, C, D, Đáp án đúng
                 q_text = str(row.iloc[0])
                 opts = [str(row.iloc[1]), str(row.iloc[2]), str(row.iloc[3]), str(row.iloc[4])]
                 corr = str(row.iloc[5]).strip().upper()
@@ -180,7 +178,6 @@ if uploaded_file is not None:
     except Exception as e:
         st.sidebar.error(f"Lỗi đọc file Excel: {e}")
 
-# Dữ liệu dự phòng nếu chưa tải file
 if not sheets_data:
     sheets_data = {
         "Chương Mẫu": [

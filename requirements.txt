@@ -1,5 +1,5 @@
 streamlit
 gspread
-google-auth
+APScheduler==3.10.4
 pandas
 openpyxl

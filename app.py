@@ -36,8 +36,9 @@ def save_current_progress():
   try:
     with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
       json.dump(data, f, ensure_ascii=False, indent=4)
+    return True
   except:
-    pass
+    return False
 
 
 st.markdown(
@@ -220,61 +221,22 @@ if "completed_chunks" not in st.session_state:
 if "passed_tests" not in st.session_state:
   st.session_state["passed_tests"] = set(saved_prog.get("passed_tests", []))
 
+# Tự động lưu ngầm mỗi khi thao tác
 save_current_progress()
 
 st.sidebar.title("⚡ Menu Ôn Tập")
 
-# --- PHẦN SAO LƯU & PHỤC HỒI DỮ LIỆU ĐÁNH DẤU ---
-with st.sidebar.expander("💾 Quản lý & Sao lưu Dữ liệu", expanded=False):
-  st.markdown(
-      "Đề phòng trường hợp server reset mất dữ liệu đánh dấu, ông có thể tải"
-      " file backup về máy."
-  )
-
-  # Nút tải file backup JSON
-  progress_json_str = json.dumps(
-      {
-          "completed_chunks": list(st.session_state.get("completed_chunks", [])),
-          "passed_tests": list(st.session_state.get("passed_tests", [])),
-          "bookmarked_questions": st.session_state.get(
-              "bookmarked_questions", []
-          ),
-          "wrong_questions": st.session_state.get("wrong_questions", []),
-      },
-      ensure_ascii=False,
-      indent=4,
-  )
-  st.download_button(
-      label="📥 Tải file Backup (.json)",
-      data=progress_json_str,
-      file_name="quiz_backup_progress.json",
-      mime="application/json",
-  )
-
-  # Nút tải file backup lên để phục hồi
-  uploaded_backup = st.file_uploader(
-      "📤 Phục hồi từ file backup", type=["json"]
-  )
-  if uploaded_backup is not None:
-    try:
-      backup_data = json.load(uploaded_backup)
-      st.session_state["completed_chunks"] = set(
-          backup_data.get("completed_chunks", [])
-      )
-      st.session_state["passed_tests"] = set(
-          backup_data.get("passed_tests", [])
-      )
-      st.session_state["bookmarked_questions"] = backup_data.get(
-          "bookmarked_questions", []
-      )
-      st.session_state["wrong_questions"] = backup_data.get(
-          "wrong_questions", []
-      )
-      save_current_progress()
-      st.success("✅ Phục hồi dữ liệu thành công!")
-      st.rerun()
-    except Exception as e:
-      st.error(f"Lỗi đọc file backup: {e}")
+# --- NÚT LƯU TIẾN ĐỘ TRỰC TIẾP ---
+if st.sidebar.button(
+    "💾 Lưu lại tiến độ hiện tại", type="primary", use_container_width=True
+):
+  if save_current_progress():
+    st.sidebar.success(
+        "✅ Đã lưu toàn bộ câu đánh dấu & tiến độ thành công! Thoát ra thoải mái"
+        " không lo mất."
+    )
+  else:
+    st.sidebar.error("❌ Lỗi khi lưu dữ liệu!")
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Chọn chế độ:**")
@@ -370,7 +332,11 @@ else:
           st.toast("Đã bỏ đánh dấu câu hỏi!", icon="ℹ️")
         else:
           st.session_state["bookmarked_questions"].append(q_item)
-          st.toast("Đã thêm vào danh sách cần ghi nhớ!", icon="⭐")
+          st.toast(
+              "Đã thêm vào danh sách cần ghi nhớ! Hãy bấm nút 'Lưu lại tiến độ"
+              " hiện tại' ở menu bên trái để ghi nhớ.",
+              icon="⭐",
+          )
         save_current_progress()
         st.rerun()
 
@@ -698,7 +664,11 @@ else:
               st.toast("Đã bỏ đánh dấu câu hỏi!", icon="ℹ️")
             else:
               st.session_state["bookmarked_questions"].append(q_item)
-              st.toast("Đã thêm vào danh sách cần ghi nhớ!", icon="⭐")
+              st.toast(
+                  "Đã thêm vào danh sách cần ghi nhớ! Hãy bấm nút 'Lưu lại tiến độ"
+                  " hiện tại' ở menu bên trái.",
+                  icon="⭐",
+              )
             save_current_progress()
             st.rerun()
 

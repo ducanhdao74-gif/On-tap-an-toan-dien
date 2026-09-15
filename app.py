@@ -8,6 +8,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import pandas as pd
 import streamlit as st
+from apscheduler.schedulers.background import BackgroundScheduler
 
 st.set_page_config(
     page_title="Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện", page_icon="⚡", layout="wide"
@@ -84,6 +85,35 @@ def save_current_progress():
     return True
   except:
     return False
+
+
+# --- HỆ THỐNG LÊN LỊCH TỰ ĐỘNG GỬI MỖI 7H SÁNG ---
+def scheduled_job():
+  saved_data = load_saved_progress()
+  bm_cnt = len(saved_data.get("bookmarked_questions", []))
+  wr_cnt = len(saved_data.get("wrong_questions", []))
+  comp_cnt = len(
+      set(saved_data.get("completed_chunks", [])).union(
+          set(saved_data.get("passed_tests", []))
+      )
+  )
+  send_daily_reminder_email(SENDER_EMAIL, bm_cnt, wr_cnt, comp_cnt)
+
+
+@st.cache_resource
+def start_scheduler():
+  scheduler = BackgroundScheduler()
+  # Đặt lịch chạy đúng 7:00 sáng mỗi ngày
+  scheduler.add_job(scheduled_job, "cron", hour=7, minute=0)
+  scheduler.start()
+  return scheduler
+
+
+# Khởi động ngầm bộ đếm giờ
+try:
+  start_scheduler()
+except Exception:
+  pass
 
 
 st.markdown(
@@ -265,22 +295,6 @@ if "completed_chunks" not in st.session_state:
   )
 if "passed_tests" not in st.session_state:
   st.session_state["passed_tests"] = set(saved_prog.get("passed_tests", []))
-
-# Tự động kiểm tra sang ngày mới để gửi mail
-today_str = datetime.date.today().strftime("%Y-%m-%d")
-last_login = saved_prog.get("last_login_date", "")
-
-if last_login != today_str:
-  st.session_state["last_login_date"] = today_str
-  save_current_progress()
-  bm_cnt = len(st.session_state["bookmarked_questions"])
-  wr_cnt = len(st.session_state["wrong_questions"])
-  comp_cnt = len(
-      st.session_state["completed_chunks"].union(
-          st.session_state["passed_tests"]
-      )
-  )
-  send_daily_reminder_email(SENDER_EMAIL, bm_cnt, wr_cnt, comp_cnt)
 
 save_current_progress()
 
@@ -1079,7 +1093,7 @@ else:
                     </div>
                 """,
             unsafe_allow_html=True,
-        )
+          )
         shuff_data = get_shuffled_options(q, f"shuff_mock_{i}")
         options = shuff_data["options"]
 

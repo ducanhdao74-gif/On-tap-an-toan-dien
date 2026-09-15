@@ -228,6 +228,29 @@ except Exception:
 
 st.markdown("""
     <style>
+    @keyframes shine {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    .sparkle-title {
+        background: linear-gradient(270deg, #38bdf8, #818cf8, #c084fc, #38bdf8);
+        background-size: 300% 300%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: shine 6s ease infinite;
+        font-weight: 800;
+        font-size: 2.8rem;
+    }
+    .welcome-card {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        box-shadow: 0 0 25px rgba(56, 189, 248, 0.15);
+        border-radius: 20px;
+        padding: 40px;
+        text-align: center;
+        backdrop-filter: blur(10px);
+    }
     div[data-testid="stHorizontalBlock"] div.stRadio [role="radiogroup"] {
         display: flex !important;
         flex-direction: row !important;
@@ -256,10 +279,6 @@ st.markdown("""
         font-size: 19px !important;
         line-height: 1.5 !important;
         color: #f1f5f9 !important;
-    }
-    .welcome-container {
-        text-align: center;
-        padding: 40px 20px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -299,25 +318,24 @@ def get_shuffled_options(q_item, session_key):
         
     return st.session_state[session_key]
 
-# --- MÀN HÌNH CHÀO MỪNG NẾU CHƯA BẤM BẮT ĐẦU ---
+# --- MÀN HÌNH CHÀO MỪNG LẤP LÁNH NẾU CHƯA BẤM BẮT ĐẦU ---
 if not st.session_state["app_started"]:
     st.markdown("<br><br>", unsafe_allow_html=True)
-    col_w1, col_w2, col_w3 = st.columns([1, 2, 1])
+    col_w1, col_w2, col_w3 = st.columns([1, 2.2, 1])
     with col_w2:
         st.markdown("""
-            <div style="text-align: center; padding: 30px; border-radius: 12px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1);">
-                <h1 style="color: #38bdf8; font-size: 2.5rem;">⚡ Chào Đức Anh!</h1>
-                <p style="font-size: 1.2rem; color: #cbd5e1; margin-top: 10px;">Hệ thống ôn tập Ngân hàng câu hỏi An Toàn Điện đã sẵn sàng.</p>
-                <p style="font-size: 1rem; color: #94a3b8;">Chúc ông ôn tập thật tốt, nắm chắc kiến thức và đạt kết quả cao nhất!</p>
+            <div class="welcome-card">
+                <h1 class="sparkle-title">⚡ Chào Đức Anh!</h1>
+                <p style="font-size: 1.25rem; color: #e2e8f0; margin-top: 15px; font-weight: 500;">Hệ thống Ngân hàng câu hỏi An Toàn Điện đã sẵn sàng.</p>
+                <p style="font-size: 1.05rem; color: #94a3b8; margin-top: 8px;">Chúc ông ôn tập thật tập trung, nắm trọn kiến thức và đạt kết quả cao nhất! 🚀</p>
             </div>
         """, unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
         
-        col_btn_center1, col_btn_center2, col_btn_center3 = st.columns([1, 2, 1])
+        col_btn_center1, col_btn_center2, col_btn_center3 = st.columns([1, 1.5, 1])
         with col_btn_center2:
-            if st.button("🚀 Bắt đầu vào ôn tập ngay", type="primary", use_container_width=True):
+            if st.button("✨ Bắt đầu vào ôn tập ngay", type="primary", use_container_width=True):
                 st.session_state["app_started"] = True
-                st.reruns = True
                 st.rerun()
 else:
     # --- GIAO DIỆN CHÍNH SAU KHI BẤM BẮT ĐẦU ---

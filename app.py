@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as str_app
 import streamlit.components.v1 as components
 import pandas as pd
 import openpyxl
@@ -12,7 +12,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import Header
 
-st.set_page_config(
+str_app.set_page_config(
     page_title="Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện",
     page_icon="⚡",
     layout="wide"
@@ -40,21 +40,21 @@ def load_saved_progress():
     }
 
 def save_current_progress():
-    if "start_session_time" in st.session_state:
-        elapsed = time.time() - st.session_state["start_session_time"]
-        st.session_state["start_session_time"] = time.time()
+    if "start_session_time" in str_app.session_state:
+        elapsed = time.time() - str_app.session_state["start_session_time"]
+        str_app.session_state["start_session_time"] = time.time()
         saved_data = load_saved_progress()
         saved_data["total_study_seconds"] = saved_data.get("total_study_seconds", 0) + elapsed
     else:
         saved_data = load_saved_progress()
 
     data = {
-        "completed_chunks": list(st.session_state.get("completed_chunks", [])),
-        "passed_tests": list(st.session_state.get("passed_tests", [])),
-        "bookmarked_questions": st.session_state.get("bookmarked_questions", []),
-        "wrong_questions": st.session_state.get("wrong_questions", []),
+        "completed_chunks": list(str_app.session_state.get("completed_chunks", [])),
+        "passed_tests": list(str_app.session_state.get("passed_tests", [])),
+        "bookmarked_questions": str_app.session_state.get("bookmarked_questions", []),
+        "wrong_questions": str_app.session_state.get("wrong_questions", []),
         "total_study_seconds": saved_data.get("total_study_seconds", 0),
-        "last_login_date": st.session_state.get("last_login_date", "")
+        "last_login_date": str_app.session_state.get("last_login_date", "")
     }
     try:
         with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
@@ -63,16 +63,16 @@ def save_current_progress():
     except:
         return False
 
-# Hàm hỗ trợ tự động cuộn mượt lên đầu trang khi thao tác
+# Hàm tối ưu hóa cuộn mượt siêu tốc (giảm delay xuống 10ms để loại bỏ hoàn toàn độ khựng)
 def scroll_to_top():
     components.html("""
         <script>
             const doc = window.parent.document;
             setTimeout(() => {
                 const main = doc.querySelector('.main') || doc.documentElement;
-                main.scrollTo({top: 0, behavior: 'smooth'});
-                window.parent.scrollTo({top: 0, behavior: 'smooth'});
-            }, 50);
+                main.scrollTo({top: 0, behavior: 'auto'});
+                window.parent.scrollTo({top: 0, behavior: 'auto'});
+            }, 10);
         </script>
     """, height=0)
 
@@ -111,7 +111,7 @@ Chúc ông ôn thi thật tốt và đạt kết quả cao!
     except Exception as e:
         return False, str(e)
 
-@st.cache_data
+@str_app.cache_data
 def load_data():
     file_name = "PL1. Tong hop ngan hang cau hoi an toàn nam 2025 fn (1).xlsx"
     if not os.path.exists(file_name):
@@ -191,8 +191,8 @@ def load_data():
     except Exception as e:
         return None, f"Lỗi đọc file: {str(e)}"
 
-if "start_session_time" not in st.session_state:
-    st.session_state["start_session_time"] = time.time()
+if "start_session_time" not in str_app.session_state:
+    str_app.session_state["start_session_time"] = time.time()
 
 sheets_data, error_message = load_data()
 saved_prog = load_saved_progress()
@@ -202,16 +202,16 @@ if sheets_data:
     for sh, ql in sheets_data.items():
         total_all_questions += len(ql)
 
-if "wrong_questions" not in st.session_state:
-    st.session_state["wrong_questions"] = saved_prog.get("wrong_questions", [])
-if "bookmarked_questions" not in st.session_state:
-    st.session_state["bookmarked_questions"] = saved_prog.get("bookmarked_questions", [])
-if "completed_chunks" not in st.session_state:
-    st.session_state["completed_chunks"] = set(saved_prog.get("completed_chunks", []))
-if "passed_tests" not in st.session_state:
-    st.session_state["passed_tests"] = set(saved_prog.get("passed_tests", []))
-if "app_started" not in st.session_state:
-    st.session_state["app_started"] = False
+if "wrong_questions" not in str_app.session_state:
+    str_app.session_state["wrong_questions"] = saved_prog.get("wrong_questions", [])
+if "bookmarked_questions" not in str_app.session_state:
+    str_app.session_state["bookmarked_questions"] = saved_prog.get("bookmarked_questions", [])
+if "completed_chunks" not in str_app.session_state:
+    str_app.session_state["completed_chunks"] = set(saved_prog.get("completed_chunks", []))
+if "passed_tests" not in str_app.session_state:
+    str_app.session_state["passed_tests"] = set(saved_prog.get("passed_tests", []))
+if "app_started" not in str_app.session_state:
+    str_app.session_state["app_started"] = False
 
 save_current_progress()
 
@@ -223,7 +223,7 @@ def scheduled_job():
     total_hours = saved_data.get("total_study_seconds", 0) / 3600.0
     send_daily_reminder_email(SENDER_EMAIL, comp_q_cnt, total_all_questions, bm_cnt, total_hours)
 
-@st.cache_resource
+@str_app.cache_resource
 def start_scheduler():
     scheduler = BackgroundScheduler()
     scheduler.add_job(scheduled_job, 'cron', hour=7, minute=0)
@@ -235,7 +235,7 @@ try:
 except Exception:
     pass
 
-st.markdown("""
+str_app.markdown("""
     <style>
     @keyframes shine {
         0% { background-position: 0% 50%; }
@@ -322,7 +322,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def get_shuffled_options(q_item, session_key):
-    if session_key not in st.session_state:
+    if session_key not in str_app.session_state:
         orig_options = q_item["options"]
         if not orig_options:
             orig_options = ["A. Đang cập nhật", "B. ---", "C. ---", "D. ---"]
@@ -349,75 +349,75 @@ def get_shuffled_options(q_item, session_key):
             if item["is_correct"]:
                 new_correct_letter = lbl
                 
-        st.session_state[session_key] = {
+        str_app.session_state[session_key] = {
             "options": shuffled_options,
             "correct": new_correct_letter
         }
         
-    return st.session_state[session_key]
+    return str_app.session_state[session_key]
 
-if not st.session_state["app_started"]:
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    col_w1, col_w2, col_w3 = st.columns([1, 2.2, 1])
+if not str_app.session_state["app_started"]:
+    str_app.markdown("<br><br>", unsafe_allow_html=True)
+    col_w1, col_w2, col_w3 = str_app.columns([1, 2.2, 1])
     with col_w2:
-        st.markdown("""
+        str_app.markdown("""
             <div class="welcome-card">
                 <h1 class="sparkle-title">⚡ Chào Đức Anh!</h1>
                 <p style="font-size: 1.25rem; color: #e2e8f0; margin-top: 15px; font-weight: 500;">Hệ thống Ngân hàng câu hỏi An Toàn Điện đã sẵn sàng.</p>
                 <p style="font-size: 1.05rem; color: #94a3b8; margin-top: 8px;">Chúc ông ôn tập thật tập trung, nắm trọn kiến thức và đạt kết quả cao nhất! 🚀</p>
             </div>
         """, unsafe_allow_html=True)
-        st.markdown("<br>", unsafe_allow_html=True)
+        str_app.markdown("<br>", unsafe_allow_html=True)
         
-        col_btn_center1, col_btn_center2, col_btn_center3 = st.columns([1, 1.5, 1])
+        col_btn_center1, col_btn_center2, col_btn_center3 = str_app.columns([1, 1.5, 1])
         with col_btn_center2:
-            if st.button("✨ Bắt đầu vào ôn tập ngay", type="primary", use_container_width=True):
-                st.session_state["app_started"] = True
+            if str_app.button("✨ Bắt đầu vào ôn tập ngay", type="primary", use_container_width=True):
+                str_app.session_state["app_started"] = True
                 scroll_to_top()
-                st.rerun()
+                str_app.rerun()
 else:
-    st.sidebar.markdown("""
+    str_app.sidebar.markdown("""
         <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
             ⚡ Dashboard Tổng Quan
         </div>
     """, unsafe_allow_html=True)
 
-    completed_chunks_set = st.session_state["completed_chunks"].union(st.session_state["passed_tests"])
+    completed_chunks_set = str_app.session_state["completed_chunks"].union(str_app.session_state["passed_tests"])
     chunk_size_calc = 50
     completed_est_count = min(len(completed_chunks_set) * chunk_size_calc, total_all_questions)
     progress_ratio = completed_est_count / total_all_questions if total_all_questions > 0 else 0.0
 
-    current_total_seconds = saved_prog.get("total_study_seconds", 0) + (time.time() - st.session_state["start_session_time"])
+    current_total_seconds = saved_prog.get("total_study_seconds", 0) + (time.time() - str_app.session_state["start_session_time"])
     current_total_hours = current_total_seconds / 3600.0
-    bookmarked_count = len(st.session_state.get("bookmarked_questions", []))
-    wrong_count = len(st.session_state.get("wrong_questions", []))
+    bookmarked_count = len(str_app.session_state.get("bookmarked_questions", []))
+    wrong_count = len(str_app.session_state.get("wrong_questions", []))
 
-    st.sidebar.markdown(f"""
+    str_app.sidebar.markdown(f"""
         <div class="metric-card-container">
             <div class="metric-label">📈 Tiến độ hoàn thành</div>
             <div class="metric-value">{progress_ratio * 100:.1f}%</div>
             <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">{completed_est_count}/{total_all_questions} câu</div>
         </div>
     """, unsafe_allow_html=True)
-    st.sidebar.progress(progress_ratio)
+    str_app.sidebar.progress(progress_ratio)
 
-    col_s1, col_s2 = st.sidebar.columns(2)
+    col_s1, col_s2 = str_app.sidebar.columns(2)
     with col_s1:
-        st.sidebar.markdown(f"""
+        str_app.sidebar.markdown(f"""
             <div class="metric-card-container" style="padding: 10px 6px;">
                 <div class="metric-label" style="font-size: 0.7rem;">⭐ Ghi nhớ</div>
                 <div class="metric-value" style="font-size: 1.2rem; color: #eab308;">{bookmarked_count}</div>
             </div>
         """, unsafe_allow_html=True)
     with col_s2:
-        st.sidebar.markdown(f"""
+        str_app.sidebar.markdown(f"""
             <div class="metric-card-container" style="padding: 10px 6px;">
                 <div class="metric-label" style="font-size: 0.7rem;">⚠️ Câu sai</div>
                 <div class="metric-value" style="font-size: 1.2rem; color: #f43f5e;">{wrong_count}</div>
             </div>
         """, unsafe_allow_html=True)
 
-    st.sidebar.markdown(f"""
+    str_app.sidebar.markdown(f"""
         <div class="metric-card-container">
             <div class="metric-label">⏱️ Tổng thời gian ôn</div>
             <div class="metric-value" style="font-size: 1.4rem; color: #818cf8;">{current_total_hours:.2f}h</div>
@@ -425,30 +425,29 @@ else:
         </div>
     """, unsafe_allow_html=True)
 
-    st.sidebar.markdown("<br>", unsafe_allow_html=True)
+    str_app.sidebar.markdown("<br>", unsafe_allow_html=True)
 
-    if st.sidebar.button("💾 Lưu lại tiến độ học", type="primary", use_container_width=True):
+    if str_app.sidebar.button("💾 Lưu lại tiến độ học", type="primary", use_container_width=True):
         if save_current_progress():
-            st.sidebar.success("✅ Đã lưu tiến độ thành công!")
+            str_app.sidebar.success("✅ Đã lưu tiến độ thành công!")
         else:
-            st.sidebar.error("❌ Lỗi khi lưu dữ liệu!")
+            str_app.sidebar.error("❌ Lỗi khi lưu dữ liệu!")
 
-    if st.sidebar.button("📧 Gửi Email nhắc nhở báo cáo", use_container_width=True):
+    if str_app.sidebar.button("📧 Gửi Email nhắc nhở báo cáo", use_container_width=True):
         success, err_msg = send_daily_reminder_email(SENDER_EMAIL, completed_est_count, total_all_questions, bookmarked_count, current_total_hours)
         if success:
-            st.sidebar.success("✅ Đã gửi email báo cáo vào Gmail!")
+            str_app.sidebar.success("✅ Đã gửi email báo cáo vào Gmail!")
         else:
-            st.sidebar.error(f"❌ Gửi mail thất bại: {err_msg}")
+            str_app.sidebar.error(f"❌ Gửi mail thất bại: {err_msg}")
 
-    st.sidebar.markdown("<br>", unsafe_allow_html=True)
+    str_app.sidebar.markdown("<br>", unsafe_allow_html=True)
     
-    # ---- PHẦN ĐIỀU HƯỚNG HỌC TẬP (ĐÃ GÓI VÀO CARD BO GÓC GIỐNG ẢNH 2) ----
-    st.sidebar.markdown("""
+    str_app.sidebar.markdown("""
         <div class="metric-card-container" style="text-align: left;">
             <div class="metric-label" style="margin-bottom: 8px;">🎛️ Điều Hướng Học Tập</div>
     """, unsafe_allow_html=True)
     
-    mode = st.sidebar.selectbox("Chọn chế độ học:", [
+    mode = str_app.sidebar.selectbox("Chọn chế độ học:", [
         "📖 Ôn tập theo chuyên đề",
         "🔄 Ôn lại câu trả lời sai",
         "📂 Ôn gộp tất cả (50 câu/phần)",
@@ -456,55 +455,55 @@ else:
         "📝 Thi thử (Mock Test)"
     ], label_visibility="collapsed", key="sidebar_mode_select")
     
-    st.sidebar.markdown("</div>", unsafe_allow_html=True)
+    str_app.sidebar.markdown("</div>", unsafe_allow_html=True)
 
     if error_message:
-        st.error(error_message)
+        str_app.error(error_message)
     else:
         if mode == "📖 Ôn tập theo chuyên đề":
-            st.sidebar.markdown("""
+            str_app.sidebar.markdown("""
                 <div class="metric-card-container" style="text-align: left;">
                     <div class="metric-label" style="margin-bottom: 8px;">📂 Chọn Chuyên Đề</div>
             """, unsafe_allow_html=True)
             sheet_list = list(sheets_data.keys())
-            selected_sheet = st.sidebar.selectbox("Chuyên đề:", sheet_list, label_visibility="collapsed", key="sidebar_chuande_select")
-            st.sidebar.markdown("</div>", unsafe_allow_html=True)
+            selected_sheet = str_app.sidebar.selectbox("Chuyên đề:", sheet_list, label_visibility="collapsed", key="sidebar_chuande_select")
+            str_app.sidebar.markdown("</div>", unsafe_allow_html=True)
             
             q_list = sheets_data[selected_sheet]
             total_q = len(q_list)
             
-            if f"q_idx_{selected_sheet}" not in st.session_state:
-                st.session_state[f"q_idx_{selected_sheet}"] = 0
-            if f"done_{selected_sheet}" not in st.session_state:
-                st.session_state[f"done_{selected_sheet}"] = 0
+            if f"q_idx_{selected_sheet}" not in str_app.session_state:
+                str_app.session_state[f"q_idx_{selected_sheet}"] = 0
+            if f"done_{selected_sheet}" not in str_app.session_state:
+                str_app.session_state[f"done_{selected_sheet}"] = 0
                 
-            col_sb1, col_sb2 = st.sidebar.columns(2)
+            col_sb1, col_sb2 = str_app.sidebar.columns(2)
             col_sb1.metric("Tổng câu", total_q)
-            col_sb2.metric("Đã làm", st.session_state[f'done_{selected_sheet}'])
+            col_sb2.metric("Đã làm", str_app.session_state[f'done_{selected_sheet}'])
             
-            if st.sidebar.button("🔄 Đặt lại chuyên đề này", use_container_width=True):
-                st.session_state[f"q_idx_{selected_sheet}"] = 0
-                st.session_state[f"done_{selected_sheet}"] = 0
-                keys_to_del = [k for k in st.session_state.keys() if k.startswith(f"shuff_chuande_{selected_sheet}_") or k.startswith(f"user_ans_chuande_{selected_sheet}_")]
+            if str_app.sidebar.button("🔄 Đặt lại chuyên đề này", use_container_width=True):
+                str_app.session_state[f"q_idx_{selected_sheet}"] = 0
+                str_app.session_state[f"done_{selected_sheet}"] = 0
+                keys_to_del = [k for k in str_app.session_state.keys() if k.startswith(f"shuff_chuande_{selected_sheet}_") or k.startswith(f"user_ans_chuande_{selected_sheet}_")]
                 for k in keys_to_del:
-                    del st.session_state[k]
+                    del str_app.session_state[k]
                 scroll_to_top()
-                st.rerun()
+                str_app.rerun()
 
-            st.title("⚡ Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện")
-            st.markdown("---")
+            str_app.title("⚡ Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện")
+            str_app.markdown("---")
             
-            idx = st.session_state[f"q_idx_{selected_sheet}"]
+            idx = str_app.session_state[f"q_idx_{selected_sheet}"]
             if idx >= total_q and total_q > 0:
                 idx = 0
-                st.session_state[f"q_idx_{selected_sheet}"] = 0
+                str_app.session_state[f"q_idx_{selected_sheet}"] = 0
                 
             if total_q == 0:
-                st.warning("Chuyên đề này hiện chưa có câu hỏi nào.")
+                str_app.warning("Chuyên đề này hiện chưa có câu hỏi nào.")
             else:
                 q_item = q_list[idx]
                 
-                st.markdown(f"""
+                str_app.markdown(f"""
                     <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span style="font-size: 1.05rem; font-weight: 700; color: #38bdf8;">📂 Chuyên đề: {selected_sheet}</span>
@@ -513,20 +512,20 @@ else:
                     </div>
                 """, unsafe_allow_html=True)
                 
-                is_bm = any(b.get("question") == q_item["question"] for b in st.session_state["bookmarked_questions"])
+                is_bm = any(b.get("question") == q_item["question"] for b in str_app.session_state["bookmarked_questions"])
                 bm_label = "⭐ Đã đánh dấu ghi nhớ" if is_bm else "☆ Đánh dấu câu cần ghi nhớ"
                 
-                col_q_head1, col_q_head2 = st.columns([4, 1])
+                col_q_head1, col_q_head2 = str_app.columns([4, 1])
                 with col_q_head2:
-                    if st.button(bm_label, key=f"bm_chuande_{idx}", use_container_width=True):
+                    if str_app.button(bm_label, key=f"bm_chuande_{idx}", use_container_width=True):
                         if is_bm:
-                            st.session_state["bookmarked_questions"] = [b for b in st.session_state["bookmarked_questions"] if b.get("question") != q_item["question"]]
-                            st.toast("Đã bỏ đánh dấu câu hỏi!", icon="ℹ️")
+                            str_app.session_state["bookmarked_questions"] = [b for b in str_app.session_state["bookmarked_questions"] if b.get("question") != q_item["question"]]
+                            str_app.toast("Đã bỏ đánh dấu câu hỏi!", icon="ℹ️")
                         else:
-                            st.session_state["bookmarked_questions"].append(q_item)
-                            st.toast("Đã thêm vào danh sách cần ghi nhớ!", icon="⭐")
+                            str_app.session_state["bookmarked_questions"].append(q_item)
+                            str_app.toast("Đã thêm vào danh sách cần ghi nhớ!", icon="⭐")
                         save_current_progress()
-                        st.rerun()
+                        str_app.rerun()
                 
                 clean_q_text = q_item['question']
                 if clean_q_text.lower().startswith("câu"):
@@ -534,7 +533,7 @@ else:
                     if len(parts) > 1:
                         clean_q_text = parts[1].strip()
 
-                st.markdown(f"""
+                str_app.markdown(f"""
                     <div class="question-title">
                         <b>Câu {idx + 1}:</b> {clean_q_text}
                     </div>
@@ -546,65 +545,65 @@ else:
                 
                 ans_storage_key = f"user_ans_chuande_{selected_sheet}_{idx}"
                 default_idx = None
-                current_saved_ans = st.session_state.get(ans_storage_key, None)
+                current_saved_ans = str_app.session_state.get(ans_storage_key, None)
                 if current_saved_ans in options:
                     default_idx = options.index(current_saved_ans)
                     
-                selected_opt = st.radio("Chọn đáp án của bạn:", options, index=default_idx, key=f"radio_chuande_{selected_sheet}_{idx}")
+                selected_opt = str_app.radio("Chọn đáp án của bạn:", options, index=default_idx, key=f"radio_chuande_{selected_sheet}_{idx}")
                 
                 if selected_opt is not None:
-                    st.session_state[ans_storage_key] = selected_opt
+                    str_app.session_state[ans_storage_key] = selected_opt
                     is_correct = selected_opt.strip().upper().startswith(correct_letter)
-                    st.markdown("<br>", unsafe_allow_html=True)
+                    str_app.markdown("<br>", unsafe_allow_html=True)
                     if is_correct:
-                        st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
+                        str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
                     else:
-                        st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
-                        if not any(w.get("question") == q_item["question"] for w in st.session_state["wrong_questions"]):
-                            st.session_state["wrong_questions"].append(q_item)
+                        str_app.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
+                        if not any(w.get("question") == q_item["question"] for w in str_app.session_state["wrong_questions"]):
+                            str_app.session_state["wrong_questions"].append(q_item)
                             save_current_progress()
                             
-                    st.session_state[f"done_{selected_sheet}"] = min(total_q, max(st.session_state[f"done_{selected_sheet}"], idx + 1))
+                    str_app.session_state[f"done_{selected_sheet}"] = min(total_q, max(str_app.session_state[f"done_{selected_sheet}"], idx + 1))
                 
-                st.markdown("<br>", unsafe_allow_html=True)
-                col_prev, col_next = st.columns([1, 1])
+                str_app.markdown("<br>", unsafe_allow_html=True)
+                col_prev, col_next = str_app.columns([1, 1])
                 with col_prev:
-                    if st.button("⬅️ Câu trước", use_container_width=True):
-                        if st.session_state[f"q_idx_{selected_sheet}"] > 0:
-                            st.session_state[f"q_idx_{selected_sheet}"] -= 1
+                    if str_app.button("⬅️ Câu trước", use_container_width=True):
+                        if str_app.session_state[f"q_idx_{selected_sheet}"] > 0:
+                            str_app.session_state[f"q_idx_{selected_sheet}"] -= 1
                         else:
-                            st.session_state[f"q_idx_{selected_sheet}"] = total_q - 1
+                            str_app.session_state[f"q_idx_{selected_sheet}"] = total_q - 1
                         scroll_to_top()
-                        st.rerun()
+                        str_app.rerun()
                 with col_next:
-                    if st.button("Câu tiếp theo ➡️", type="primary", use_container_width=True):
-                        if st.session_state[f"q_idx_{selected_sheet}"] < total_q - 1:
-                            st.session_state[f"q_idx_{selected_sheet}"] += 1
+                    if str_app.button("Câu tiếp theo ➡️", type="primary", use_container_width=True):
+                        if str_app.session_state[f"q_idx_{selected_sheet}"] < total_q - 1:
+                            str_app.session_state[f"q_idx_{selected_sheet}"] += 1
                         else:
-                            st.session_state[f"q_idx_{selected_sheet}"] = 0
+                            str_app.session_state[f"q_idx_{selected_sheet}"] = 0
                         scroll_to_top()
-                        st.rerun()
+                        str_app.rerun()
 
         elif mode == "🔄 Ôn lại câu trả lời sai":
-            st.title("🔄 Ôn Lại Câu Trả Lời Sai")
-            st.markdown("---")
+            str_app.title("🔄 Ôn Lại Câu Trả Lời Sai")
+            str_app.markdown("---")
             
-            wrong_list = st.session_state["wrong_questions"]
+            wrong_list = str_app.session_state["wrong_questions"]
             if not wrong_list:
-                st.info("🎉 Hiện tại bạn chưa có câu trả lời sai nào được lưu lại.")
+                str_app.info("🎉 Hiện tại bạn chưa có câu trả lời sai nào được lưu lại.")
             else:
-                st.write(f"Bạn đang có **{len(wrong_list)}** câu cần ôn tập lại.")
-                if "wrong_idx" not in st.session_state:
-                    st.session_state["wrong_idx"] = 0
+                str_app.write(f"Bạn đang có **{len(wrong_list)}** câu cần ôn tập lại.")
+                if "wrong_idx" not in str_app.session_state:
+                    str_app.session_state["wrong_idx"] = 0
                     
-                w_idx = st.session_state["wrong_idx"]
+                w_idx = str_app.session_state["wrong_idx"]
                 if w_idx >= len(wrong_list):
                     w_idx = 0
-                    st.session_state["wrong_idx"] = 0
+                    str_app.session_state["wrong_idx"] = 0
                     
                 w_item = wrong_list[w_idx]
                 
-                st.markdown(f"""
+                str_app.markdown(f"""
                     <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span style="font-size: 1.05rem; font-weight: 700; color: #f43f5e;">⚠️ Nguồn: {w_item.get('sheet', 'N/A')}</span>
@@ -613,7 +612,7 @@ else:
                     </div>
                 """, unsafe_allow_html=True)
                 
-                st.markdown(f"""
+                str_app.markdown(f"""
                     <div class="question-title">
                         <b>Câu {w_idx + 1}:</b> {w_item['question']}
                     </div>
@@ -625,50 +624,50 @@ else:
                 
                 w_storage_key = f"user_ans_wrong_{w_idx}"
                 w_default_idx = None
-                if st.session_state.get(w_storage_key) in options:
-                    w_default_idx = options.index(st.session_state.get(w_storage_key))
+                if str_app.session_state.get(w_storage_key) in options:
+                    w_default_idx = options.index(str_app.session_state.get(w_storage_key))
                     
-                w_choice = st.radio("Chọn đáp án của bạn:", options, index=w_default_idx, key=f"radio_wrong_{w_idx}")
+                w_choice = str_app.radio("Chọn đáp án của bạn:", options, index=w_default_idx, key=f"radio_wrong_{w_idx}")
                 if w_choice is not None:
-                    st.session_state[w_storage_key] = w_choice
-                    st.markdown("<br>", unsafe_allow_html=True)
+                    str_app.session_state[w_storage_key] = w_choice
+                    str_app.markdown("<br>", unsafe_allow_html=True)
                     if w_choice.strip().upper().startswith(correct_letter):
-                        st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
+                        str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
                         wrong_list = [w for w in wrong_list if w.get("question") != w_item.get("question")]
-                        st.session_state["wrong_questions"] = wrong_list
+                        str_app.session_state["wrong_questions"] = wrong_list
                         save_current_progress()
                     else:
-                        st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
+                        str_app.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
                 
-                st.markdown("<br>", unsafe_allow_html=True)
-                if st.button("Câu tiếp theo ➡️", type="primary", use_container_width=True, key=f"next_wrong_{w_idx}"):
-                    if st.session_state["wrong_idx"] < len(wrong_list) - 1:
-                        st.session_state["wrong_idx"] += 1
+                str_app.markdown("<br>", unsafe_allow_html=True)
+                if str_app.button("Câu tiếp theo ➡️", type="primary", use_container_width=True, key=f"next_wrong_{w_idx}"):
+                    if str_app.session_state["wrong_idx"] < len(wrong_list) - 1:
+                        str_app.session_state["wrong_idx"] += 1
                     else:
-                        st.session_state["wrong_idx"] = 0
+                        str_app.session_state["wrong_idx"] = 0
                     scroll_to_top()
-                    st.rerun()
+                    str_app.rerun()
 
         elif mode == "⭐ Tất cả câu hỏi cần ghi nhớ":
-            st.title("⭐ Tất Cả Câu Hỏi Cần Ghi Nhớ")
-            st.markdown("---")
+            str_app.title("⭐ Tất Cả Câu Hỏi Cần Ghi Nhớ")
+            str_app.markdown("---")
             
-            bm_list = st.session_state["bookmarked_questions"]
+            bm_list = str_app.session_state["bookmarked_questions"]
             if not bm_list:
-                st.info("⭐ Bạn chưa đánh dấu câu hỏi nào cần ghi nhớ cả.")
+                str_app.info("⭐ Bạn chưa đánh dấu câu hỏi nào cần ghi nhớ cả.")
             else:
-                st.write(f"Tổng số câu bạn đã đánh dấu ghi nhớ: **{len(bm_list)}** câu.")
-                if "global_bm_idx" not in st.session_state:
-                    st.session_state["global_bm_idx"] = 0
+                str_app.write(f"Tổng số câu bạn đã đánh dấu ghi nhớ: **{len(bm_list)}** câu.")
+                if "global_bm_idx" not in str_app.session_state:
+                    str_app.session_state["global_bm_idx"] = 0
                     
-                gbm_idx = st.session_state["global_bm_idx"]
+                gbm_idx = str_app.session_state["global_bm_idx"]
                 if gbm_idx >= len(bm_list):
                     gbm_idx = 0
-                    st.session_state["global_bm_idx"] = 0
+                    str_app.session_state["global_bm_idx"] = 0
                     
                 bm_item = bm_list[gbm_idx]
                 
-                st.markdown(f"""
+                str_app.markdown(f"""
                     <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span style="font-size: 1.05rem; font-weight: 700; color: #eab308;">⭐ Chuyên đề: {bm_item.get('sheet', 'N/A')}</span>
@@ -677,15 +676,15 @@ else:
                     </div>
                 """, unsafe_allow_html=True)
                 
-                col_bm1, col_bm2 = st.columns([4, 1])
+                col_bm1, col_bm2 = str_app.columns([4, 1])
                 with col_bm2:
-                    if st.button("❌ Bỏ lưu", key=f"remove_global_bm_{gbm_idx}__", use_container_width=True):
-                        st.session_state["bookmarked_questions"] = [b for b in st.session_state["bookmarked_questions"] if b.get("question") != bm_item.get("question")]
+                    if str_app.button("❌ Bỏ lưu", key=f"remove_global_bm_{gbm_idx}__", use_container_width=True):
+                        str_app.session_state["bookmarked_questions"] = [b for b in str_app.session_state["bookmarked_questions"] if b.get("question") != bm_item.get("question")]
                         save_current_progress()
-                        st.toast("Đã xóa khỏi danh sách ghi nhớ!", icon="ℹ️")
-                        st.rerun()
+                        str_app.toast("Đã xóa khỏi danh sách ghi nhớ!", icon="ℹ️")
+                        str_app.rerun()
 
-                st.markdown(f"""
+                str_app.markdown(f"""
                     <div class="question-title">
                         <b>Câu hỏi:</b> {bm_item['question']}
                     </div>
@@ -697,26 +696,26 @@ else:
                 
                 correct_letter = bm_item.get("correct", "A").strip().upper()
                 
-                st.markdown("##### 💡 Đáp án chuẩn:")
+                str_app.markdown("##### 💡 Đáp án chuẩn:")
                 for opt in options:
                     opt_letter = opt.strip().upper()[:1]
                     if opt_letter == correct_letter:
-                        st.markdown(f"- ✅ **{opt}** *(Đáp án đúng)*")
+                        str_app.markdown(f"- ✅ **{opt}** *(Đáp án đúng)*")
                     else:
-                        st.markdown(f"- {opt}")
+                        str_app.markdown(f"- {opt}")
                 
-                st.markdown("<br>", unsafe_allow_html=True)
-                if st.button("Câu tiếp theo ➡️", type="primary", use_container_width=True, key=f"next_global_bm_{gbm_idx}"):
-                    if st.session_state["global_bm_idx"] < len(bm_list) - 1:
-                        st.session_state["global_bm_idx"] += 1
+                str_app.markdown("<br>", unsafe_allow_html=True)
+                if str_app.button("Câu tiếp theo ➡️", type="primary", use_container_width=True, key=f"next_global_bm_{gbm_idx}"):
+                    if str_app.session_state["global_bm_idx"] < len(bm_list) - 1:
+                        str_app.session_state["global_bm_idx"] += 1
                     else:
-                        st.session_state["global_bm_idx"] = 0
+                        str_app.session_state["global_bm_idx"] = 0
                     scroll_to_top()
-                    st.rerun()
+                    str_app.rerun()
 
         elif mode == "📂 Ôn gộp tất cả (50 câu/phần)":
-            st.title("📂 Ôn Gộp Tất Cả Chuyên Đề (50 Câu/Phần)")
-            st.markdown("---")
+            str_app.title("📂 Ôn Gộp Tất Cả Chuyên Đề (50 Câu/Phần)")
+            str_app.markdown("---")
             
             all_questions = []
             for sh, ql in sheets_data.items():
@@ -724,99 +723,97 @@ else:
                 
             total_all = len(all_questions)
             if total_all == 0:
-                st.warning("Không có dữ liệu câu hỏi.")
+                str_app.warning("Không có dữ liệu câu hỏi.")
             else:
                 chunk_size = 50
                 total_chunks = (total_all // chunk_size) + (1 if total_all % chunk_size != 0 else 0)
                 
-                # ---- CHỌN PHẦN ÔN TẬP (ĐÃ GÓI VÀO CARD BO GÓC GIỐNG ẢNH 2) ----
-                st.sidebar.markdown("""
+                str_app.sidebar.markdown("""
                     <div class="metric-card-container" style="text-align: left;">
                         <div class="metric-label" style="margin-bottom: 8px;">📁 Chọn Phần Ôn Tập</div>
                 """, unsafe_allow_html=True)
                 
                 chunk_names = []
                 for i in range(total_chunks):
-                    is_done = (i in st.session_state["completed_chunks"] or i in st.session_state["passed_tests"])
+                    is_done = (i in str_app.session_state["completed_chunks"] or i in str_app.session_state["passed_tests"])
                     prefix = "✅ " if is_done else "📌 "
                     chunk_names.append(f"{prefix}Phần {i+1}")
                     
-                selected_chunk_name = st.sidebar.selectbox("Chọn phần:", chunk_names, label_visibility="collapsed", key="sidebar_chunk_select")
-                st.sidebar.markdown("</div>", unsafe_allow_html=True)
+                selected_chunk_name = str_app.sidebar.selectbox("Chọn phần:", chunk_names, label_visibility="collapsed", key="sidebar_chunk_select")
+                str_app.sidebar.markdown("</div>", unsafe_allow_html=True)
                 
                 c_num = int(selected_chunk_name.split("Phần")[1].strip()) - 1
                 
                 start_idx = c_num * chunk_size
                 end_idx = min((c_num + 1) * chunk_size, total_all)
                 
-                if f"chunk_q_{c_num}" not in st.session_state:
+                if f"chunk_q_{c_num}" not in str_app.session_state:
                     chunk_qs = all_questions.copy()
                     random.seed(42)
                     random.shuffle(chunk_qs)
-                    st.session_state[f"chunk_q_{c_num}"] = chunk_qs[start_idx:end_idx]
+                    str_app.session_state[f"chunk_q_{c_num}"] = chunk_qs[start_idx:end_idx]
                     
-                current_chunk_questions = st.session_state[f"chunk_q_{c_num}"]
+                current_chunk_questions = str_app.session_state[f"chunk_q_{c_num}"]
                 actual_chunk_len = len(current_chunk_questions)
                 
-                # ---- HIỂN THỊ TỔNG SỐ CÂU TRONG CARD ----
-                st.sidebar.markdown(f"""
+                str_app.sidebar.markdown(f"""
                     <div class="metric-card-container">
                         <div class="metric-label">📊 Tổng số câu của phần</div>
                         <div class="metric-value">{actual_chunk_len}</div>
                     </div>
                 """, unsafe_allow_html=True)
                 
-                if f"chunk_studied_count_{c_num}" not in st.session_state:
-                    st.session_state[f"chunk_studied_count_{c_num}"] = set()
+                if f"chunk_studied_count_{c_num}" not in str_app.session_state:
+                    str_app.session_state[f"chunk_studied_count_{c_num}"] = set()
 
-                studied_set = st.session_state[f"chunk_studied_count_{c_num}"]
+                studied_set = str_app.session_state[f"chunk_studied_count_{c_num}"]
                 is_fully_studied = len(studied_set) >= actual_chunk_len
 
                 sub_modes = ["📖 Ôn tập từng câu", "🔄 Làm lại phần này", "⚠️ Ôn các câu sai"]
-                if is_fully_studied or (c_num in st.session_state["completed_chunks"]):
+                if is_fully_studied or (c_num in str_app.session_state["completed_chunks"]):
                     sub_modes.insert(1, "📝 Bài kiểm tra chốt kiến thức")
                 
-                sub_mode = st.radio("Chế độ học trong phần:", sub_modes, horizontal=True, label_visibility="collapsed")
+                sub_mode = str_app.radio("Chế độ học trong phần:", sub_modes, horizontal=True, label_visibility="collapsed")
                 
-                if sub_mode == "📝 Bài kiểm tra chốt kiến thức" and not is_fully_studied and (c_num not in st.session_state["completed_chunks"]):
-                    st.warning("⚠️ Ông chưa ôn tập hết các câu trong phần này! Hãy hoàn thành phần 'Ôn tập từng câu' trước khi làm bài kiểm tra chốt.")
+                if sub_mode == "📝 Bài kiểm tra chốt kiến thức" and not is_fully_studied and (c_num not in str_app.session_state["completed_chunks"]):
+                    str_app.warning("⚠️ Ông chưa ôn tập hết các câu trong phần này! Hãy hoàn thành phần 'Ôn tập từng câu' trước khi làm bài kiểm tra chốt.")
                     sub_mode = "📖 Ôn tập từng câu"
 
-                st.markdown("---")
+                str_app.markdown("---")
                 
                 if sub_mode == "📖 Ôn tập từng câu":
-                    if f"gop_idx_{c_num}" not in st.session_state:
-                        st.session_state[f"gop_idx_{c_num}"] = 0
+                    if f"gop_idx_{c_num}" not in str_app.session_state:
+                        str_app.session_state[f"gop_idx_{c_num}"] = 0
                     
-                    g_idx = st.session_state[f"gop_idx_{c_num}"]
+                    g_idx = str_app.session_state[f"gop_idx_{c_num}"]
                     
                     if g_idx >= actual_chunk_len:
-                        st.success(f"🎉 Ông đã ôn tập xong toàn bộ {actual_chunk_len} câu của Phần {c_num + 1}! Bây giờ có thể chuyển sang Bài kiểm tra chốt kiến thức.")
-                        st.markdown("---")
-                        col_btn1, col_btn2 = st.columns(2)
+                        str_app.success(f"🎉 Ông đã ôn tập xong toàn bộ {actual_chunk_len} câu của Phần {c_num + 1}! Bây giờ có thể chuyển sang Bài kiểm tra chốt kiến thức.")
+                        str_app.markdown("---")
+                        col_btn1, col_btn2 = str_app.columns(2)
                         with col_btn1:
-                            if st.button("🔄 Ôn lại từ đầu", type="secondary", use_container_width=True):
-                                st.session_state[f"gop_idx_{c_num}"] = 0
-                                st.session_state[f"chunk_studied_count_{c_num}"] = set()
-                                keys_to_del = [k for k in st.session_state.keys() if k.startswith(f"shuff_gop_{c_num}_") or k.startswith(f"user_ans_gop_{c_num}_")]
+                            if str_app.button("🔄 Ôn lại từ đầu", type="secondary", use_container_width=True):
+                                str_app.session_state[f"gop_idx_{c_num}"] = 0
+                                str_app.session_state[f"chunk_studied_count_{c_num}"] = set()
+                                keys_to_del = [k for k in str_app.session_state.keys() if k.startswith(f"shuff_gop_{c_num}_") or k.startswith(f"user_ans_gop_{c_num}_")]
                                 for k in keys_to_del:
-                                    del st.session_state[k]
+                                    del str_app.session_state[k]
                                 scroll_to_top()
-                                st.rerun()
+                                str_app.rerun()
                         with col_btn2:
-                            if st.button("📝 Mở khóa & Bắt đầu bài kiểm tra chốt", type="primary", use_container_width=True):
-                                st.session_state[f"auto_switch_test_{c_num}"] = True
+                            if str_app.button("📝 Mở khóa & Bắt đầu bài kiểm tra chốt", type="primary", use_container_width=True):
+                                str_app.session_state[f"auto_switch_test_{c_num}"] = True
                                 scroll_to_top()
-                                st.rerun()
+                                str_app.rerun()
                     else:
-                        if st.session_state.get(f"auto_switch_test_{c_num}", False):
-                            st.session_state[f"auto_switch_test_{c_num}"] = False
-                            st.rerun()
+                        if str_app.session_state.get(f"auto_switch_test_{c_num}", False):
+                            str_app.session_state[f"auto_switch_test_{c_num}"] = False
+                            str_app.rerun()
 
                     if g_idx < actual_chunk_len:
                         q_item = current_chunk_questions[g_idx]
                         
-                        st.markdown(f"""
+                        str_app.markdown(f"""
                             <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <span style="font-size: 1.05rem; font-weight: 700; color: #38bdf8;">📂 Phần {c_num + 1} — Chuyên đề: {q_item['sheet']}</span>
@@ -825,22 +822,22 @@ else:
                             </div>
                         """, unsafe_allow_html=True)
                         
-                        is_bm = any(b.get("question") == q_item["question"] for b in st.session_state["bookmarked_questions"])
+                        is_bm = any(b.get("question") == q_item["question"] for b in str_app.session_state["bookmarked_questions"])
                         bm_label = "⭐ Đã đánh dấu ghi nhớ" if is_bm else "☆ Đánh dấu câu cần ghi nhớ"
                         
-                        col_q_head1, col_q_head2 = st.columns([4, 1])
+                        col_q_head1, col_q_head2 = str_app.columns([4, 1])
                         with col_q_head2:
-                            if st.button(bm_label, key=f"bm_gop_{c_num}_{g_idx}", use_container_width=True):
+                            if str_app.button(bm_label, key=f"bm_gop_{c_num}_{g_idx}", use_container_width=True):
                                 if is_bm:
-                                    st.session_state["bookmarked_questions"] = [b for b in st.session_state["bookmarked_questions"] if b.get("question") != q_item["question"]]
-                                    st.toast("Đã bỏ đánh dấu câu hỏi!", icon="ℹ️")
+                                    str_app.session_state["bookmarked_questions"] = [b for b in str_app.session_state["bookmarked_questions"] if b.get("question") != q_item["question"]]
+                                    str_app.toast("Đã bỏ đánh dấu câu hỏi!", icon="ℹ️")
                                 else:
-                                    st.session_state["bookmarked_questions"].append(q_item)
-                                    st.toast("Đã thêm vào danh sách cần ghi nhớ!", icon="⭐")
+                                    str_app.session_state["bookmarked_questions"].append(q_item)
+                                    str_app.toast("Đã thêm vào danh sách cần ghi nhớ!", icon="⭐")
                                 save_current_progress()
-                                st.rerun()
+                                str_app.rerun()
                                 
-                        st.markdown(f"""
+                        str_app.markdown(f"""
                             <div class="question-title">
                                 <b>Câu {g_idx + 1}:</b> {q_item['question']}
                             </div>
@@ -852,55 +849,55 @@ else:
                         
                         gop_storage_key = f"user_ans_gop_{c_num}_{g_idx}"
                         gop_default_idx = None
-                        if st.session_state.get(gop_storage_key) in options:
-                            gop_default_idx = options.index(st.session_state.get(gop_storage_key))
+                        if str_app.session_state.get(gop_storage_key) in options:
+                            gop_default_idx = options.index(str_app.session_state.get(gop_storage_key))
                             
-                        g_choice = st.radio("Chọn đáp án của bạn:", options, index=gop_default_idx, key=f"radio_gop_{c_num}_{g_idx}")
+                        g_choice = str_app.radio("Chọn đáp án của bạn:", options, index=gop_default_idx, key=f"radio_gop_{c_num}_{g_idx}")
                         
                         if g_choice is not None:
-                            st.session_state[gop_storage_key] = g_choice
-                            st.session_state[f"chunk_studied_count_{c_num}"].add(g_idx)
+                            str_app.session_state[gop_storage_key] = g_choice
+                            str_app.session_state[f"chunk_studied_count_{c_num}"].add(g_idx)
                             
                             is_correct = g_choice.strip().upper().startswith(correct_letter)
-                            st.markdown("<br>", unsafe_allow_html=True)
+                            str_app.markdown("<br>", unsafe_allow_html=True)
                             if is_correct:
-                                st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
+                                str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
                             else:
-                                st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
-                                if not any(w.get("question") == q_item["question"] for w in st.session_state["wrong_questions"]):
-                                    st.session_state["wrong_questions"].append(q_item)
+                                str_app.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
+                                if not any(w.get("question") == q_item["question"] for w in str_app.session_state["wrong_questions"]):
+                                    str_app.session_state["wrong_questions"].append(q_item)
                                     save_current_progress()
                                     
-                        st.markdown("<br>", unsafe_allow_html=True)
-                        col_prev, col_next = st.columns(2)
+                        str_app.markdown("<br>", unsafe_allow_html=True)
+                        col_prev, col_next = str_app.columns(2)
                         with col_prev:
-                            if st.button("⬅️ Câu trước", use_container_width=True):
-                                if st.session_state[f"gop_idx_{c_num}"] > 0:
-                                    st.session_state[f"gop_idx_{c_num}"] -= 1
+                            if str_app.button("⬅️ Câu trước", use_container_width=True):
+                                if str_app.session_state[f"gop_idx_{c_num}"] > 0:
+                                    str_app.session_state[f"gop_idx_{c_num}"] -= 1
                                 else:
-                                    st.session_state[f"gop_idx_{c_num}"] = actual_chunk_len - 1
+                                    str_app.session_state[f"gop_idx_{c_num}"] = actual_chunk_len - 1
                                 scroll_to_top()
-                                st.rerun()
+                                str_app.rerun()
                         with col_next:
-                            if st.button("Câu tiếp theo ➡️", type="primary", use_container_width=True):
-                                st.session_state[f"chunk_studied_count_{c_num}"].add(g_idx)
-                                if st.session_state[f"gop_idx_{c_num}"] < actual_chunk_len:
-                                    st.session_state[f"gop_idx_{c_num}"] += 1
+                            if str_app.button("Câu tiếp theo ➡️", type="primary", use_container_width=True):
+                                str_app.session_state[f"chunk_studied_count_{c_num}"].add(g_idx)
+                                if str_app.session_state[f"gop_idx_{c_num}"] < actual_chunk_len:
+                                    str_app.session_state[f"gop_idx_{c_num}"] += 1
                                 scroll_to_top()
-                                st.rerun()
+                                str_app.rerun()
 
                 elif sub_mode == "📝 Bài kiểm tra chốt kiến thức":
-                    st.markdown(f"### Bài Kiểm Tra - Phần {c_num + 1} ({actual_chunk_len} câu)")
+                    str_app.markdown(f"### Bài Kiểm Tra - Phần {c_num + 1} ({actual_chunk_len} câu)")
                     
                     submitted_key = f"submitted_test_{c_num}"
-                    if submitted_key not in st.session_state:
-                        st.session_state[submitted_key] = False
+                    if submitted_key not in str_app.session_state:
+                        str_app.session_state[submitted_key] = False
 
-                    if f"test_start_time_{c_num}" not in st.session_state:
-                        st.session_state[f"test_start_time_{c_num}"] = time.time()
+                    if f"test_start_time_{c_num}" not in str_app.session_state:
+                        str_app.session_state[f"test_start_time_{c_num}"] = time.time()
                         
-                    if not st.session_state[submitted_key]:
-                        elapsed_sec = int(time.time() - st.session_state.get(f"test_start_time_{c_num}", time.time()))
+                    if not str_app.session_state[submitted_key]:
+                        elapsed_sec = int(time.time() - str_app.session_state.get(f"test_start_time_{c_num}", time.time()))
                         rem_sec = max(0, 59 * 60 - elapsed_sec)
 
                         timer_code = f"""
@@ -946,7 +943,7 @@ else:
 
                         user_answers = {}
                         for i, q in enumerate(current_chunk_questions):
-                            st.markdown(f"""
+                            str_app.markdown(f"""
                                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                                     <span class="badge-topic">{q['sheet']}</span>
                                     <span style="color: #94a3b8; font-weight: 600;">Câu {i+1}</span>
@@ -960,58 +957,58 @@ else:
                             options = shuff_data["options"]
                             
                             test_ans_key = f"test_chunk_{c_num}_{i}"
-                            ans = st.radio("Chọn đáp án:", options, index=(options.index(st.session_state[test_ans_key]) if st.session_state.get(test_ans_key) in options else None), key=test_ans_key, label_visibility="collapsed")
+                            ans = str_app.radio("Chọn đáp án:", options, index=(options.index(str_app.session_state[test_ans_key]) if str_app.session_state.get(test_ans_key) in options else None), key=test_ans_key, label_visibility="collapsed")
                             user_answers[i] = ans
-                            st.markdown("<hr style='margin: 30px 0; border-color: rgba(56, 189, 248, 0.2);'>", unsafe_allow_html=True)
+                            str_app.markdown("<hr style='margin: 30px 0; border-color: rgba(56, 189, 248, 0.2);'>", unsafe_allow_html=True)
                             
-                        if st.button("📤 Nộp bài kiểm tra ngay", type="primary", use_container_width=True):
+                        if str_app.button("📤 Nộp bài kiểm tra ngay", type="primary", use_container_width=True):
                             unanswered = [i + 1 for i in range(actual_chunk_len) if user_answers[i] is None]
                             if unanswered:
-                                st.error(f"⚠️ Ông chưa làm xong tất cả các câu! Còn thiếu các câu: {', '.join(map(str, unanswered))}.")
+                                str_app.error(f"⚠️ Ông chưa làm xong tất cả các câu! Còn thiếu các câu: {', '.join(map(str, unanswered))}.")
                             else:
                                 correct_count = 0
                                 wrong_count = 0
                                 for i, q in enumerate(current_chunk_questions):
                                     selected = user_answers[i]
-                                    shuff_data = st.session_state.get(f"shuff_test_{c_num}_{i}", {"correct": "A"})
+                                    shuff_data = str_app.session_state.get(f"shuff_test_{c_num}_{i}", {"correct": "A"})
                                     correct_letter = shuff_data["correct"]
                                     
                                     if selected and selected.strip().upper().startswith(correct_letter):
                                         correct_count += 1
                                     else:
                                         wrong_count += 1
-                                        if not any(w.get("question") == q["question"] for w in st.session_state["wrong_questions"]):
-                                            st.session_state["wrong_questions"].append(q)
+                                        if not any(w.get("question") == q["question"] for w in str_app.session_state["wrong_questions"]):
+                                            str_app.session_state["wrong_questions"].append(q)
                                             
-                                st.session_state[f"result_correct_{c_num}"] = correct_count
-                                st.session_state[f"result_wrong_{c_num}"] = wrong_count
-                                st.session_state[f"test_user_answers_{c_num}"] = user_answers
-                                st.session_state[submitted_key] = True
-                                st.session_state["completed_chunks"].add(c_num)
-                                st.session_state["passed_tests"].add(c_num)
+                                str_app.session_state[f"result_correct_{c_num}"] = correct_count
+                                str_app.session_state[f"result_wrong_{c_num}"] = wrong_count
+                                str_app.session_state[f"test_user_answers_{c_num}"] = user_answers
+                                str_app.session_state[submitted_key] = True
+                                str_app.session_state["completed_chunks"].add(c_num)
+                                str_app.session_state["passed_tests"].add(c_num)
                                 save_current_progress()
-                                st.balloons()
+                                str_app.balloons()
                                 scroll_to_top()
-                                st.rerun()
+                                str_app.rerun()
                     else:
-                        c_correct = st.session_state.get(f"result_correct_{c_num}", 0)
-                        c_wrong = st.session_state.get(f"result_wrong_{c_num}", 0)
+                        c_correct = str_app.session_state.get(f"result_correct_{c_num}", 0)
+                        c_wrong = str_app.session_state.get(f"result_wrong_{c_num}", 0)
                         score_percent = (c_correct / actual_chunk_len) * 100
                         
-                        st.success("🎉 Đã nộp bài kiểm tra thành công!")
-                        st.markdown("### 📊 Kết Quả Bài Kiểm Tra")
-                        col1, col2, col3 = st.columns(3)
+                        str_app.success("🎉 Đã nộp bài kiểm tra thành công!")
+                        str_app.markdown("### 📊 Kết Quả Bài Kiểm Tra")
+                        col1, col2, col3 = str_app.columns(3)
                         col1.metric("Số câu đúng", f"{c_correct}/{actual_chunk_len}", f"{score_percent:.1f}%")
                         col2.metric("Số câu sai", f"{c_wrong}/{actual_chunk_len}")
                         col3.metric("Trạng thái", "Đã hoàn thành ✅")
                         
-                        st.markdown("---")
-                        st.markdown("### 🔍 Xem Lại Chi Tiết Các Câu Trả Lời Sai")
-                        user_answers = st.session_state.get(f"test_user_answers_{c_num}", {})
+                        str_app.markdown("---")
+                        str_app.markdown("### 🔍 Xem Lại Chi Tiết Các Câu Trả Lời Sai")
+                        user_answers = str_app.session_state.get(f"test_user_answers_{c_num}", {})
                         wrong_items_in_test = []
                         for i, q in enumerate(current_chunk_questions):
                             selected = user_answers.get(i)
-                            shuff_data = st.session_state.get(f"shuff_test_{c_num}_{i}", {"correct": "A"})
+                            shuff_data = str_app.session_state.get(f"shuff_test_{c_num}_{i}", {"correct": "A"})
                             correct_letter = shuff_data["correct"]
                             
                             is_correct = selected and selected.strip().upper().startswith(correct_letter)
@@ -1019,11 +1016,11 @@ else:
                                 wrong_items_in_test.append((i, q, selected, shuff_data))
                                 
                         if not wrong_items_in_test:
-                            st.info("🎉 Tuyệt vời! Ông đã trả lời đúng tất cả các câu trong phần này.")
+                            str_app.info("🎉 Tuyệt vời! Ông đã trả lời đúng tất cả các câu trong phần này.")
                         else:
                             for q_idx, q_item, user_sel, shuff_info in wrong_items_in_test:
-                                st.markdown(f"**Câu {q_idx + 1}** *(Thuộc chuyên đề: {q_item['sheet']})*")
-                                st.markdown(f"> **{q_item['question']}**")
+                                str_app.markdown(f"**Câu {q_idx + 1}** *(Thuộc chuyên đề: {q_item['sheet']})*")
+                                str_app.markdown(f"> **{q_item['question']}**")
                                 correct_letter = shuff_info["correct"]
                                 for opt in shuff_info["options"]:
                                     opt_letter = opt.strip().upper()[:1]
@@ -1031,69 +1028,69 @@ else:
                                     is_user_chosen = (user_sel and opt.strip() == user_sel.strip())
                                     
                                     if is_this_correct:
-                                        st.markdown(f"- ✅ **{opt}** *(Đáp án đúng)*")
+                                        str_app.markdown(f"- ✅ **{opt}** *(Đáp án đúng)*")
                                     elif is_user_chosen:
-                                        st.markdown(f"- ❌ ~~{opt}~~ *(Ông đã chọn)*")
+                                        str_app.markdown(f"- ❌ ~~{opt}~~ *(Ông đã chọn)*")
                                     else:
-                                        st.markdown(f"- {opt}")
-                                st.markdown("<hr style='margin: 20px 0; border-color: rgba(56, 189, 248, 0.2);'>", unsafe_allow_html=True)
+                                        str_app.markdown(f"- {opt}")
+                                str_app.markdown("<hr style='margin: 20px 0; border-color: rgba(56, 189, 248, 0.2);'>", str_app.markdown("<br>", unsafe_allow_html=True))
                                 
-                        if st.button("🔄 Làm lại bài kiểm tra này", type="primary", use_container_width=True):
-                            st.session_state[submitted_key] = False
-                            st.session_state[f"test_start_time_{c_num}"] = time.time()
-                            keys_to_del = [k for k in st.session_state.keys() if k.startswith(f"shuff_test_{c_num}_") or k.startswith(f"test_chunk_{c_num}_")]
+                        if str_app.button("🔄 Làm lại bài kiểm tra này", type="primary", use_container_width=True):
+                            str_app.session_state[submitted_key] = False
+                            str_app.session_state[f"test_start_time_{c_num}"] = time.time()
+                            keys_to_del = [k for k in str_app.session_state.keys() if k.startswith(f"shuff_test_{c_num}_") or k.startswith(f"test_chunk_{c_num}_")]
                             for k in keys_to_del:
-                                del st.session_state[k]
-                            if f"test_user_answers_{c_num}" in st.session_state:
-                                del st.session_state[f"test_user_answers_{c_num}"]
-                            if c_num in st.session_state["completed_chunks"]:
-                                st.session_state["completed_chunks"].remove(c_num)
-                            if c_num in st.session_state["passed_tests"]:
-                                st.session_state["passed_tests"].remove(c_num)
+                                del str_app.session_state[k]
+                            if f"test_user_answers_{c_num}" in str_app.session_state:
+                                del str_app.session_state[f"test_user_answers_{c_num}"]
+                            if c_num in str_app.session_state["completed_chunks"]:
+                                str_app.session_state["completed_chunks"].remove(c_num)
+                            if c_num in str_app.session_state["passed_tests"]:
+                                str_app.session_state["passed_tests"].remove(c_num)
                             save_current_progress()
                             scroll_to_top()
-                            st.rerun()
+                            str_app.rerun()
 
                 elif sub_mode == "🔄 Làm lại phần này":
-                    st.session_state[f"gop_idx_{c_num}"] = 0
-                    st.session_state[f"chunk_studied_count_{c_num}"] = set()
-                    keys_to_del = [k for k in st.session_state.keys() if k.startswith(f"shuff_gop_{c_num}_") or k.startswith(f"shuff_test_{c_num}_") or k.startswith(f"user_ans_gop_{c_num}_") or k.startswith(f"test_chunk_{c_num}_")]
+                    str_app.session_state[f"gop_idx_{c_num}"] = 0
+                    str_app.session_state[f"chunk_studied_count_{c_num}"] = set()
+                    keys_to_del = [k for k in str_app.session_state.keys() if k.startswith(f"shuff_gop_{c_num}_") or k.startswith(f"shuff_test_{c_num}_") or k.startswith(f"user_ans_gop_{c_num}_") or k.startswith(f"test_chunk_{c_num}_")]
                     for k in keys_to_del:
-                        del st.session_state[k]
-                    if f"submitted_test_{c_num}" in st.session_state:
-                        st.session_state[f"submitted_test_{c_num}"] = False
-                    if f"test_user_answers_{c_num}" in st.session_state:
-                        del st.session_state[f"test_user_answers_{c_num}"]
-                    if f"test_start_time_{c_num}" in st.session_state:
-                        del st.session_state[f"test_start_time_{c_num}"]
-                    if c_num in st.session_state["completed_chunks"]:
-                        st.session_state["completed_chunks"].remove(c_num)
-                    if c_num in st.session_state["passed_tests"]:
-                        st.session_state["passed_tests"].remove(c_num)
+                        del str_app.session_state[k]
+                    if f"submitted_test_{c_num}" in str_app.session_state:
+                        str_app.session_state[f"submitted_test_{c_num}"] = False
+                    if f"test_user_answers_{c_num}" in str_app.session_state:
+                        del str_app.session_state[f"test_user_answers_{c_num}"]
+                    if f"test_start_time_{c_num}" in str_app.session_state:
+                        del str_app.session_state[f"test_start_time_{c_num}"]
+                    if c_num in str_app.session_state["completed_chunks"]:
+                        str_app.session_state["completed_chunks"].remove(c_num)
+                    if c_num in str_app.session_state["passed_tests"]:
+                        str_app.session_state["passed_tests"].remove(c_num)
                     save_current_progress()
-                    st.success(f"Đã reset Phần {c_num + 1} thành công!")
+                    str_app.success(f"Đã reset Phần {c_num + 1} thành công!")
                     scroll_to_top()
-                    st.rerun()
+                    str_app.rerun()
 
                 elif sub_mode == "⚠️ Ôn các câu sai":
-                    st.markdown(f"### Ôn Lại Các Câu Sai Trong Phần {c_num + 1}")
+                    str_app.markdown(f"### Ôn Lại Các Câu Sai Trong Phần {c_num + 1}")
                     chunk_questions_texts = set(q["question"] for q in current_chunk_questions)
-                    wrong_in_chunk = [q for q in st.session_state["wrong_questions"] if q.get("question") in chunk_questions_texts]
+                    wrong_in_chunk = [q for q in str_app.session_state["wrong_questions"] if q.get("question") in chunk_questions_texts]
                     
                     if not wrong_in_chunk:
-                        st.info("🎉 Phần này bạn chưa trả lời sai câu nào cả!")
+                        str_app.info("🎉 Phần này bạn chưa trả lời sai câu nào cả!")
                     else:
-                        if f"wrong_chunk_idx_{c_num}" not in st.session_state:
-                            st.session_state[f"wrong_chunk_idx_{c_num}"] = 0
+                        if f"wrong_chunk_idx_{c_num}" not in str_app.session_state:
+                            str_app.session_state[f"wrong_chunk_idx_{c_num}"] = 0
                             
-                        wc_idx = st.session_state[f"wrong_chunk_idx_{c_num}"]
+                        wc_idx = str_app.session_state[f"wrong_chunk_idx_{c_num}"]
                         if wc_idx >= len(wrong_in_chunk):
                             wc_idx = 0
-                            st.session_state[f"wrong_chunk_idx_{c_num}"] = 0
+                            str_app.session_state[f"wrong_chunk_idx_{c_num}"] = 0
                             
                         wc_item = wrong_in_chunk[wc_idx]
                         
-                        st.markdown(f"""
+                        str_app.markdown(f"""
                             <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <span style="font-size: 1.05rem; font-weight: 700; color: #f43f5e;">⚠️ Ôn câu sai Phần {c_num + 1}</span>
@@ -1102,7 +1099,7 @@ else:
                             </div>
                         """, unsafe_allow_html=True)
                         
-                        st.markdown(f"""
+                        str_app.markdown(f"""
                             <div class="question-title">
                                 <b>Câu hỏi:</b> {wc_item['question']}
                             </div>
@@ -1114,45 +1111,45 @@ else:
                         
                         wc_storage_key = f"user_ans_wc_{c_num}_{wc_idx}"
                         wc_default_idx = None
-                        if st.session_state.get(wc_storage_key) in options:
-                            wc_default_idx = options.index(st.session_state.get(wc_storage_key))
+                        if str_app.session_state.get(wc_storage_key) in options:
+                            wc_default_idx = options.index(str_app.session_state.get(wc_storage_key))
                             
-                        wc_choice = st.radio("Chọn đáp án của bạn:", options, index=wc_default_idx, key=f"radio_wc_{c_num}_{wc_idx}")
+                        wc_choice = str_app.radio("Chọn đáp án của bạn:", options, index=wc_default_idx, key=f"radio_wc_{c_num}_{wc_idx}")
                         if wc_choice is not None:
-                            st.session_state[wc_storage_key] = wc_choice
-                            st.markdown("<br>", unsafe_allow_html=True)
+                            str_app.session_state[wc_storage_key] = wc_choice
+                            str_app.markdown("<br>", unsafe_allow_html=True)
                             if wc_choice.strip().upper().startswith(correct_letter):
-                                st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
-                                st.session_state["wrong_questions"] = [
-                                    w for w in st.session_state["wrong_questions"] 
+                                str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
+                                str_app.session_state["wrong_questions"] = [
+                                    w for w in str_app.session_state["wrong_questions"] 
                                     if w.get("question") != wc_item.get("question")
                                 ]
                                 save_current_progress()
                             else:
-                                st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
+                                str_app.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
                         
-                        st.markdown("<br>", unsafe_allow_html=True)
-                        if st.button("Câu tiếp theo ➡️", type="primary", use_container_width=True, key=f"next_wc_{c_num}_{wc_idx}"):
-                            if st.session_state[f"wrong_chunk_idx_{c_num}"] < len(wrong_in_chunk) - 1:
-                                st.session_state[f"wrong_chunk_idx_{c_num}"] += 1
+                        str_app.markdown("<br>", unsafe_allow_html=True)
+                        if str_app.button("Câu tiếp theo ➡️", type="primary", use_container_width=True, key=f"next_wc_{c_num}_{wc_idx}"):
+                            if str_app.session_state[f"wrong_chunk_idx_{c_num}"] < len(wrong_in_chunk) - 1:
+                                str_app.session_state[f"wrong_chunk_idx_{c_num}"] += 1
                             else:
-                                st.session_state[f"wrong_chunk_idx_{c_num}"] = 0
+                                str_app.session_state[f"wrong_chunk_idx_{c_num}"] = 0
                             scroll_to_top()
-                            st.rerun()
+                            str_app.rerun()
 
         elif mode == "📝 Thi thử (Mock Test)":
-            st.title("📝 Chế Độ Thi Thử (Mock Test)")
-            st.markdown("---")
+            str_app.title("📝 Chế Độ Thi Thử (Mock Test)")
+            str_app.markdown("---")
             
             all_questions = []
             for sh, ql in sheets_data.items():
                 all_questions.extend(ql)
                 
-            if "mock_started" not in st.session_state:
-                st.session_state["mock_started"] = False
+            if "mock_started" not in str_app.session_state:
+                str_app.session_state["mock_started"] = False
                 
-            if not st.session_state["mock_started"]:
-                st.markdown("""
+            if not str_app.session_state["mock_started"]:
+                str_app.markdown("""
                     <div class="welcome-card" style="text-align: left; padding: 30px;">
                         <h3>📋 Thông tin bài thi thử mô phỏng:</h3>
                         <p style="color: #cbd5e1; font-size: 1.1rem; margin-top: 10px;">- Bài thi gồm <b>50 câu hỏi ngẫu nhiên</b> được trộn đều từ toàn bộ ngân hàng câu hỏi an toàn điện.</p>
@@ -1160,22 +1157,22 @@ else:
                         <p style="color: #cbd5e1; font-size: 1.1rem;">- Đánh giá chính xác năng lực và mức độ sẵn sàng trước kỳ thi chính thức.</p>
                     </div>
                 """, unsafe_allow_html=True)
-                st.markdown("<br>", unsafe_allow_html=True)
+                str_app.markdown("<br>", unsafe_allow_html=True)
                 
-                col_m1, col_m2, col_m3 = st.columns([1, 1.5, 1])
+                col_m1, col_m2, col_m3 = str_app.columns([1, 1.5, 1])
                 with col_m2:
-                    if st.button("🚀 Bắt đầu làm bài thi ngay", type="primary", use_container_width=True):
-                        st.session_state["mock_started"] = True
-                        st.session_state["mock_start_time"] = time.time()
-                        st.session_state["mock_questions"] = random.sample(all_questions, min(50, len(all_questions)))
-                        st.session_state["mock_answers"] = {}
-                        keys_to_del = [k for k in st.session_state.keys() if k.startswith("shuff_mock_") or k.startswith("mock_q_")]
+                    if str_app.button("🚀 Bắt đầu làm bài thi ngay", type="primary", use_container_width=True):
+                        str_app.session_state["mock_started"] = True
+                        str_app.session_state["mock_start_time"] = time.time()
+                        str_app.session_state["mock_questions"] = random.sample(all_questions, min(50, len(all_questions)))
+                        str_app.session_state["mock_answers"] = {}
+                        keys_to_del = [k for k in str_app.session_state.keys() if k.startswith("shuff_mock_") or k.startswith("mock_q_")]
                         for k in keys_to_del:
-                            del st.session_state[k]
+                            del str_app.session_state[k]
                         scroll_to_top()
-                        st.rerun()
+                        str_app.rerun()
             else:
-                elapsed_sec = int(time.time() - st.session_state.get("mock_start_time", time.time()))
+                elapsed_sec = int(time.time() - str_app.session_state.get("mock_start_time", time.time()))
                 rem_sec = max(0, 59 * 60 - elapsed_sec)
 
                 timer_code = f"""
@@ -1218,12 +1215,12 @@ else:
                 """
                 components.html(timer_code, height=75)
 
-                mock_qs = st.session_state["mock_questions"]
-                st.write(f"Đang làm bài thi thử chính thức ({len(mock_qs)} câu).")
-                st.markdown("---")
+                mock_qs = str_app.session_state["mock_questions"]
+                str_app.write(f"Đang làm bài thi thử chính thức ({len(mock_qs)} câu).")
+                str_app.markdown("---")
                 
                 for i, q in enumerate(mock_qs):
-                    st.markdown(f"""
+                    str_app.markdown(f"""
                         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                             <span class="badge-topic">{q['sheet']}</span>
                             <span style="color: #94a3b8; font-weight: 600;">Câu {i+1} / {len(mock_qs)}</span>
@@ -1237,15 +1234,15 @@ else:
                     options = shuff_data["options"]
                     
                     mock_ans_key = f"mock_q_{i}"
-                    ans = st.radio("Chọn đáp án:", options, index=(options.index(st.session_state[mock_ans_key]) if st.session_state.get(mock_ans_key) in options else None), key=mock_ans_key, label_visibility="collapsed")
-                    st.session_state["mock_answers"][i] = ans
-                    st.markdown("<hr style='margin: 30px 0; border-color: rgba(56, 189, 248, 0.2);'>", unsafe_allow_html=True)
+                    ans = str_app.radio("Chọn đáp án:", options, index=(options.index(str_app.session_state[mock_ans_key]) if str_app.session_state.get(mock_ans_key) in options else None), key=mock_ans_key, label_visibility="collapsed")
+                    str_app.session_state["mock_answers"][i] = ans
+                    str_app.markdown("<hr style='margin: 30px 0; border-color: rgba(56, 189, 248, 0.2);'>", unsafe_allow_html=True)
                     
-                if st.button("📤 Nộp bài thi thử", type="primary", use_container_width=True):
-                    st.success("Đã nộp bài thành công!")
-                    st.balloons()
+                if str_app.button("📤 Nộp bài thi thử", type="primary", use_container_width=True):
+                    str_app.success("Đã nộp bài thành công!")
+                    str_app.balloons()
                     scroll_to_top()
-                    if st.button("Làm bài thi mới", use_container_width=True):
-                        st.session_state["mock_started"] = False
+                    if str_app.button("Làm bài thi mới", use_container_width=True):
+                        str_app.session_state["mock_started"] = False
                         scroll_to_top()
-                        st.rerun()
+                        str_app.rerun()

@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import openpyxl
 import os
@@ -994,6 +995,7 @@ else:
                     <div class="welcome-card" style="text-align: left; padding: 30px;">
                         <h3>📋 Thông tin bài thi thử mô phỏng:</h3>
                         <p style="color: #cbd5e1; font-size: 1.1rem; margin-top: 10px;">- Bài thi gồm <b>50 câu hỏi ngẫu nhiên</b> được trộn đều từ toàn bộ ngân hàng câu hỏi an toàn điện.</p>
+                        <p style="color: #cbd5e1; font-size: 1.1rem;">- Thời gian làm bài chính thức: <b>59 phút</b> (có đếm ngược trực tiếp).</p>
                         <p style="color: #cbd5e1; font-size: 1.1rem;">- Đánh giá chính xác năng lực và mức độ sẵn sàng trước kỳ thi chính thức.</p>
                     </div>
                 """, unsafe_allow_html=True)
@@ -1003,6 +1005,7 @@ else:
                 with col_m2:
                     if st.button("🚀 Bắt đầu làm bài thi ngay", type="primary", use_container_width=True):
                         st.session_state["mock_started"] = True
+                        st.session_state["mock_start_time"] = time.time()
                         st.session_state["mock_questions"] = random.sample(all_questions, min(50, len(all_questions)))
                         st.session_state["mock_answers"] = {}
                         keys_to_del = [k for k in st.session_state.keys() if k.startswith("shuff_mock_") or k.startswith("mock_q_")]
@@ -1010,6 +1013,49 @@ else:
                             del st.session_state[k]
                         st.rerun()
             else:
+                elapsed_sec = int(time.time() - st.session_state.get("mock_start_time", time.time()))
+                rem_sec = max(0, 59 * 60 - elapsed_sec)
+
+                timer_code = f"""
+                <div style="
+                    background: linear-gradient(135deg, rgba(244, 63, 94, 0.15), rgba(15, 23, 42, 0.8));
+                    border: 1px solid #f43f5e;
+                    border-radius: 12px;
+                    padding: 12px 20px;
+                    text-align: center;
+                    font-family: sans-serif;
+                    box-shadow: 0 0 15px rgba(244, 63, 94, 0.2);
+                ">
+                    <span style="color: #f8fafc; font-size: 1.1rem; font-weight: 600;">⏱️ Thời gian còn lại: </span>
+                    <span id="countdown" style="color: #fb7185; font-size: 1.6rem; font-weight: 800; font-family: monospace;">--:--</span>
+                </div>
+                <script>
+                    var duration = {rem_sec};
+                    var display = document.querySelector('#countdown');
+                    
+                    function updateTimer() {{
+                        var minutes = parseInt(duration / 60, 10);
+                        var seconds = parseInt(duration % 60, 10);
+
+                        minutes = minutes < 10 ? "0" + minutes : minutes;
+                        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                        display.textContent = minutes + ":" + seconds;
+
+                        if (duration <= 0) {{
+                            display.textContent = "00:00 - HẾT GIỜ!";
+                            display.style.color = "#ff4d4d";
+                        }} else {{
+                            duration--;
+                        }}
+                    }}
+                    
+                    updateTimer();
+                    setInterval(updateTimer, 1000);
+                </script>
+                """
+                components.html(timer_code, height=75)
+
                 mock_qs = st.session_state["mock_questions"]
                 st.write(f"Đang làm bài thi thử chính thức ({len(mock_qs)} câu).")
                 st.markdown("---")

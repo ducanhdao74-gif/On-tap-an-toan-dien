@@ -1640,11 +1640,6 @@ if str_app.button(
 
     time.sleep(1)
     str_app.rerun()
-      str_app.error(f"Lỗi gửi email: {e}")
-# --- HOÀN THÀNH PHIÊN ÔN TẬP (1 NÚT DUY NHẤT) ---
-str_app.markdown("---")
-str_app.markdown("### 🏁 Hoàn thành phiên ôn tập")
-
 if str_app.button(
     "🏠 Hoàn thành phiên ôn tập & Về màn hình Welcome",
     type="primary",

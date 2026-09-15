@@ -784,13 +784,59 @@ else:
 
                 elif sub_mode == "📝 Bài kiểm tra chốt kiến thức":
                     st.markdown(f"### Bài Kiểm Tra - Phần {c_num + 1} ({actual_chunk_len} câu)")
-                    st.markdown("---")
                     
                     submitted_key = f"submitted_test_{c_num}"
                     if submitted_key not in st.session_state:
                         st.session_state[submitted_key] = False
+
+                    if f"test_start_time_{c_num}" not in st.session_state:
+                        st.session_state[f"test_start_time_{c_num}"] = time.time()
                         
                     if not st.session_state[submitted_key]:
+                        elapsed_sec = int(time.time() - st.session_state.get(f"test_start_time_{c_num}", time.time()))
+                        rem_sec = max(0, 59 * 60 - elapsed_sec)
+
+                        timer_code = f"""
+                        <div style="
+                            background: linear-gradient(135deg, rgba(244, 63, 94, 0.15), rgba(15, 23, 42, 0.8));
+                            border: 1px solid #f43f5e;
+                            border-radius: 12px;
+                            padding: 12px 20px;
+                            text-align: center;
+                            font-family: sans-serif;
+                            box-shadow: 0 0 15px rgba(244, 63, 94, 0.2);
+                            margin-bottom: 25px;
+                        ">
+                            <span style="color: #f8fafc; font-size: 1.1rem; font-weight: 600;">⏱️ Thời gian kiểm tra còn lại: </span>
+                            <span id="countdown_chunk_{c_num}" style="color: #fb7185; font-size: 1.6rem; font-weight: 800; font-family: monospace;">--:--</span>
+                        </div>
+                        <script>
+                            var duration = {rem_sec};
+                            var display = document.querySelector('#countdown_chunk_{c_num}');
+                            
+                            function updateTimer() {{
+                                var minutes = parseInt(duration / 60, 10);
+                                var seconds = parseInt(duration % 60, 10);
+
+                                minutes = minutes < 10 ? "0" + minutes : minutes;
+                                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                                display.textContent = minutes + ":" + seconds;
+
+                                if (duration <= 0) {{
+                                    display.textContent = "00:00 - HẾT GIỜ!";
+                                    display.style.color = "#ff4d4d";
+                                }} else {{
+                                    duration--;
+                                }}
+                            }}
+                            
+                            updateTimer();
+                            setInterval(updateTimer, 1000);
+                        </script>
+                        """
+                        components.html(timer_code, height=75)
+
                         user_answers = {}
                         for i, q in enumerate(current_chunk_questions):
                             st.markdown(f"""
@@ -886,6 +932,7 @@ else:
                                 
                         if st.button("🔄 Làm lại bài kiểm tra này", type="primary", use_container_width=True):
                             st.session_state[submitted_key] = False
+                            st.session_state[f"test_start_time_{c_num}"] = time.time()
                             keys_to_del = [k for k in st.session_state.keys() if k.startswith(f"shuff_test_{c_num}_") or k.startswith(f"test_chunk_{c_num}_")]
                             for k in keys_to_del:
                                 del st.session_state[k]
@@ -907,6 +954,8 @@ else:
                         st.session_state[f"submitted_test_{c_num}"] = False
                     if f"test_user_answers_{c_num}" in st.session_state:
                         del st.session_state[f"test_user_answers_{c_num}"]
+                    if f"test_start_time_{c_num}" in st.session_state:
+                        del st.session_state[f"test_start_time_{c_num}"]
                     if c_num in st.session_state["completed_chunks"]:
                         st.session_state["completed_chunks"].remove(c_num)
                     if c_num in st.session_state["passed_tests"]:

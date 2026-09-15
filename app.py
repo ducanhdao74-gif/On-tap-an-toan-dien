@@ -549,6 +549,7 @@ else:
       start_idx = c_num * chunk_size
       end_idx = min((c_num + 1) * chunk_size, total_all)
 
+      # Cố định random seed bằng c_num để danh sách chia phần luôn ổn định mỗi lần chạy
       if f"chunk_q_{c_num}" not in st.session_state:
         chunk_qs = all_questions.copy()
         random.seed(42)
@@ -566,7 +567,7 @@ else:
               "📖 Ôn tập từng câu trong phần",
               "📝 Bài kiểm tra chốt kiến thức phần này",
               "🔄 Làm lại phần này (Ôn tập lại từ đầu)",
-              "⚠️ Làm lại các câu sai trong phầnนี้",
+              "⚠️ Làm lại các câu sai trong phần này",
           ],
           horizontal=True,
           label_visibility="collapsed",
@@ -579,7 +580,6 @@ else:
 
         g_idx = st.session_state[f"gop_idx_{c_num}"]
 
-        # KIỂM TRA NẾU ĐÃ LÀM XONG HẾT CÁC CÂU TRONG PHẦN
         if g_idx >= actual_chunk_len:
           st.success(
               f"🎉 Bạn đã hoàn thành phần ôn tập! (Phần {c_num + 1} - Tổng số"
@@ -603,21 +603,13 @@ else:
             if st.button(
                 "📝 Bước đến bài thi (Kiểm tra chốt kiến thức)", type="primary"
             ):
-              # Chuyển trực tiếp sang sub_mode bài kiểm tra
-              # Streamlit không cho thay đổi radio index trực tiếp dễ dàng ngoài việc dùng session_state cho selectbox/radio hoặc hiển thị trực tiếp.
-              # Cách tốt nhất là gán cờ hoặc ta tự động chuyển hướng hiển thị phần kiểm tra luôn ở đây.
               st.session_state[f"auto_switch_test_{c_num}"] = True
               st.rerun()
         else:
-          # Kiểm tra nếu cờ auto_switch_test đang bật thì nhảy thẳng vào bài kiểm tra
           if st.session_state.get(f"auto_switch_test_{c_num}", False):
-            # Reset cờ và chuyển sang tab kiểm tra bằng cách set lại sub_mode giả định
             st.session_state[f"auto_switch_test_{c_num}"] = False
-            # Ta có thể render thẳng nội dung bài kiểm tra hoặc hướng dẫn người dùng bấm tab bài kiểm tra
-            # Hoặc gán lại session_state để render giao diện kiểm tra luôn:
             sub_mode = "📝 Bài kiểm tra chốt kiến thức phần này"
 
-        # Nếu sub_mode vẫn là ôn tập từng câu và g_idx < actual_chunk_len
         if sub_mode == "📖 Ôn tập từng câu trong phần" and g_idx < actual_chunk_len:
           q_item = current_chunk_questions[g_idx]
 
@@ -898,15 +890,22 @@ else:
 
       elif sub_mode == "⚠️ Làm lại các câu sai trong phần này":
         st.markdown(f"### Ôn lại các câu sai trong Phần {c_num + 1}")
-        chunk_questions_texts = set(q["question"] for q in current_chunk_questions)
+
+        # Lọc danh sách câu sai dựa trên bộ lọc chuẩn hóa chuỗi (tránh lệch dấu cách/khoảng trắng)
+        chunk_questions_texts = {
+            q["question"].strip() for q in current_chunk_questions
+        }
         wrong_in_chunk = [
             q
-            for q in st.session_state["wrong_questions"]
-            if q.get("question") in chunk_questions_texts
+            for q in st.session_state.get("wrong_questions", [])
+            if q.get("question", "").strip() in chunk_questions_texts
         ]
 
         if not wrong_in_chunk:
-          st.info("🎉 Phần này bạn chưa trả lời sai câu nào cả!")
+          st.info(
+              "🎉 Phần này ông chưa trả lời sai câu nào trong quá trình ôn tập"
+              " hoặc làm bài kiểm tra cả!"
+          )
         else:
           if f"wrong_chunk_idx_{c_num}" not in st.session_state:
             st.session_state[f"wrong_chunk_idx_{c_num}"] = 0
@@ -953,10 +952,12 @@ else:
             st.session_state[wc_storage_key] = wc_choice
             if wc_choice.strip().upper().startswith(correct_letter):
               st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
+              # Xóa khỏi danh sách câu sai toàn hệ thống khi trả lời đúng
               st.session_state["wrong_questions"] = [
                   w
                   for w in st.session_state["wrong_questions"]
-                  if w.get("question") != wc_item.get("question")
+                  if w.get("question", "").strip()
+                  != wc_item.get("question", "").strip()
               ]
               save_current_progress()
             else:

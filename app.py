@@ -254,7 +254,6 @@ st.markdown("""
         padding: 15px;
         margin-bottom: 15px;
     }
-    /* CSS cho Thẻ Thống Kê Dashboard */
     .metric-card-container {
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
         border: 1px solid rgba(56, 189, 248, 0.25);
@@ -382,7 +381,6 @@ else:
     bookmarked_count = len(st.session_state.get("bookmarked_questions", []))
     wrong_count = len(st.session_state.get("wrong_questions", []))
 
-    # Hiển thị thẻ tiến độ chính
     st.sidebar.markdown(f"""
         <div class="metric-card-container">
             <div class="metric-label">📈 Tiến độ hoàn thành</div>
@@ -392,7 +390,6 @@ else:
     """, unsafe_allow_html=True)
     st.sidebar.progress(progress_ratio)
 
-    # Chia cột 2 thẻ nhỏ: Ghi nhớ & Câu sai
     col_s1, col_s2 = st.sidebar.columns(2)
     with col_s1:
         st.sidebar.markdown(f"""
@@ -409,7 +406,6 @@ else:
             </div>
         """, unsafe_allow_html=True)
 
-    # Hiển thị thẻ thời gian học
     st.sidebar.markdown(f"""
         <div class="metric-card-container">
             <div class="metric-label">⏱️ Tổng thời gian ôn</div>

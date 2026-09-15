@@ -223,6 +223,60 @@ if "passed_tests" not in st.session_state:
 save_current_progress()
 
 st.sidebar.title("⚡ Menu Ôn Tập")
+
+# --- PHẦN SAO LƯU & PHỤC HỒI DỮ LIỆU ĐÁNH DẤU ---
+with st.sidebar.expander("💾 Quản lý & Sao lưu Dữ liệu", expanded=False):
+  st.markdown(
+      "Đề phòng trường hợp server reset mất dữ liệu đánh dấu, ông có thể tải"
+      " file backup về máy."
+  )
+
+  # Nút tải file backup JSON
+  progress_json_str = json.dumps(
+      {
+          "completed_chunks": list(st.session_state.get("completed_chunks", [])),
+          "passed_tests": list(st.session_state.get("passed_tests", [])),
+          "bookmarked_questions": st.session_state.get(
+              "bookmarked_questions", []
+          ),
+          "wrong_questions": st.session_state.get("wrong_questions", []),
+      },
+      ensure_ascii=False,
+      indent=4,
+  )
+  st.download_button(
+      label="📥 Tải file Backup (.json)",
+      data=progress_json_str,
+      file_name="quiz_backup_progress.json",
+      mime="application/json",
+  )
+
+  # Nút tải file backup lên để phục hồi
+  uploaded_backup = st.file_uploader(
+      "📤 Phục hồi từ file backup", type=["json"]
+  )
+  if uploaded_backup is not None:
+    try:
+      backup_data = json.load(uploaded_backup)
+      st.session_state["completed_chunks"] = set(
+          backup_data.get("completed_chunks", [])
+      )
+      st.session_state["passed_tests"] = set(
+          backup_data.get("passed_tests", [])
+      )
+      st.session_state["bookmarked_questions"] = backup_data.get(
+          "bookmarked_questions", []
+      )
+      st.session_state["wrong_questions"] = backup_data.get(
+          "wrong_questions", []
+      )
+      save_current_progress()
+      st.success("✅ Phục hồi dữ liệu thành công!")
+      st.rerun()
+    except Exception as e:
+      st.error(f"Lỗi đọc file backup: {e}")
+
+st.sidebar.markdown("---")
 st.sidebar.markdown("**Chọn chế độ:**")
 mode = st.sidebar.radio(
     "",
@@ -549,7 +603,6 @@ else:
       start_idx = c_num * chunk_size
       end_idx = min((c_num + 1) * chunk_size, total_all)
 
-      # Cố định random seed bằng c_num để danh sách chia phần luôn ổn định mỗi lần chạy
       if f"chunk_q_{c_num}" not in st.session_state:
         chunk_qs = all_questions.copy()
         random.seed(42)
@@ -567,7 +620,7 @@ else:
               "📖 Ôn tập từng câu trong phần",
               "📝 Bài kiểm tra chốt kiến thức phần này",
               "🔄 Làm lại phần này (Ôn tập lại từ đầu)",
-              "⚠️ Làm lại các câu sai trong phần này",
+              "⚠️ Làm lại các câu sai trong phầnนี้",
           ],
           horizontal=True,
           label_visibility="collapsed",
@@ -890,22 +943,15 @@ else:
 
       elif sub_mode == "⚠️ Làm lại các câu sai trong phần này":
         st.markdown(f"### Ôn lại các câu sai trong Phần {c_num + 1}")
-
-        # Lọc danh sách câu sai dựa trên bộ lọc chuẩn hóa chuỗi (tránh lệch dấu cách/khoảng trắng)
-        chunk_questions_texts = {
-            q["question"].strip() for q in current_chunk_questions
-        }
+        chunk_questions_texts = set(q["question"] for q in current_chunk_questions)
         wrong_in_chunk = [
             q
-            for q in st.session_state.get("wrong_questions", [])
-            if q.get("question", "").strip() in chunk_questions_texts
+            for q in st.session_state["wrong_questions"]
+            if q.get("question") in chunk_questions_texts
         ]
 
         if not wrong_in_chunk:
-          st.info(
-              "🎉 Phần này ông chưa trả lời sai câu nào trong quá trình ôn tập"
-              " hoặc làm bài kiểm tra cả!"
-          )
+          st.info("🎉 Phần này bạn chưa trả lời sai câu nào cả!")
         else:
           if f"wrong_chunk_idx_{c_num}" not in st.session_state:
             st.session_state[f"wrong_chunk_idx_{c_num}"] = 0
@@ -952,12 +998,10 @@ else:
             st.session_state[wc_storage_key] = wc_choice
             if wc_choice.strip().upper().startswith(correct_letter):
               st.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
-              # Xóa khỏi danh sách câu sai toàn hệ thống khi trả lời đúng
               st.session_state["wrong_questions"] = [
                   w
                   for w in st.session_state["wrong_questions"]
-                  if w.get("question", "").strip()
-                  != wc_item.get("question", "").strip()
+                  if w.get("question") != wc_item.get("question")
               ]
               save_current_progress()
             else:

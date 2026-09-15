@@ -341,6 +341,18 @@ else:
     # --- GIAO DIỆN CHÍNH SAU KHI BẤM BẮT ĐẦU ---
     st.sidebar.title("⚡ Menu Ôn Tập")
 
+    # --- THANH TIẾN ĐỘ TỔNG QUAN (GLOBAL PROGRESS BAR) ---
+    completed_chunks_set = st.session_state["completed_chunks"].union(st.session_state["passed_tests"])
+    chunk_size_calc = 50
+    total_chunks_count = (total_all_questions // chunk_size_calc) + (1 if total_all_questions % chunk_size_calc != 0 else 0) if total_all_questions > 0 else 1
+    completed_est_count = min(len(completed_chunks_set) * chunk_size_calc, total_all_questions)
+    progress_ratio = completed_est_count / total_all_questions if total_all_questions > 0 else 0.0
+
+    st.sidebar.markdown("### 📈 Tiến Độ Tổng Quan")
+    st.sidebar.progress(progress_ratio)
+    st.sidebar.caption(f"Đã hoàn thành khoảng **{completed_est_count}/{total_all_questions}** câu ({progress_ratio * 100:.1f}%)")
+    st.sidebar.markdown("---")
+
     current_total_seconds = saved_prog.get("total_study_seconds", 0) + (time.time() - st.session_state["start_session_time"])
     current_total_hours = current_total_seconds / 3600.0
 
@@ -354,8 +366,7 @@ else:
 
     if st.sidebar.button("📧 Gửi Email nhắc nhở ngay", use_container_width=True):
         bm_cnt = len(st.session_state["bookmarked_questions"])
-        comp_chunks = st.session_state["completed_chunks"].union(st.session_state["passed_tests"])
-        comp_q_cnt = min(len(comp_chunks) * 50, total_all_questions)
+        comp_q_cnt = completed_est_count
         
         success, err_msg = send_daily_reminder_email(SENDER_EMAIL, comp_q_cnt, total_all_questions, bm_cnt, current_total_hours)
         if success:
@@ -761,6 +772,7 @@ else:
                                 st.session_state["completed_chunks"].add(c_num)
                                 st.session_state["passed_tests"].add(c_num)
                                 save_current_progress()
+                                st.balloons() # Pháo hoa ăn mừng khi nộp bài xong!
                                 st.rerun()
                     else:
                         c_correct = st.session_state.get(f"result_correct_{c_num}", 0)
@@ -937,6 +949,7 @@ else:
                     
                 if st.button("📤 Nộp bài thi", type="primary"):
                     st.success("Đã nộp bài thành công!")
+                    st.balloons() # Pháo hoa ăn mừng khi nộp bài thi thử!
                     if st.button("Làm bài thi mới"):
                         st.session_state["mock_started"] = False
                         st.rerun()

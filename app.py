@@ -3,6 +3,7 @@ import json
 import os
 import random
 import smtplib
+import time
 from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -21,19 +22,76 @@ SENDER_EMAIL = "ducanhdao74@gmail.com"
 SENDER_PASSWORD = "ospeifebafqlufpi"
 
 
+def load_saved_progress():
+  if os.path.exists(PROGRESS_FILE):
+    try:
+      with open(PROGRESS_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+    except:
+      pass
+  return {
+      "completed_chunks": [],
+      "passed_tests": [],
+      "bookmarked_questions": [],
+      "wrong_questions": [],
+      "total_study_seconds": 0,
+      "last_login_date": "",
+  }
+
+
+def save_current_progress():
+  # Cập nhật thời gian tích lũy nếu có session chạy
+  if "start_session_time" in st.session_state:
+    elapsed = time.time() - st.session_state["start_session_time"]
+    st.session_state["start_session_time"] = time.time()
+    saved_data = load_saved_progress()
+    saved_data["total_study_seconds"] = (
+        saved_data.get("total_study_seconds", 0) + elapsed
+    )
+  else:
+    saved_data = load_saved_progress()
+
+  data = {
+      "completed_chunks": list(st.session_state.get("completed_chunks", [])),
+      "passed_tests": list(st.session_state.get("passed_tests", [])),
+      "bookmarked_questions": st.session_state.get("bookmarked_questions", []),
+      "wrong_questions": st.session_state.get("wrong_questions", []),
+      "total_study_seconds": saved_data.get("total_study_seconds", 0),
+      "last_login_date": st.session_state.get("last_login_date", ""),
+  }
+  try:
+    with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
+      json.dump(data, f, ensure_ascii=False, indent=4)
+    return True
+  except:
+    return False
+
+
+# --- CẬP NHẬT HÀM GỬI EMAIL THEO YÊU CẦU ---
 def send_daily_reminder_email(
-    receiver_email, bookmarked_count, wrong_count, completed_parts
+    receiver_email,
+    completed_questions_count,
+    total_questions_count,
+    bookmarked_count,
+    total_study_hours,
 ):
   subject = "⚡ Nhắc nhở ôn tập An Toàn Điện mỗi ngày!"
+  
+  # Định dạng thời gian hiển thị (nếu dưới 1 giờ thì hiện phút cho trực quan)
+  if total_study_hours < 1:
+    time_str = f"{int(total_study_hours * 60)} phút"
+  else:
+    time_str = f"{total_study_hours:.1f} giờ"
+
   body = f"""
     Chào Đức Anh,
     
     Hôm nay là một ngày mới rồi! Hãy dành ra chút thời gian để vào ôn tập ngân hàng câu hỏi An Toàn Điện nhé:
     
     📊 Tiến độ hiện tại của ông:
-    - Số phần đã hoàn thành: {completed_parts}/5 phần
+    - Số câu đã hoàn thành: {completed_questions_count}/{total_questions_count} câu
+    - Tổng thời gian đã ôn tập: {time_str}
     - Số câu hỏi đang cần ghi nhớ (Star): {bookmarked_count} câu
-    - Số câu trả lời sai cần luyện lại: {wrong_count} câu
     
     Chúc ông ôn thi thật tốt và đạt kết quả cao!
     """
@@ -53,107 +111,6 @@ def send_daily_reminder_email(
     return True, "Thành công"
   except Exception as e:
     return False, str(e)
-
-
-def load_saved_progress():
-  if os.path.exists(PROGRESS_FILE):
-    try:
-      with open(PROGRESS_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
-    except:
-      pass
-  return {
-      "completed_chunks": [0],
-      "passed_tests": [0],
-      "bookmarked_questions": [],
-      "wrong_questions": [],
-      "last_login_date": "",
-  }
-
-
-def save_current_progress():
-  data = {
-      "completed_chunks": list(st.session_state.get("completed_chunks", [])),
-      "passed_tests": list(st.session_state.get("passed_tests", [])),
-      "bookmarked_questions": st.session_state.get("bookmarked_questions", []),
-      "wrong_questions": st.session_state.get("wrong_questions", []),
-      "last_login_date": st.session_state.get("last_login_date", ""),
-  }
-  try:
-    with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
-      json.dump(data, f, ensure_ascii=False, indent=4)
-    return True
-  except:
-    return False
-
-
-# --- HỆ THỐNG LÊN LỊCH TỰ ĐỘNG GỬI MỖI 7H SÁNG ---
-def scheduled_job():
-  saved_data = load_saved_progress()
-  bm_cnt = len(saved_data.get("bookmarked_questions", []))
-  wr_cnt = len(saved_data.get("wrong_questions", []))
-  comp_cnt = len(
-      set(saved_data.get("completed_chunks", [])).union(
-          set(saved_data.get("passed_tests", []))
-      )
-  )
-  send_daily_reminder_email(SENDER_EMAIL, bm_cnt, wr_cnt, comp_cnt)
-
-
-@st.cache_resource
-def start_scheduler():
-  scheduler = BackgroundScheduler()
-  # Đặt lịch chạy đúng 7:00 sáng mỗi ngày
-  scheduler.add_job(scheduled_job, "cron", hour=7, minute=0)
-  scheduler.start()
-  return scheduler
-
-
-# Khởi động ngầm bộ đếm giờ
-try:
-  start_scheduler()
-except Exception:
-  pass
-
-
-st.markdown(
-    """
-    <style>
-    div[data-testid="stHorizontalBlock"] div.stRadio [role="radiogroup"] {
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: stretch !important;
-    }
-    div[data-testid="stHorizontalBlock"] div.stRadio [role="radiogroup"] label {
-        text-align: left !important;
-        font-size: 1rem !important;
-    }
-
-    .question-box {
-        background-color: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0px !important;
-        margin-bottom: 15px;
-    }
-    .question-box h4 {
-        font-size: 1.2rem !important;
-        line-height: 1.6;
-        color: #f8fafc !important;
-        font-weight: 600;
-    }
-    
-    div[data-testid="stRadio"] > div[role="radiogroup"] label p,
-    div[data-testid="stRadio"] > div[role="radiogroup"] label span,
-    div[data-testid="stRadio"] > div[role="radiogroup"] label div {
-        font-size: 19px !important;
-        line-height: 1.5 !important;
-        color: #f1f5f9 !important;
-    }
-    </style>
-""",
-    unsafe_allow_html=True,
-)
 
 
 @st.cache_data
@@ -242,6 +199,105 @@ def load_data():
     return None, f"Lỗi đọc file: {str(e)}"
 
 
+# Khởi tạo thời gian phiên làm việc để tính thời gian ôn tập
+if "start_session_time" not in st.session_state:
+  st.session_state["start_session_time"] = time.time()
+
+sheets_data, error_message = load_data()
+saved_prog = load_saved_progress()
+
+# Tính tổng số câu hỏi toàn bộ Excel
+total_all_questions = 0
+if sheets_data:
+  for sh, ql in sheets_data.items():
+    total_all_questions += len(ql)
+
+if "wrong_questions" not in st.session_state:
+  st.session_state["wrong_questions"] = saved_prog.get("wrong_questions", [])
+if "bookmarked_questions" not in st.session_state:
+  st.session_state["bookmarked_questions"] = saved_prog.get(
+      "bookmarked_questions", []
+  )
+if "completed_chunks" not in st.session_state:
+  st.session_state["completed_chunks"] = set(
+      saved_prog.get("completed_chunks", [])
+  )
+if "passed_tests" not in st.session_state:
+  st.session_state["passed_tests"] = set(saved_prog.get("passed_tests", []))
+
+save_current_progress()
+
+# --- HỆ THỐNG LÊN LỊCH TỰ ĐỘNG GỬI MỖI 7H SÁNG ---
+def scheduled_job():
+  saved_data = load_saved_progress()
+  bm_cnt = len(saved_data.get("bookmarked_questions", []))
+  
+  # Tính số câu hoàn thành dựa trên các phần (chunk) 50 câu đã pass/hoàn thành
+  completed_chunks_set = set(saved_data.get("completed_chunks", [])).union(
+      set(saved_data.get("passed_tests", []))
+  )
+  comp_q_cnt = min(len(completed_chunks_set) * 50, total_all_questions)
+  
+  total_hours = saved_data.get("total_study_seconds", 0) / 3600.0
+  send_daily_reminder_email(
+      SENDER_EMAIL, comp_q_cnt, total_all_questions, bm_cnt, total_hours
+  )
+
+
+@st.cache_resource
+def start_scheduler():
+  scheduler = BackgroundScheduler()
+  scheduler.add_job(scheduled_job, "cron", hour=7, minute=0)
+  scheduler.start()
+  return scheduler
+
+
+try:
+  start_scheduler()
+except Exception:
+  pass
+
+
+st.markdown(
+    """
+    <style>
+    div[data-testid="stHorizontalBlock"] div.stRadio [role="radiogroup"] {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: stretch !important;
+    }
+    div[data-testid="stHorizontalBlock"] div.stRadio [role="radiogroup"] label {
+        text-align: left !important;
+        font-size: 1rem !important;
+    }
+
+    .question-box {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0px !important;
+        margin-bottom: 15px;
+    }
+    .question-box h4 {
+        font-size: 1.2rem !important;
+        line-height: 1.6;
+        color: #f8fafc !important;
+        font-weight: 600;
+    }
+    
+    div[data-testid="stRadio"] > div[role="radiogroup"] label p,
+    div[data-testid="stRadio"] > div[role="radiogroup"] label span,
+    div[data-testid="stRadio"] > div[role="radiogroup"] label div {
+        font-size: 19px !important;
+        line-height: 1.5 !important;
+        color: #f1f5f9 !important;
+    }
+    </style>
+""",
+    unsafe_allow_html=True,
+)
+
+
 def get_shuffled_options(q_item, session_key):
   if session_key not in st.session_state:
     orig_options = q_item["options"]
@@ -280,49 +336,46 @@ def get_shuffled_options(q_item, session_key):
   return st.session_state[session_key]
 
 
-sheets_data, error_message = load_data()
-saved_prog = load_saved_progress()
-
-if "wrong_questions" not in st.session_state:
-  st.session_state["wrong_questions"] = saved_prog.get("wrong_questions", [])
-if "bookmarked_questions" not in st.session_state:
-  st.session_state["bookmarked_questions"] = saved_prog.get(
-      "bookmarked_questions", []
-  )
-if "completed_chunks" not in st.session_state:
-  st.session_state["completed_chunks"] = set(
-      saved_prog.get("completed_chunks", [])
-  )
-if "passed_tests" not in st.session_state:
-  st.session_state["passed_tests"] = set(saved_prog.get("passed_tests", []))
-
-save_current_progress()
-
 st.sidebar.title("⚡ Menu Ôn Tập")
+
+# Tính tổng thời gian học thực tế bao gồm cả session hiện tại
+current_total_seconds = saved_prog.get("total_study_seconds", 0) + (
+    time.time() - st.session_state["start_session_time"]
+)
+current_total_hours = current_total_seconds / 3600.0
+
+st.sidebar.info(
+    f"⏱️ Tổng thời gian ôn: **{current_total_hours:.2f} giờ** (~"
+    f" {int(current_total_seconds // 60)} phút)"
+)
 
 if st.sidebar.button(
     "💾 Lưu lại tiến độ hiện tại", type="primary", use_container_width=True
 ):
   if save_current_progress():
     st.sidebar.success(
-        "✅ Đã lưu tiến độ thành công! Thoát ra thoải mái không lo mất."
+        "✅ Đã lưu tiến độ & thời gian học thành công! Thoát ra thoải mái không"
+        " lo mất."
     )
   else:
     st.sidebar.error("❌ Lỗi khi lưu dữ liệu!")
 
 if st.sidebar.button("📧 Gửi Email nhắc nhở ngay", use_container_width=True):
   bm_cnt = len(st.session_state["bookmarked_questions"])
-  wr_cnt = len(st.session_state["wrong_questions"])
-  comp_cnt = len(
-      st.session_state["completed_chunks"].union(
-          st.session_state["passed_tests"]
-      )
+  comp_chunks = st.session_state["completed_chunks"].union(
+      st.session_state["passed_tests"]
   )
+  comp_q_cnt = min(len(comp_chunks) * 50, total_all_questions)
+
   success, err_msg = send_daily_reminder_email(
-      SENDER_EMAIL, bm_cnt, wr_cnt, comp_cnt
+      SENDER_EMAIL,
+      comp_q_cnt,
+      total_all_questions,
+      bm_cnt,
+      current_total_hours,
   )
   if success:
-    st.sidebar.success("✅ Đã gửi email nhắc nhở vào Gmail của ông!")
+    st.sidebar.success("✅ Đã gửi email nhắc nhở kèm tiến độ mới vào Gmail!")
   else:
     st.sidebar.error(f"❌ Gửi mail thất bại: {err_msg}")
 
@@ -1032,7 +1085,7 @@ else:
               st.session_state["wrong_questions"] = [
                   w
                   for w in st.session_state["wrong_questions"]
-                  if w.get("question") != wc_item.get("question")
+                  if w.get("question"] != wc_item.get("question")
               ]
               save_current_progress()
             else:

@@ -1625,7 +1625,7 @@ if str_app.sidebar.button(
     )
 
     try:
-      # send_daily_reminder_email()
+      send_daily_reminder_email()
       str_app.sidebar.success("Đã gửi báo cáo tự động về Gmail thành công!")
     except Exception as e:
       str_app.sidebar.error(f"Lỗi gửi email: {e}")
@@ -1634,5 +1634,5 @@ if str_app.sidebar.button(
     for key in list(str_app.session_state.keys()):
       del str_app.session_state[key]
 
-    time.sleep(1)
+    time.sleep(2)
     str_app.rerun()

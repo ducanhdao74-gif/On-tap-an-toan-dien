@@ -1555,4 +1555,111 @@ else:
                         del str_app.session_state[key]
                     str_app.success("Đã thiết lập lại toàn bộ ứng dụng từ đầu!")
                     time.sleep(1)
-                    str_app.rerun()
+                    str_app.rerun()import streamlit as st
+import gspread
+from google.oauth2.service_account import Credentials
+
+# --- KẾT NỐI GOOGLE SHEETS ---
+@st.cache_resource
+def init_connection():
+    # Lấy thông tin từ Streamlit Secrets đã cấu hình
+    creds_dict = dict(st.secrets["gcp_service_account"])
+    scope = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+    client = gspread.authorize(creds)
+    return client
+
+client = init_connection()
+
+# Mở Google Sheet có tên là "quiz_progress"
+sheet = client.open("quiz_progress").sheet1
+
+# --- HÀM ĐỌC DỮ LIỆU ---
+def load_progress():
+    try:
+        # Lấy toàn bộ dữ liệu từ sheet (trả về danh sách các dict)
+        data = sheet.get_all_records()
+        return data
+    except Exception as e:
+        st.error(f"Lỗi khi đọc dữ liệu từ Google Sheets: {e}")
+        return []
+
+# --- HÀM LƯU DỮ LIỆU ---
+def save_progress(user_data):
+    try:
+        # Xóa nội dung cũ trên sheet trước khi ghi mới
+        sheet.clear()
+        
+        if not user_data:
+            return
+
+        # 1. Trường hợp user_data là danh sách các dict (khớp với định dạng get_all_records())
+        if isinstance(user_data, list) and len(user_data) > 0 and isinstance(user_data[0], dict):
+            headers = list(user_data[0].keys())
+            rows = [[item.get(h, "") for h in headers] for h in user_data]
+            sheet.update('A1', [headers] + rows)
+            
+        # 2. Trường hợp user_data là Pandas DataFrame
+        elif hasattr(user_data, "columns") and hasattr(user_data, "values"):
+            headers = list(user_data.columns)
+            rows = user_data.values.tolist()
+            sheet.update('A1', [headers] + rows)
+            
+        # 3. Trường hợp user_data là danh sách các list (list of lists)
+        elif isinstance(user_data, list):
+            sheet.update('A1', user_data)
+            
+        st.success("Đã lưu tiến trình lên Google Sheets thành công!")
+    except Exception as e:
+        st.error(f"Lỗi khi lưu dữ liệu lên Google Sheets: {e}")import gspread
+from google.oauth2.service_account import Credentials
+
+# --- KẾT NỐI GOOGLE SHEETS ---
+@str_app.cache_resource
+def init_gspread_connection():
+    try:
+        creds_dict = dict(str_app.secrets["gcp_service_account"])
+        scope = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive"
+        ]
+        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+        client = gspread.authorize(creds)
+        # Mở Google Sheet có tên là "quiz_progress"
+        sheet = client.open("quiz_progress").sheet1
+        return sheet
+    except Exception:
+        return None
+
+# Tích hợp vào hàm load/save tiến độ của ứng dụng
+def load_saved_progress():
+    sheet = init_gspread_connection()
+    if sheet:
+        try:
+            data = sheet.get_all_records()
+            if data and len(data) > 0:
+                # Trả về bản ghi đầu tiên hoặc cấu trúc phù hợp
+                return data[0] 
+        except:
+            pass
+            
+    # Fallback về file JSON cục bộ nếu chưa cấu hình secrets Google Sheets
+    if os.path.exists(PROGRESS_FILE):
+        try:
+            with open(PROGRESS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            pass
+            
+    return {
+        "completed_chunks": [],
+        "passed_tests": [],
+        "bookmarked_questions": [],
+        "wrong_questions": [],
+        "spaced_repetition_data": {},
+        "total_study_seconds": 0,
+        "last_login_date": ""
+    }

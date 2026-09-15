@@ -254,7 +254,7 @@ try:
 except Exception:
     pass
 
-# --- CYBERPUNK / DARK TECH GLASSMORPHISM CSS & QUESTION CARD ---
+# --- CYBERPUNK / DARK TECH GLASSMORPHISM CSS & OPTION CARDS ---
 str_app.markdown("""
     <style>
     @keyframes shine {
@@ -321,11 +321,11 @@ str_app.markdown("""
         box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         backdrop-filter: blur(8px);
     }
-    /* Giao diện khung thẻ câu hỏi (tích hợp từ code mẫu của bạn) */
+    /* Khung thẻ câu hỏi */
     .question-card {
         background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.75));
         border: 1px solid rgba(56, 189, 248, 0.25);
-        border-left: 6px solid #38bdf8; /* Viền xanh tạo điểm nhấn bên trái */
+        border-left: 6px solid #38bdf8;
         padding: 20px;
         border-radius: 12px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -339,12 +339,34 @@ str_app.markdown("""
         font-weight: 600;
         margin: 0;
     }
+    
+    /* --- NÂNG CẤP GIAO DIỆN CHỌN ĐÁP ÁN (OPTION CARDS) --- */
+    div[data-testid="stRadio"] > div[role="radiogroup"] {
+        gap: 12px !important;
+    }
+    div[data-testid="stRadio"] > div[role="radiogroup"] label {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.7)) !important;
+        border: 1px solid rgba(56, 189, 248, 0.25) !important;
+        border-radius: 12px !important;
+        padding: 14px 18px !important;
+        width: 100% !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+        transition: all 0.3s ease !important;
+        cursor: pointer !important;
+    }
+    div[data-testid="stRadio"] > div[role="radiogroup"] label:hover {
+        border-color: #38bdf8 !important;
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(56, 189, 248, 0.2)) !important;
+        box-shadow: 0 0 20px rgba(56, 189, 248, 0.35) !important;
+        transform: translateX(4px);
+    }
     div[data-testid="stRadio"] > div[role="radiogroup"] label p,
     div[data-testid="stRadio"] > div[role="radiogroup"] label span,
     div[data-testid="stRadio"] > div[role="radiogroup"] label div {
         font-size: 1.05rem !important;
         line-height: 1.5 !important;
         color: #f1f5f9 !important;
+        font-weight: 500 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -562,7 +584,6 @@ else:
                     if len(parts) > 1:
                         clean_q_text = parts[1].strip()
 
-                # Áp dụng khung thẻ question-card cho nội dung câu hỏi
                 str_app.markdown(f"""
                     <div class="question-card">
                         <div class="question-title">

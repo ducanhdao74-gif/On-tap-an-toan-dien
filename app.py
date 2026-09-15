@@ -17,12 +17,20 @@ st.set_page_config(
 # --- KẾT NỐI GOOGLE SHEETS ---
 @st.cache_resource
 def init_connection():
-    creds_dict = dict(st.secrets["gcp_service_account"])
     scope = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive"
     ]
-    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+    # Kiểm tra cả 2 dạng tên file viết hoa/thường để không bao giờ bị lỗi
+    if os.path.exists("Credentials.json"):
+        creds = Credentials.from_service_account_file("Credentials.json", scopes=scope)
+    elif os.path.exists("credentials.json"):
+        creds = Credentials.from_service_account_file("credentials.json", scopes=scope)
+    else:
+        # Fallback đọc từ st.secrets nếu không tìm thấy file
+        creds_dict = dict(st.secrets["gcp_service_account"])
+        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+        
     client = gspread.authorize(creds)
     return client
 

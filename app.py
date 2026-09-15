@@ -14,6 +14,10 @@ st.set_page_config(
     layout="wide"
 )
 
+from google.oauth2.service_account import Credentials
+import gspread
+import streamlit as st
+
 # --- KẾT NỐI GOOGLE SHEETS ---
 @st.cache_resource
 def init_connection():
@@ -22,10 +26,10 @@ def init_connection():
         "https://www.googleapis.com/auth/drive"
     ]
     
-    # Đọc trực tiếp và an toàn từ Streamlit Secrets
+    # Biến toàn bộ section trong secrets thành dictionary tiêu chuẩn
     creds_dict = dict(st.secrets["gcp_service_account"])
+    
     creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
-        
     client = gspread.authorize(creds)
     return client
 

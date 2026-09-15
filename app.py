@@ -1,6 +1,11 @@
+import datetime
 import json
 import os
 import random
+import smtplib
+from email.header import Header
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 import pandas as pd
 import streamlit as st
 
@@ -9,6 +14,45 @@ st.set_page_config(
 )
 
 PROGRESS_FILE = "quiz_progress.json"
+
+# --- CẤU HÌNH GMAIL GỬI THÔNG BÁO ---
+SENDER_EMAIL = "ducanhdao74@gmail.com"
+SENDER_PASSWORD = "xhkvxznlejcephcar"
+
+
+def send_daily_reminder_email(
+    receiver_email, bookmarked_count, wrong_count, completed_parts
+):
+  subject = "⚡ Nhắc nhở ôn tập An Toàn Điện mỗi ngày!"
+  body = f"""
+    Chào Đức Anh,
+    
+    Hôm nay là một ngày mới rồi! Hãy dành ra chút thời gian để vào ôn tập ngân hàng câu hỏi An Toàn Điện nhé:
+    
+    📊 Tiến độ hiện tại của ông:
+    - Số phần đã hoàn thành: {completed_parts}/5 phần
+    - Số câu hỏi đang cần ghi nhớ (Star): {bookmarked_count} câu
+    - Số câu trả lời sai cần luyện lại: {wrong_count} câu
+    
+    Chúc ông ôn thi thật tốt và đạt kết quả cao!
+    """
+
+  message = MIMEMultipart()
+  message["From"] = SENDER_EMAIL
+  message["To"] = receiver_email
+  message["Subject"] = Header(subject, "utf-8")
+  message.attach(MIMEText(body, "plain", "utf-8"))
+
+  try:
+    server = smtplib.SMTP("smtp.gmail.com", 587)
+    server.starttls()
+    server.login(SENDER_EMAIL, SENDER_PASSWORD)
+    server.sendmail(SENDER_EMAIL, receiver_email, message.as_string())
+    server.quit()
+    return True
+  except Exception as e:
+    print(f"Lỗi gửi mail: {e}")
+    return False
 
 
 def load_saved_progress():
@@ -23,6 +67,7 @@ def load_saved_progress():
       "passed_tests": [0],
       "bookmarked_questions": [],
       "wrong_questions": [],
+      "last_login_date": "",
   }
 
 
@@ -32,6 +77,7 @@ def save_current_progress():
       "passed_tests": list(st.session_state.get("passed_tests", [])),
       "bookmarked_questions": st.session_state.get("bookmarked_questions", []),
       "wrong_questions": st.session_state.get("wrong_questions", []),
+      "last_login_date": st.session_state.get("last_login_date", ""),
   }
   try:
     with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
@@ -221,22 +267,48 @@ if "completed_chunks" not in st.session_state:
 if "passed_tests" not in st.session_state:
   st.session_state["passed_tests"] = set(saved_prog.get("passed_tests", []))
 
-# Tự động lưu ngầm mỗi khi thao tác
+# Tự động kiểm tra sang ngày mới để gửi mail
+today_str = datetime.date.today().strftime("%Y-%m-%d")
+last_login = saved_prog.get("last_login_date", "")
+
+if last_login != today_str:
+  st.session_state["last_login_date"] = today_str
+  save_current_progress()
+  bm_cnt = len(st.session_state["bookmarked_questions"])
+  wr_cnt = len(st.session_state["wrong_questions"])
+  comp_cnt = len(
+      st.session_state["completed_chunks"].union(
+          st.session_state["passed_tests"]
+      )
+  )
+  send_daily_reminder_email(SENDER_EMAIL, bm_cnt, wr_cnt, comp_cnt)
+
 save_current_progress()
 
 st.sidebar.title("⚡ Menu Ôn Tập")
 
-# --- NÚT LƯU TIẾN ĐỘ TRỰC TIẾP ---
 if st.sidebar.button(
     "💾 Lưu lại tiến độ hiện tại", type="primary", use_container_width=True
 ):
   if save_current_progress():
     st.sidebar.success(
-        "✅ Đã lưu toàn bộ câu đánh dấu & tiến độ thành công! Thoát ra thoải mái"
-        " không lo mất."
+        "✅ Đã lưu tiến độ thành công! Thoát ra thoải mái không lo mất."
     )
   else:
     st.sidebar.error("❌ Lỗi khi lưu dữ liệu!")
+
+if st.sidebar.button("📧 Gửi Email nhắc nhở ngay", use_container_width=True):
+  bm_cnt = len(st.session_state["bookmarked_questions"])
+  wr_cnt = len(st.session_state["wrong_questions"])
+  comp_cnt = len(
+      st.session_state["completed_chunks"].union(
+          st.session_state["passed_tests"]
+      )
+  )
+  if send_daily_reminder_email(SENDER_EMAIL, bm_cnt, wr_cnt, comp_cnt):
+    st.sidebar.success("✅ Đã gửi email nhắc nhở vào Gmail của ông!")
+  else:
+    st.sidebar.error("❌ Gửi mail thất bại!")
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Chọn chế độ:**")
@@ -334,7 +406,7 @@ else:
           st.session_state["bookmarked_questions"].append(q_item)
           st.toast(
               "Đã thêm vào danh sách cần ghi nhớ! Hãy bấm nút 'Lưu lại tiến độ"
-              " hiện tại' ở menu bên trái để ghi nhớ.",
+              " hiện tại'.",
               icon="⭐",
           )
         save_current_progress()
@@ -466,10 +538,7 @@ else:
 
     bm_list = st.session_state["bookmarked_questions"]
     if not bm_list:
-      st.info(
-          "⭐ Bạn chưa đánh dấu câu hỏi nào cần ghi nhớ cả. Hãy bấm 'Đánh dấu"
-          " câu cần ghi nhớ' trong lúc làm bài để lưu lại nhé!"
-      )
+      st.info("⭐ Bạn chưa đánh dấu câu hỏi nào cần ghi nhớ cả.")
     else:
       st.write(
           f"Tổng số câu bạn đã đánh dấu ghi nhớ: **{len(bm_list)}** câu."
@@ -586,7 +655,7 @@ else:
               "📖 Ôn tập từng câu trong phần",
               "📝 Bài kiểm tra chốt kiến thức phần này",
               "🔄 Làm lại phần này (Ôn tập lại từ đầu)",
-              "⚠️ Làm lại các câu sai trong phầnนี้",
+              "⚠️ Làm lại các câu sai trong phần này",
           ],
           horizontal=True,
           label_visibility="collapsed",
@@ -600,10 +669,7 @@ else:
         g_idx = st.session_state[f"gop_idx_{c_num}"]
 
         if g_idx >= actual_chunk_len:
-          st.success(
-              f"🎉 Bạn đã hoàn thành phần ôn tập! (Phần {c_num + 1} - Tổng số"
-              f" {actual_chunk_len} câu)"
-          )
+          st.success(f"🎉 Bạn đã hoàn thành phần ôn tập (Phần {c_num + 1})!")
           st.markdown("---")
           col_btn1, col_btn2 = st.columns(2)
           with col_btn1:
@@ -633,8 +699,8 @@ else:
           q_item = current_chunk_questions[g_idx]
 
           st.markdown(
-              f"### Đang ôn: Phần {c_num + 1} (Hỗn hợp chuyên đề) — *(Thuộc"
-              f" chuyên đề: {q_item['sheet']})*"
+              f"### Đang ôn: Phần {c_num + 1} — *(Thuộc chuyên đề:"
+              f" {q_item['sheet']})*"
           )
           st.markdown("---")
 
@@ -664,11 +730,7 @@ else:
               st.toast("Đã bỏ đánh dấu câu hỏi!", icon="ℹ️")
             else:
               st.session_state["bookmarked_questions"].append(q_item)
-              st.toast(
-                  "Đã thêm vào danh sách cần ghi nhớ! Hãy bấm nút 'Lưu lại tiến độ"
-                  " hiện tại' ở menu bên trái.",
-                  icon="⭐",
-              )
+              st.toast("Đã thêm vào danh sách cần ghi nhớ!", icon="⭐")
             save_current_progress()
             st.rerun()
 
@@ -828,24 +890,14 @@ else:
               wrong_items_in_test.append((i, q, selected, shuff_data))
 
           if not wrong_items_in_test:
-            st.info(
-                "🎉 Tuyệt vời! Ông đã trả lời đúng tất cả các câu trong phần"
-                " này."
-            )
+            st.info("🎉 Tuyệt vời! Ông đã trả lời đúng tất cả các câu.")
           else:
-            st.write(
-                f"Ông trả lời sai **{len(wrong_items_in_test)}** câu. Dưới đây"
-                " là chi tiết các câu sai, đáp án ông đã chọn và đáp án đúng"
-                " chuẩn:"
-            )
             for q_idx, q_item, user_sel, shuff_info in wrong_items_in_test:
               st.markdown(
                   f"**Câu {q_idx + 1}** *(Thuộc chuyên đề: {q_item['sheet']})*"
               )
               st.markdown(f"> **{q_item['question']}**")
-
               correct_letter = shuff_info["correct"]
-
               for opt in shuff_info["options"]:
                 opt_letter = opt.strip().upper()[:1]
                 is_this_correct = opt_letter == correct_letter
@@ -857,10 +909,6 @@ else:
                   st.markdown(f"- ❌ ~~{opt}~~ *(Ông đã chọn)*")
                 else:
                   st.markdown(f"- {opt}")
-
-              if not user_sel:
-                st.markdown("👉 *Ông chưa chọn đáp án nào cho câu này.*")
-
               st.markdown("---")
 
           if st.button("🔄 Làm lại bài kiểm tra này"):
@@ -905,10 +953,7 @@ else:
         if c_num in st.session_state["passed_tests"]:
           st.session_state["passed_tests"].remove(c_num)
         save_current_progress()
-        st.success(
-            f"Đã reset và xáo trộn lại vị trí đáp án của Phần {c_num + 1}"
-            " thành công!"
-        )
+        st.success(f"Đã reset Phần {c_num + 1} thành công!")
         st.rerun()
 
       elif sub_mode == "⚠️ Làm lại các câu sai trong phần này":

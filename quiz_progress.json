@@ -1,6 +1,6 @@
 {
-    "completed_chunks": [],
-    "passed_tests": [],
+   "completed_chunks": [0, 1, 2],
+"passed_tests": [0, 1, 2],
     "bookmarked_questions": [],
     "wrong_questions": [],
     "spaced_repetition_data": {},

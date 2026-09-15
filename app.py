@@ -247,13 +247,6 @@ st.markdown("""
         text-align: center;
         backdrop-filter: blur(10px);
     }
-    .sidebar-card {
-        background: rgba(30, 41, 59, 0.5);
-        border: 1px solid rgba(56, 189, 248, 0.2);
-        border-radius: 12px;
-        padding: 15px;
-        margin-bottom: 15px;
-    }
     .metric-card-container {
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
         border: 1px solid rgba(56, 189, 248, 0.25);
@@ -261,7 +254,7 @@ st.markdown("""
         padding: 14px;
         text-align: center;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        margin-bottom: 10px;
+        margin-bottom: 12px;
         transition: all 0.3s ease;
     }
     .metric-card-container:hover {
@@ -350,6 +343,50 @@ def get_shuffled_options(q_item, session_key):
         
     return st.session_state[session_key]
 
+if "start_session_time" not in st.session_state:
+    st.session_state["start_session_time"] = time.time()
+
+sheets_data, error_message = load_data()
+saved_prog = load_saved_progress()
+
+total_all_questions = 0
+if sheets_data:
+    for sh, ql in sheets_data.items():
+        total_all_questions += len(ql)
+
+if "wrong_questions" not in st.session_state:
+    st.session_state["wrong_questions"] = saved_prog.get("wrong_questions", [])
+if "bookmarked_questions" not in st.session_state:
+    st.session_state["bookmarked_questions"] = saved_prog.get("bookmarked_questions", [])
+if "completed_chunks" not in st.session_state:
+    st.session_state["completed_chunks"] = set(saved_prog.get("completed_chunks", []))
+if "passed_tests" not in st.session_state:
+    st.session_state["passed_tests"] = set(saved_prog.get("passed_tests", []))
+if "app_started" not in st.session_state:
+    st.session_state["app_started"] = False
+
+save_current_progress()
+
+def scheduled_job():
+    saved_data = load_saved_progress()
+    bm_cnt = len(saved_data.get("bookmarked_questions", []))
+    completed_chunks_set = set(saved_data.get("completed_chunks", [])).union(set(saved_data.get("passed_tests", [])))
+    comp_q_cnt = min(len(completed_chunks_set) * 50, total_all_questions)
+    total_hours = saved_data.get("total_study_seconds", 0) / 3600.0
+    send_daily_reminder_email(SENDER_EMAIL, comp_q_cnt, total_all_questions, bm_cnt, total_hours)
+
+@st.cache_resource
+def start_scheduler():
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(scheduled_job, 'cron', hour=7, minute=0)
+    scheduler.start()
+    return scheduler
+
+try:
+    start_scheduler()
+except Exception:
+    pass
+
 if not st.session_state["app_started"]:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col_w1, col_w2, col_w3 = st.columns([1, 2.2, 1])
@@ -369,7 +406,11 @@ if not st.session_state["app_started"]:
                 st.session_state["app_started"] = True
                 st.rerun()
 else:
-    st.sidebar.markdown("### ⚡ Dashboard Tổng Quan")
+    st.sidebar.markdown("""
+        <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+            ⚡ Dashboard Tổng Quan
+        </div>
+    """, unsafe_allow_html=True)
 
     completed_chunks_set = st.session_state["completed_chunks"].union(st.session_state["passed_tests"])
     chunk_size_calc = 50
@@ -414,7 +455,7 @@ else:
         </div>
     """, unsafe_allow_html=True)
 
-    st.sidebar.markdown("---")
+    st.sidebar.markdown("<br>", unsafe_allow_html=True)
 
     if st.sidebar.button("💾 Lưu lại tiến độ học", type="primary", use_container_width=True):
         if save_current_progress():
@@ -429,25 +470,35 @@ else:
         else:
             st.sidebar.error(f"❌ Gửi mail thất bại: {err_msg}")
 
-    st.sidebar.markdown("---")
+    st.sidebar.markdown("<br>", unsafe_allow_html=True)
     
-    st.sidebar.markdown("### 🎛️ Điều Hướng Học Tập")
+    # ---- PHẦN ĐIỀU HƯỚNG HỌC TẬP (ĐÃ GÓI VÀO CARD BO GÓC GIỐNG ẢNH 2) ----
+    st.sidebar.markdown("""
+        <div class="metric-card-container" style="text-align: left;">
+            <div class="metric-label" style="margin-bottom: 8px;">🎛️ Điều Hướng Học Tập</div>
+    """, unsafe_allow_html=True)
+    
     mode = st.sidebar.selectbox("Chọn chế độ học:", [
         "📖 Ôn tập theo chuyên đề",
         "🔄 Ôn lại câu trả lời sai",
         "📂 Ôn gộp tất cả (50 câu/phần)",
         "⭐ Tất cả câu hỏi cần ghi nhớ",
         "📝 Thi thử (Mock Test)"
-    ], label_visibility="collapsed")
+    ], label_visibility="collapsed", key="sidebar_mode_select")
+    
+    st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
     if error_message:
         st.error(error_message)
     else:
         if mode == "📖 Ôn tập theo chuyên đề":
-            st.sidebar.markdown("---")
-            st.sidebar.markdown("#### 📂 Chọn Chuyên Đề")
+            st.sidebar.markdown("""
+                <div class="metric-card-container" style="text-align: left;">
+                    <div class="metric-label" style="margin-bottom: 8px;">📂 Chọn Chuyên Đề</div>
+            """, unsafe_allow_html=True)
             sheet_list = list(sheets_data.keys())
-            selected_sheet = st.sidebar.selectbox("Chuyên đề:", sheet_list, label_visibility="collapsed")
+            selected_sheet = st.sidebar.selectbox("Chuyên đề:", sheet_list, label_visibility="collapsed", key="sidebar_chuande_select")
+            st.sidebar.markdown("</div>", unsafe_allow_html=True)
             
             q_list = sheets_data[selected_sheet]
             total_q = len(q_list)
@@ -457,7 +508,6 @@ else:
             if f"done_{selected_sheet}" not in st.session_state:
                 st.session_state[f"done_{selected_sheet}"] = 0
                 
-            st.sidebar.markdown("---")
             col_sb1, col_sb2 = st.sidebar.columns(2)
             col_sb1.metric("Tổng câu", total_q)
             col_sb2.metric("Đã làm", st.session_state[f'done_{selected_sheet}'])
@@ -704,8 +754,11 @@ else:
                 chunk_size = 50
                 total_chunks = (total_all // chunk_size) + (1 if total_all % chunk_size != 0 else 0)
                 
-                st.sidebar.markdown("---")
-                st.sidebar.markdown("#### 📂 Chọn Phần Ôn Tập")
+                # ---- CHỌN PHẦN ÔN TẬP (ĐÃ GÓI VÀO CARD BO GÓC GIỐNG ẢNH 2) ----
+                st.sidebar.markdown("""
+                    <div class="metric-card-container" style="text-align: left;">
+                        <div class="metric-label" style="margin-bottom: 8px;">📁 Chọn Phần Ôn Tập</div>
+                """, unsafe_allow_html=True)
                 
                 chunk_names = []
                 for i in range(total_chunks):
@@ -713,7 +766,9 @@ else:
                     prefix = "✅ " if is_done else "📌 "
                     chunk_names.append(f"{prefix}Phần {i+1}")
                     
-                selected_chunk_name = st.sidebar.selectbox("Chọn phần:", chunk_names, label_visibility="collapsed")
+                selected_chunk_name = st.sidebar.selectbox("Chọn phần:", chunk_names, label_visibility="collapsed", key="sidebar_chunk_select")
+                st.sidebar.markdown("</div>", unsafe_allow_html=True)
+                
                 c_num = int(selected_chunk_name.split("Phần")[1].strip()) - 1
                 
                 start_idx = c_num * chunk_size
@@ -728,8 +783,13 @@ else:
                 current_chunk_questions = st.session_state[f"chunk_q_{c_num}"]
                 actual_chunk_len = len(current_chunk_questions)
                 
-                st.sidebar.markdown("---")
-                st.sidebar.metric("Tổng số câu của phần", actual_chunk_len)
+                # ---- HIỂN THỊ TỔNG SỐ CÂU TRONG CARD ----
+                st.sidebar.markdown(f"""
+                    <div class="metric-card-container">
+                        <div class="metric-label">📊 Tổng số câu của phần</div>
+                        <div class="metric-value">{actual_chunk_len}</div>
+                    </div>
+                """, unsafe_allow_html=True)
                 
                 if f"chunk_studied_count_{c_num}" not in st.session_state:
                     st.session_state[f"chunk_studied_count_{c_num}"] = set()

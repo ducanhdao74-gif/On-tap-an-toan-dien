@@ -1644,6 +1644,7 @@ if str_app.button(
     "🏠 Hoàn thành phiên ôn tập & Về màn hình Welcome",
     type="primary",
     use_container_width=True,
+    key="btn_complete_and_return_welcome",
 ):
   with str_app.spinner(
       "Đang gửi báo cáo tổng kết về Gmail và về trang chủ..."
@@ -1653,12 +1654,12 @@ if str_app.button(
         f"Chào Đức Anh,\n\n"
         f"Hệ thống ghi nhận ông vừa hoàn thành một phiên ôn tập chuẩn bị thi Điện lực Điện Biên:\n"
         f"- Thời gian kết thúc phiên: Hôm nay\n"
-        f"- Trạng thái: Đã hoàn thành ôn luyện và reset phiên làm việc để về trang chủ.\n\n"
+        f"- Trạng thái: Đã hoàn thành phiên ôn luyện và reset phiên làm việc để về trang chủ.\n\n"
         f"Chúc ông tiếp tục giữ vững phong độ cho kỳ thi sắp tới!"
     )
 
     try:
-      # 2. Tự động gửi email thông báo (bỏ dấu # ở dòng dưới nếu hàm gửi mail của ông tên là send_daily_reminder_email)
+      # 2. Tự động gửi email thông báo
       # send_daily_reminder_email()
 
       str_app.success(

@@ -99,44 +99,31 @@ def send_daily_reminder_email(
     time_str = f"{total_study_hours:.1f} giờ"
 
   if is_completion:
-    subject = "🏁 Báo cáo tổng kết hoàn thành phiên ôn tập An Toàn Điện!"
-    body = f"""Chào Đức Anh,
+    subject = "Bao cao tong ket hoan thanh phien on tap An Toan Dien!"
+    body = f"""Chao Duc Anh,
 
-Hệ thống ghi nhận ông vừa hoàn thành một phiên ôn tập chuẩn bị thi Điện lực Điện Biên:
-- Thời gian kết thúc phiên: Hôm nay
-- Trạng thái: Đã hoàn thành ôn luyện và reset phiên làm việc về trang chủ.
+He thong ghi nhan ong vua hoan thanh mot phien on tap chuan bi thi Dien luc Dien Bien:
+- Thoi gian ket thuc phien: Hom nay
+- Trang thai: Da hoan thanh on luyen va reset phien lam việc ve trang chu.
 
-📊 Tiến độ phiên vừa rồi:
-- Số câu đã hoàn thành: {completed_questions_count}/{total_questions_count} câu
-- Tổng thời gian ôn tập: {time_str}
-- Số câu hỏi cần lưu ý (Star): {bookmarked_count} câu
+Tien do phien vua roi:
+- So cau da hoan thanh: {completed_questions_count}/{total_questions_count} cau
+- Tong thoi gian on tap: {time_str}
+- So cau hoi can luu y (Star): {bookmarked_count} cau
 
-Chúc ông tiếp tục giữ vững phong độ cho kỳ thi sắp tới!"""
+Chuc ong tiep tuc giu vung phong do cho ky thi sap toi!"""
   else:
-    subject = "⚡ Nhắc nhở ôn tập An Toàn Điện mỗi ngày!"
-    body = f"""Chào Đức Anh,
+    subject = "Nhac nho on tap An Toan Dien moi ngay!"
+    body = f"""Chao Duc Anh,
 
-Hôm nay là một ngày mới rồi! Hãy dành ra chút thời gian để vào ôn tập ngân hàng câu hỏi An Toàn Điện nhé:
+Hom nay la mot ngay moi roi! Hay danh ra chut thoi gian de vao on tap ngan hang cau hoi An Toan Dien nhe:
 
-📊 Tiến độ hiện tại của ông:
-- Số câu đã hoàn thành: {completed_questions_count}/{total_questions_count} câu
-- Tổng thời gian đã ôn tập: {time_str}
-- Số câu hỏi đang cần ghi nhớ (Star): {bookmarked_count} câu
+Tien do hien tai cua ong:
+- So cau da hoan thanh: {completed_questions_count}/{total_questions_count} cau
+- Tong thoi gian da on tap: {time_str}
+- So cau hoi dang can ghi nhớ (Star): {bookmarked_count} cau
 
-Chúc ông ôn thi thật tốt và đạt kết quả cao!"""
-
-  # --- Đoạn xử lý kết nối SMTP gửi mail giữ nguyên phía dưới ---
-Chào Đức Anh,
-
-Hôm nay là một ngày mới rồi! Hãy dành ra chút thời gian để vào ôn tập ngân hàng câu hỏi An Toàn Điện nhé:
-
-📊 Tiến độ hiện tại của ông:
-- Số câu đã hoàn thành: {completed_questions_count}/{total_questions_count} câu
-- Tổng thời gian đã ôn tập: {time_str}
-- Số câu hỏi đang cần ghi nhớ (Star): {bookmarked_count} câu
-
-Chúc ông ôn thi thật tốt và đạt kết quả cao!
-"""
+Chuc ong on thi that tot va dat ket qua cao!"""
     message = MIMEMultipart()
     message["From"] = SENDER_EMAIL
     message["To"] = receiver_email

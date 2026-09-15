@@ -254,6 +254,34 @@ st.markdown("""
         padding: 15px;
         margin-bottom: 15px;
     }
+    /* CSS cho Thẻ Thống Kê Dashboard */
+    .metric-card-container {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
+        border: 1px solid rgba(56, 189, 248, 0.25);
+        border-radius: 14px;
+        padding: 14px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+    }
+    .metric-card-container:hover {
+        border-color: rgba(56, 189, 248, 0.6);
+        box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+    }
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #38bdf8;
+        margin-top: 2px;
+    }
+    .metric-label {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
     .main-header-card {
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
         border-left: 5px solid #38bdf8;
@@ -342,25 +370,55 @@ if not st.session_state["app_started"]:
                 st.session_state["app_started"] = True
                 st.rerun()
 else:
-    st.sidebar.markdown("### ⚡ Dashboard Ôn Tập")
+    st.sidebar.markdown("### ⚡ Dashboard Tổng Quan")
 
     completed_chunks_set = st.session_state["completed_chunks"].union(st.session_state["passed_tests"])
     chunk_size_calc = 50
     completed_est_count = min(len(completed_chunks_set) * chunk_size_calc, total_all_questions)
     progress_ratio = completed_est_count / total_all_questions if total_all_questions > 0 else 0.0
 
+    current_total_seconds = saved_prog.get("total_study_seconds", 0) + (time.time() - st.session_state["start_session_time"])
+    current_total_hours = current_total_seconds / 3600.0
+    bookmarked_count = len(st.session_state.get("bookmarked_questions", []))
+    wrong_count = len(st.session_state.get("wrong_questions", []))
+
+    # Hiển thị thẻ tiến độ chính
     st.sidebar.markdown(f"""
-        <div class="sidebar-card">
-            <span style="font-size: 0.9rem; font-weight: 600; color: #38bdf8;">📈 TIẾN ĐỘ TỔNG QUAN</span>
+        <div class="metric-card-container">
+            <div class="metric-label">📈 Tiến độ hoàn thành</div>
+            <div class="metric-value">{progress_ratio * 100:.1f}%</div>
+            <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">{completed_est_count}/{total_all_questions} câu</div>
         </div>
     """, unsafe_allow_html=True)
     st.sidebar.progress(progress_ratio)
-    st.sidebar.caption(f"Đã hoàn thành: **{completed_est_count}/{total_all_questions}** câu ({progress_ratio * 100:.1f}%)")
 
-    current_total_seconds = saved_prog.get("total_study_seconds", 0) + (time.time() - st.session_state["start_session_time"])
-    current_total_hours = current_total_seconds / 3600.0
+    # Chia cột 2 thẻ nhỏ: Ghi nhớ & Câu sai
+    col_s1, col_s2 = st.sidebar.columns(2)
+    with col_s1:
+        st.sidebar.markdown(f"""
+            <div class="metric-card-container" style="padding: 10px 6px;">
+                <div class="metric-label" style="font-size: 0.7rem;">⭐ Ghi nhớ</div>
+                <div class="metric-value" style="font-size: 1.2rem; color: #eab308;">{bookmarked_count}</div>
+            </div>
+        """, unsafe_allow_html=True)
+    with col_s2:
+        st.sidebar.markdown(f"""
+            <div class="metric-card-container" style="padding: 10px 6px;">
+                <div class="metric-label" style="font-size: 0.7rem;">⚠️ Câu sai</div>
+                <div class="metric-value" style="font-size: 1.2rem; color: #f43f5e;">{wrong_count}</div>
+            </div>
+        """, unsafe_allow_html=True)
 
-    st.sidebar.info(f"⏱️ Tổng thời gian: **{current_total_hours:.2f}h** (~{int(current_total_seconds // 60)} phút)")
+    # Hiển thị thẻ thời gian học
+    st.sidebar.markdown(f"""
+        <div class="metric-card-container">
+            <div class="metric-label">⏱️ Tổng thời gian ôn</div>
+            <div class="metric-value" style="font-size: 1.4rem; color: #818cf8;">{current_total_hours:.2f}h</div>
+            <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 2px;">~{int(current_total_seconds // 60)} phút tập trung</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    st.sidebar.markdown("---")
 
     if st.sidebar.button("💾 Lưu lại tiến độ học", type="primary", use_container_width=True):
         if save_current_progress():
@@ -369,8 +427,7 @@ else:
             st.sidebar.error("❌ Lỗi khi lưu dữ liệu!")
 
     if st.sidebar.button("📧 Gửi Email nhắc nhở báo cáo", use_container_width=True):
-        bm_cnt = len(st.session_state["bookmarked_questions"])
-        success, err_msg = send_daily_reminder_email(SENDER_EMAIL, completed_est_count, total_all_questions, bm_cnt, current_total_hours)
+        success, err_msg = send_daily_reminder_email(SENDER_EMAIL, completed_est_count, total_all_questions, bookmarked_count, current_total_hours)
         if success:
             st.sidebar.success("✅ Đã gửi email báo cáo vào Gmail!")
         else:

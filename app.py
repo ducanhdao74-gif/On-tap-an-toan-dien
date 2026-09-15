@@ -3,11 +3,10 @@ import time
 from datetime import datetime
 import pandas as pd
 import streamlit as st
-from apscheduler.schedulers.background import BackgroundScheduler
 
 # --- CẤU HÌNH TRANG ---
 st.set_page_config(
-    page_title="Ôn Tập An Toàn Điện - Điện lực Điện Biên",
+    page_title="Ôn Tập An Toàn Điện",
     page_icon="⚡",
     layout="centered",
 )
@@ -19,11 +18,8 @@ if "start_time" not in st.session_state:
 if "completed_questions" not in st.session_state:
   st.session_state.completed_questions = set()
 
-if "total_questions_count" not in st.session_state:
-  st.session_state.total_questions_count = 0
 
-
-# --- HÀM TÍNH THỜI GIAN ÔN TẬP ---
+# --- HÀM TÍNH TỔNG THỜI GIAN ÔN TẬP ---
 def get_total_study_time():
   current_session_duration = time.time() - st.session_state.start_time
   total_seconds = (
@@ -37,7 +33,7 @@ def get_total_study_time():
     return f"{phut} phút"
 
 
-# --- HÀM TẠO NỘI DUNG THÔNG BÁO TIẾN ĐỘ ---
+# --- HÀM TẠO NỘI DUNG THÔNG BÁO TIẾN ĐỘ MỚI ---
 def get_progress_email_content():
   so_cau_hoan_thanh = len(st.session_state.completed_questions)
   tong_so_cau = st.session_state.get("total_questions_count", 0)
@@ -57,20 +53,15 @@ Chúc ông ôn thi thật tốt và đạt kết quả cao!
   return noi_dung
 
 
-# --- GIAO DIỆN CHÍNH ---
-st.title("⚡ Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện")
-st.write(
-    "Chào Đức Anh! Hệ thống ôn tập phục vụ ôn thi Công ty Điện lực Điện Biên."
-)
-
-# Tìm file excel bắt đầu bằng "PL1" trong thư mục hiện tại cho chính xác
+# --- TÌM VÀ ĐỌC FILE EXCEL CŨ CỦA ÔNG ---
 excel_file = None
 for f in os.listdir("."):
-  if f.endswith(".xlsx") and f.startswith("PL1"):
+  if f.endswith(".xlsx") and (
+      f.startswith("PL1") or "toan" in f.lower() or "cau" in f.lower()
+  ):
     excel_file = f
     break
 
-# Nếu không tìm thấy bằng chữ bắt đầu, thử quét các file excel khác
 if not excel_file:
   for f in os.listdir("."):
     if f.endswith(".xlsx"):
@@ -78,53 +69,63 @@ if not excel_file:
       break
 
 if excel_file and os.path.exists(excel_file):
-  try:
-    df = pd.read_excel(excel_file)
-    st.session_state.total_questions_count = len(df)
+  df = pd.read_excel(excel_file)
+  st.session_state.total_questions_count = len(df)
+else:
+  df = None
+  st.session_state.total_questions_count = 0
 
-    st.success(
-        f"Đã tải thành công ngân hàng câu hỏi từ file `{excel_file}`! Tổng số"
-        f" câu: {len(df)} câu."
+# --- GIAO DIỆN CHÍNH (GIỮ NGUYÊN BỐ CỤC CŨ) ---
+st.title("⚡ Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện")
+st.write("Chào Đức Anh! Giao diện ôn tập quen thuộc của ông đã sẵn sàng.")
+
+if df is not None:
+  # Hiển thị số liệu tổng quan
+  col1, col2 = st.columns(2)
+  with col1:
+    st.metric(
+        "Tiến độ hoàn thành",
+        f"{len(st.session_state.completed_questions)} /"
+        f" {st.session_state.total_questions_count} câu",
     )
+  with col2:
+    st.metric("Tổng thời gian ôn", get_total_study_time())
 
-    # Hiển thị thống kê nhanh
-    col1, col2 = st.columns(2)
-    with col1:
-      st.metric(
-          "Tiến độ câu hỏi",
-          f"{len(st.session_state.completed_questions)} /"
-          f" {st.session_state.total_questions_count}",
-      )
-    with col2:
-      st.metric("Tổng thời gian ôn", get_total_study_time())
+  st.divider()
 
-    st.divider()
+  # Khu vực làm bài cũ của ông (được tích hợp lại đầy đủ)
+  st.subheader("📝 Danh sách và Nội dung Ôn Tập")
 
-    # --- KHU VỰC LÀM BÀI ÔN TẬP ---
-    st.subheader("📝 Bắt đầu ôn tập / Trắc nghiệm")
+  # Tab hoặc bộ lọc chọn chế độ làm bài như cũ
+  che_do = st.radio(
+      "Chọn chế độ:", ["Làm từng câu hỏi", "Xem toàn bộ danh sách"]
+  )
 
-    option = st.selectbox(
-        "Chọn chế độ ôn tập:", ["Làm toàn bộ câu hỏi", "Ôn theo phần"]
+  if che_do == "Làm từng câu hỏi":
+    cau_chon = st.number_input(
+        "Chọn câu số:", min_value=1, max_value=len(df), value=1, step=1
     )
+    idx = cau_chon - 1
+    row = df.iloc[idx]
 
-    if option == "Làm toàn bộ câu hỏi":
-      st.write("Giao diện danh sách câu hỏi hoặc làm từng câu sẽ hiển thị ở đây.")
-      # Hiển thị trước một vài dòng dữ liệu của file excel để xác nhận đúng phần ôn tập
-      with st.expander("Xem trước danh sách câu hỏi trong file"):
-        st.dataframe(df.head())
+    st.markdown(f"**Câu {cau_chon}:**")
+    # Hiển thị thông tin hàng dữ liệu câu hỏi từ Excel
+    st.write(row.to_dict())
 
-      if st.button("Đánh dấu hoàn thành toàn bộ câu hỏi (Test)"):
-        st.session_state.completed_questions = set(range(len(df)))
-        st.rerun()
+    if st.button("Đã hoàn thành câu này"):
+      st.session_state.completed_questions.add(cau_chon)
+      st.success(f"Đã lưu tiến độ câu {cau_chon}!")
+  else:
+    st.dataframe(df)
 
-    # Xem thử nội dung thông báo
-    with st.expander("📩 Xem trước nội dung thông báo tiến độ gửi cho ông"):
-      st.code(get_progress_email_content(), language="text")
+  st.divider()
 
-  except Exception as e:
-    st.error(f"Lỗi khi đọc file Excel câu hỏi: {e}")
+  # Phần xem thử nội dung thông báo gửi cho ông
+  with st.expander("📩 Xem trước thông báo tiến độ"):
+    st.code(get_progress_email_content(), language="text")
+
 else:
   st.warning(
-      "⚠️ Không tìm thấy file Excel nào trong thư mục GitHub. Vui lòng kiểm tra"
-      " lại tên file."
+      "⚠️ Không tìm thấy tệp Excel ngân hàng câu hỏi. Vui lòng kiểm tra lại"
+      " kho lưu trữ."
   )

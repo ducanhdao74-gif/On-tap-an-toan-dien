@@ -484,7 +484,7 @@ else:
             if str_app.sidebar.button("🔄 Đặt lại chuyên đề này", use_container_width=True):
                 str_app.session_state[f"q_idx_{selected_sheet}"] = 0
                 str_app.session_state[f"done_{selected_sheet}"] = 0
-                keys_to_del = [k for k in str_app.session_state.keys() if k.startswith(f"shuff_chuande_{selected_sheet}_") or k.startswith(f"user_ans_chuande_{selected_sheet}_")]
+                keys_to_del = [k for k in str_app.session_state.keys() if k.startswith(f"shuff_chuande_{selected_sheet}_") or k.startswith(f"user_ans_chuande_{selected_sheet}_") or k.startswith(f"answered_chuande_{selected_sheet}_")]
                 for k in keys_to_del:
                     del str_app.session_state[k]
                 scroll_to_top()
@@ -544,26 +544,38 @@ else:
                 correct_letter = shuff_data["correct"]
                 
                 ans_storage_key = f"user_ans_chuande_{selected_sheet}_{idx}"
+                answered_key = f"answered_chuande_{selected_sheet}_{idx}"
+                is_already_answered = str_app.session_state.get(answered_key, False)
+                
                 default_idx = None
                 current_saved_ans = str_app.session_state.get(ans_storage_key, None)
                 if current_saved_ans in options:
                     default_idx = options.index(current_saved_ans)
                     
-                selected_opt = str_app.radio("Chọn đáp án của bạn:", options, index=default_idx, key=f"radio_chuande_{selected_sheet}_{idx}")
-                
-                if selected_opt is not None:
-                    str_app.session_state[ans_storage_key] = selected_opt
-                    is_correct = selected_opt.strip().upper().startswith(correct_letter)
+                if not is_already_answered:
+                    selected_opt = str_app.radio("Chọn đáp án của bạn:", options, index=default_idx, key=f"radio_chuande_{selected_sheet}_{idx}")
+                    
+                    if selected_opt is not None:
+                        str_app.session_state[ans_storage_key] = selected_opt
+                        str_app.session_state[answered_key] = True
+                        str_app.session_state[f"done_{selected_sheet}"] = min(total_q, max(str_app.session_state[f"done_{selected_sheet}"], idx + 1))
+                        
+                        is_correct = selected_opt.strip().upper().startswith(correct_letter)
+                        if not is_correct:
+                            if not any(w.get("question") == q_item["question"] for w in str_app.session_state["wrong_questions"]):
+                                str_app.session_state["wrong_questions"].append(q_item)
+                                save_current_progress()
+                        str_app.rerun()
+                else:
+                    saved_choice = str_app.session_state.get(ans_storage_key)
+                    str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_choice}</b></p>", unsafe_allow_html=True)
+                    
+                    is_correct = saved_choice.strip().upper().startswith(correct_letter)
                     str_app.markdown("<br>", unsafe_allow_html=True)
                     if is_correct:
                         str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
                     else:
                         str_app.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
-                        if not any(w.get("question") == q_item["question"] for w in str_app.session_state["wrong_questions"]):
-                            str_app.session_state["wrong_questions"].append(q_item)
-                            save_current_progress()
-                            
-                    str_app.session_state[f"done_{selected_sheet}"] = min(total_q, max(str_app.session_state[f"done_{selected_sheet}"], idx + 1))
                 
                 str_app.markdown("<br>", unsafe_allow_html=True)
                 col_prev, col_next = str_app.columns([1, 1])
@@ -623,19 +635,31 @@ else:
                 correct_letter = shuff_data["correct"]
                 
                 w_storage_key = f"user_ans_wrong_{w_idx}"
+                w_answered_key = f"answered_wrong_{w_idx}"
+                is_w_answered = str_app.session_state.get(w_answered_key, False)
+                
                 w_default_idx = None
                 if str_app.session_state.get(w_storage_key) in options:
                     w_default_idx = options.index(str_app.session_state.get(w_storage_key))
                     
-                w_choice = str_app.radio("Chọn đáp án của bạn:", options, index=w_default_idx, key=f"radio_wrong_{w_idx}")
-                if w_choice is not None:
-                    str_app.session_state[w_storage_key] = w_choice
+                if not is_w_answered:
+                    w_choice = str_app.radio("Chọn đáp án của bạn:", options, index=w_default_idx, key=f"radio_wrong_{w_idx}")
+                    if w_choice is not None:
+                        str_app.session_state[w_storage_key] = w_choice
+                        str_app.session_state[w_answered_key] = True
+                        
+                        if w_choice.strip().upper().startswith(correct_letter):
+                            wrong_list = [w for w in wrong_list if w.get("question") != w_item.get("question")]
+                            str_app.session_state["wrong_questions"] = wrong_list
+                            save_current_progress()
+                        str_app.rerun()
+                else:
+                    saved_w_choice = str_app.session_state.get(w_storage_key)
+                    str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_w_choice}</b></p>", unsafe_allow_html=True)
+                    
                     str_app.markdown("<br>", unsafe_allow_html=True)
-                    if w_choice.strip().upper().startswith(correct_letter):
-                        str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
-                        wrong_list = [w for w in wrong_list if w.get("question") != w_item.get("question")]
-                        str_app.session_state["wrong_questions"] = wrong_list
-                        save_current_progress()
+                    if saved_w_choice.strip().upper().startswith(correct_letter):
+                        str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}. (Đã xóa khỏi danh sách câu sai)")
                     else:
                         str_app.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
                 
@@ -795,7 +819,7 @@ else:
                             if str_app.button("🔄 Ôn lại từ đầu", type="secondary", use_container_width=True):
                                 str_app.session_state[f"gop_idx_{c_num}"] = 0
                                 str_app.session_state[f"chunk_studied_count_{c_num}"] = set()
-                                keys_to_del = [k for k in str_app.session_state.keys() if k.startswith(f"shuff_gop_{c_num}_") or k.startswith(f"user_ans_gop_{c_num}_")]
+                                keys_to_del = [k for k in str_app.session_state.keys() if k.startswith(f"shuff_gop_{c_num}_") or k.startswith(f"user_ans_gop_{c_num}_") or k.startswith(f"answered_gop_{c_num}_")]
                                 for k in keys_to_del:
                                     del str_app.session_state[k]
                                 scroll_to_top()
@@ -848,26 +872,38 @@ else:
                         correct_letter = shuff_data["correct"]
                         
                         gop_storage_key = f"user_ans_gop_{c_num}_{g_idx}"
+                        gop_answered_key = f"answered_gop_{c_num}_{g_idx}"
+                        is_gop_answered = str_app.session_state.get(gop_answered_key, False)
+                        
                         gop_default_idx = None
                         if str_app.session_state.get(gop_storage_key) in options:
                             gop_default_idx = options.index(str_app.session_state.get(gop_storage_key))
                             
-                        g_choice = str_app.radio("Chọn đáp án của bạn:", options, index=gop_default_idx, key=f"radio_gop_{c_num}_{g_idx}")
-                        
-                        if g_choice is not None:
-                            str_app.session_state[gop_storage_key] = g_choice
-                            str_app.session_state[f"chunk_studied_count_{c_num}"].add(g_idx)
+                        if not is_gop_answered:
+                            g_choice = str_app.radio("Chọn đáp án của bạn:", options, index=gop_default_idx, key=f"radio_gop_{c_num}_{g_idx}")
                             
-                            is_correct = g_choice.strip().upper().startswith(correct_letter)
+                            if g_choice is not None:
+                                str_app.session_state[gop_storage_key] = g_choice
+                                str_app.session_state[gop_answered_key] = True
+                                str_app.session_state[f"chunk_studied_count_{c_num}"].add(g_idx)
+                                
+                                is_correct = g_choice.strip().upper().startswith(correct_letter)
+                                if not is_correct:
+                                    if not any(w.get("question") == q_item["question"] for w in str_app.session_state["wrong_questions"]):
+                                        str_app.session_state["wrong_questions"].append(q_item)
+                                        save_current_progress()
+                                str_app.rerun()
+                        else:
+                            saved_gop_choice = str_app.session_state.get(gop_storage_key)
+                            str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_gop_choice}</b></p>", unsafe_allow_html=True)
+                            
+                            is_correct = saved_gop_choice.strip().upper().startswith(correct_letter)
                             str_app.markdown("<br>", unsafe_allow_html=True)
                             if is_correct:
                                 str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
                             else:
                                 str_app.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
-                                if not any(w.get("question") == q_item["question"] for w in str_app.session_state["wrong_questions"]):
-                                    str_app.session_state["wrong_questions"].append(q_item)
-                                    save_current_progress()
-                                    
+                                
                         str_app.markdown("<br>", unsafe_allow_html=True)
                         col_prev, col_next = str_app.columns(2)
                         with col_prev:
@@ -1054,7 +1090,7 @@ else:
                 elif sub_mode == "🔄 Làm lại phần này":
                     str_app.session_state[f"gop_idx_{c_num}"] = 0
                     str_app.session_state[f"chunk_studied_count_{c_num}"] = set()
-                    keys_to_del = [k for k in str_app.session_state.keys() if k.startswith(f"shuff_gop_{c_num}_") or k.startswith(f"shuff_test_{c_num}_") or k.startswith(f"user_ans_gop_{c_num}_") or k.startswith(f"test_chunk_{c_num}_")]
+                    keys_to_del = [k for k in str_app.session_state.keys() if k.startswith(f"shuff_gop_{c_num}_") or k.startswith(f"shuff_test_{c_num}_") or k.startswith(f"user_ans_gop_{c_num}_") or k.startswith(f"answered_gop_{c_num}_") or k.startswith(f"test_chunk_{c_num}_")]
                     for k in keys_to_del:
                         del str_app.session_state[k]
                     if f"submitted_test_{c_num}" in str_app.session_state:
@@ -1110,21 +1146,33 @@ else:
                         correct_letter = shuff_data["correct"]
                         
                         wc_storage_key = f"user_ans_wc_{c_num}_{wc_idx}"
+                        wc_answered_key = f"answered_wc_{c_num}_{wc_idx}"
+                        is_wc_answered = str_app.session_state.get(wc_answered_key, False)
+                        
                         wc_default_idx = None
                         if str_app.session_state.get(wc_storage_key) in options:
                             wc_default_idx = options.index(str_app.session_state.get(wc_storage_key))
                             
-                        wc_choice = str_app.radio("Chọn đáp án của bạn:", options, index=wc_default_idx, key=f"radio_wc_{c_num}_{wc_idx}")
-                        if wc_choice is not None:
-                            str_app.session_state[wc_storage_key] = wc_choice
+                        if not is_wc_answered:
+                            wc_choice = str_app.radio("Chọn đáp án của bạn:", options, index=wc_default_idx, key=f"radio_wc_{c_num}_{wc_idx}")
+                            if wc_choice is not None:
+                                str_app.session_state[wc_storage_key] = wc_choice
+                                str_app.session_state[wc_answered_key] = True
+                                
+                                if wc_choice.strip().upper().startswith(correct_letter):
+                                    str_app.session_state["wrong_questions"] = [
+                                        w for w in str_app.session_state["wrong_questions"] 
+                                        if w.get("question") != wc_item.get("question")
+                                    ]
+                                    save_current_progress()
+                                str_app.rerun()
+                        else:
+                            saved_wc_choice = str_app.session_state.get(wc_storage_key)
+                            str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_wc_choice}</b></p>", unsafe_allow_html=True)
+                            
                             str_app.markdown("<br>", unsafe_allow_html=True)
-                            if wc_choice.strip().upper().startswith(correct_letter):
-                                str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
-                                str_app.session_state["wrong_questions"] = [
-                                    w for w in str_app.session_state["wrong_questions"] 
-                                    if w.get("question") != wc_item.get("question")
-                                ]
-                                save_current_progress()
+                            if saved_wc_choice.strip().upper().startswith(correct_letter):
+                                str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}. (Đã xóa khỏi danh sách câu sai)")
                             else:
                                 str_app.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
                         

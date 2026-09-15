@@ -85,13 +85,38 @@ def scroll_to_top():
         </script>
     """, height=0)
 
-def send_daily_reminder_email(receiver_email, completed_questions_count, total_questions_count, bookmarked_count, total_study_hours):
-    subject = "⚡ Nhắc nhở ôn tập An Toàn Điện mỗi ngày!"
-    if total_study_hours < 1:
-        time_str = f"{int(total_study_hours * 60)} phút"
-    else:
-        time_str = f"{total_study_hours:.1f} giờ"
+def send_daily_reminder_email(
+    receiver_email,
+    completed_questions_count,
+    total_questions_count,
+    bookmarked_count,
+    total_study_hours,
+    is_completion=False,  # Thêm tham số này để nhận diện khi nào là hoàn thành phiên
+):
+  if total_study_hours < 1:
+    time_str = f"{int(total_study_hours * 60)} phút"
+  else:
+    time_str = f"{total_study_hours:.1f} giờ"
 
+  # Phân nhánh nội dung tùy theo loại email được gọi
+  if is_completion:
+    subject = "🏁 Báo cáo tổng kết hoàn thành phiên ôn tập An Toàn Điện!"
+    body = f"""
+Chào Đức Anh,
+
+Hệ thống ghi nhận ông vừa hoàn thành một phiên ôn tập chuẩn bị thi Điện lực Điện Biên:
+- Thời gian kết thúc phiên: Hôm nay
+- Trạng thái: Đã hoàn thành ôn luyện và reset phiên làm việc để về trang chủ.
+
+📊 Tiến độ phiên vừa rồi:
+- Số câu đã hoàn thành: {completed_questions_count}/{total_questions_count} câu
+- Tổng thời gian ôn tập: {time_str}
+- Số câu hỏi cần lưu ý (Star): {bookmarked_count} câu
+
+Chúc ông tiếp tục giữ vững phong độ cho kỳ thi sắp tới!
+"""
+  else:
+    subject = "⚡ Nhắc nhở ôn tập An Toàn Điện mỗi ngày!"
     body = f"""
 Chào Đức Anh,
 
@@ -1636,6 +1661,7 @@ if str_app.sidebar.button(
           ),
           bookmarked_count=str_app.session_state.get("bookmarked_count", 0),
           total_study_hours=str_app.session_state.get("study_hours", 1.0),
+          is_completion=True,  # <--- Thêm đúng dòng này vào đây
       )
       str_app.sidebar.success("Đã gửi báo cáo tự động về Gmail thành công!")
     except Exception as e:

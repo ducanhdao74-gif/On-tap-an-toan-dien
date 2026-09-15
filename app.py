@@ -101,7 +101,9 @@ def send_daily_reminder_email(
   # Phân nhánh nội dung tùy theo loại email được gọi
 if is_completion:
     subject = "🏁 Báo cáo tổng kết hoàn thành phiên ôn tập An Toàn Điện!"
-    body = f"""Chào Đức Anh,
+  if is_completion:
+      subject = "🏁 Báo cáo tổng kết hoàn thành phiên ôn tập An Toàn Điện!"
+      body = f"""Chào Đức Anh,
 
 Hệ thống ghi nhận ông vừa hoàn thành một phiên ôn tập chuẩn bị thi Điện lực Điện Biên:
 - Thời gian kết thúc phiên: Hôm nay
@@ -113,9 +115,9 @@ Hệ thống ghi nhận ông vừa hoàn thành một phiên ôn tập chuẩn b
 - Số câu hỏi cần lưu ý (Star): {bookmarked_count} câu
 
 Chúc ông tiếp tục giữ vững phong độ cho kỳ thi sắp tới!"""
-  else:
-    subject = "⚡ Nhắc nhở ôn tập An Toàn Điện mỗi ngày!"
-    body = f"""Chào Đức Anh,
+    else:
+      subject = "⚡ Nhắc nhở ôn tập An Toàn Điện mỗi ngày!"
+      body = f"""Chào Đức Anh,
 
 Hôm nay là một ngày mới rồi! Hãy dành ra chút thời gian để vào ôn tập ngân hàng câu hỏi An Toàn Điện nhé:
 

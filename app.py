@@ -261,15 +261,6 @@ st.markdown("""
         margin-bottom: 20px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
-    .question-card {
-        background: rgba(30, 41, 59, 0.4);
-        border: 1px solid rgba(56, 189, 248, 0.25);
-        border-radius: 16px;
-        padding: 28px;
-        margin-bottom: 25px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-        backdrop-filter: blur(8px);
-    }
     .question-title {
         font-size: 1.25rem !important;
         line-height: 1.6;
@@ -438,9 +429,6 @@ else:
             else:
                 q_item = q_list[idx]
                 
-                # Gom gọn tất cả vào chung một khung `.question-card` duy nhất để triệt tiêu khung rỗng
-                st.markdown('<div class="question-card">', unsafe_allow_html=True)
-                
                 st.markdown(f"""
                     <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -503,8 +491,7 @@ else:
                             
                     st.session_state[f"done_{selected_sheet}"] = min(total_q, max(st.session_state[f"done_{selected_sheet}"], idx + 1))
                 
-                st.markdown('</div>', unsafe_allow_html=True)
-                
+                st.markdown("<br>", unsafe_allow_html=True)
                 col_prev, col_next = st.columns([1, 1])
                 with col_prev:
                     if st.button("⬅️ Câu trước", use_container_width=True):
@@ -540,7 +527,6 @@ else:
                     
                 w_item = wrong_list[w_idx]
                 
-                st.markdown('<div class="question-card">', unsafe_allow_html=True)
                 st.markdown(f"""
                     <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -576,8 +562,8 @@ else:
                         save_current_progress()
                     else:
                         st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
-                st.markdown('</div>', unsafe_allow_html=True)
                 
+                st.markdown("<br>", unsafe_allow_html=True)
                 if st.button("Câu tiếp theo ➡️", type="primary", use_container_width=True, key=f"next_wrong_{w_idx}"):
                     if st.session_state["wrong_idx"] < len(wrong_list) - 1:
                         st.session_state["wrong_idx"] += 1
@@ -604,7 +590,6 @@ else:
                     
                 bm_item = bm_list[gbm_idx]
                 
-                st.markdown('<div class="question-card">', unsafe_allow_html=True)
                 st.markdown(f"""
                     <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -641,8 +626,8 @@ else:
                         st.markdown(f"- ✅ **{opt}** *(Đáp án đúng)*")
                     else:
                         st.markdown(f"- {opt}")
-                st.markdown('</div>', unsafe_allow_html=True)
                 
+                st.markdown("<br>", unsafe_allow_html=True)
                 if st.button("Câu tiếp theo ➡️", type="primary", use_container_width=True, key=f"next_global_bm_{gbm_idx}"):
                     if st.session_state["global_bm_idx"] < len(bm_list) - 1:
                         st.session_state["global_bm_idx"] += 1
@@ -729,7 +714,6 @@ else:
                     if sub_mode == "📖 Ôn tập từng câu" and g_idx < actual_chunk_len:
                         q_item = current_chunk_questions[g_idx]
                         
-                        st.markdown('<div class="question-card">', unsafe_allow_html=True)
                         st.markdown(f"""
                             <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -783,8 +767,7 @@ else:
                                     st.session_state["wrong_questions"].append(q_item)
                                     save_current_progress()
                                     
-                        st.markdown('</div>', unsafe_allow_html=True)
-                        
+                        st.markdown("<br>", unsafe_allow_html=True)
                         col_prev, col_next = st.columns(2)
                         with col_prev:
                             if st.button("⬅️ Câu trước", use_container_width=True):
@@ -809,7 +792,6 @@ else:
                     if not st.session_state[submitted_key]:
                         user_answers = {}
                         for i, q in enumerate(current_chunk_questions):
-                            st.markdown('<div class="question-card">', unsafe_allow_html=True)
                             st.markdown(f"""
                                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                                     <span class="badge-topic">{q['sheet']}</span>
@@ -826,7 +808,7 @@ else:
                             test_ans_key = f"test_chunk_{c_num}_{i}"
                             ans = st.radio("Chọn đáp án:", options, index=(options.index(st.session_state[test_ans_key]) if st.session_state.get(test_ans_key) in options else None), key=test_ans_key, label_visibility="collapsed")
                             user_answers[i] = ans
-                            st.markdown('</div>', unsafe_allow_html=True)
+                            st.markdown("<hr style='margin: 30px 0; border-color: rgba(56, 189, 248, 0.2);'>", unsafe_allow_html=True)
                             
                         if st.button("📤 Nộp bài kiểm tra ngay", type="primary", use_container_width=True):
                             unanswered = [i + 1 for i in range(actual_chunk_len) if user_answers[i] is None]
@@ -885,7 +867,6 @@ else:
                             st.info("🎉 Tuyệt vời! Ông đã trả lời đúng tất cả các câu trong phần này.")
                         else:
                             for q_idx, q_item, user_sel, shuff_info in wrong_items_in_test:
-                                st.markdown('<div class="question-card">', unsafe_allow_html=True)
                                 st.markdown(f"**Câu {q_idx + 1}** *(Thuộc chuyên đề: {q_item['sheet']})*")
                                 st.markdown(f"> **{q_item['question']}**")
                                 correct_letter = shuff_info["correct"]
@@ -900,7 +881,7 @@ else:
                                         st.markdown(f"- ❌ ~~{opt}~~ *(Ông đã chọn)*")
                                     else:
                                         st.markdown(f"- {opt}")
-                                st.markdown('</div>', unsafe_allow_html=True)
+                                st.markdown("<hr style='margin: 20px 0; border-color: rgba(56, 189, 248, 0.2);'>", unsafe_allow_html=True)
                                 
                         if st.button("🔄 Làm lại bài kiểm tra này", type="primary", use_container_width=True):
                             st.session_state[submitted_key] = False
@@ -951,7 +932,6 @@ else:
                             
                         wc_item = wrong_in_chunk[wc_idx]
                         
-                        st.markdown('<div class="question-card">', unsafe_allow_html=True)
                         st.markdown(f"""
                             <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -989,8 +969,8 @@ else:
                                 save_current_progress()
                             else:
                                 st.error(f"❌ Sai rồi! Đáp án đúng là {correct_letter}.")
-                        st.markdown('</div>', unsafe_allow_html=True)
                         
+                        st.markdown("<br>", unsafe_allow_html=True)
                         if st.button("Câu tiếp theo ➡️", type="primary", use_container_width=True, key=f"next_wc_{c_num}_{wc_idx}"):
                             if st.session_state[f"wrong_chunk_idx_{c_num}"] < len(wrong_in_chunk) - 1:
                                 st.session_state[f"wrong_chunk_idx_{c_num}"] += 1
@@ -1035,7 +1015,6 @@ else:
                 st.markdown("---")
                 
                 for i, q in enumerate(mock_qs):
-                    st.markdown('<div class="question-card">', unsafe_allow_html=True)
                     st.markdown(f"""
                         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                             <span class="badge-topic">{q['sheet']}</span>
@@ -1052,7 +1031,7 @@ else:
                     mock_ans_key = f"mock_q_{i}"
                     ans = st.radio("Chọn đáp án:", options, index=(options.index(st.session_state[mock_ans_key]) if st.session_state.get(mock_ans_key) in options else None), key=mock_ans_key, label_visibility="collapsed")
                     st.session_state["mock_answers"][i] = ans
-                    st.markdown('</div>', unsafe_allow_html=True)
+                    st.markdown("<hr style='margin: 30px 0; border-color: rgba(56, 189, 248, 0.2);'>", unsafe_allow_html=True)
                     
                 if st.button("📤 Nộp bài thi thử", type="primary", use_container_width=True):
                     st.success("Đã nộp bài thành công!")

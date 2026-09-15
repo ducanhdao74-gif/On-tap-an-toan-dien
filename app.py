@@ -91,19 +91,16 @@ def send_daily_reminder_email(
     total_questions_count,
     bookmarked_count,
     total_study_hours,
-    is_completion=False,  # Thêm tham số này để nhận diện khi nào là hoàn thành phiên
+    is_completion=False,
 ):
   if total_study_hours < 1:
     time_str = f"{int(total_study_hours * 60)} phút"
   else:
     time_str = f"{total_study_hours:.1f} giờ"
 
-  # Phân nhánh nội dung tùy theo loại email được gọi
-if is_completion:
-    subject = "🏁 Báo cáo tổng kết hoàn thành phiên ôn tập An Toàn Điện!"
   if is_completion:
-      subject = "🏁 Báo cáo tổng kết hoàn thành phiên ôn tập An Toàn Điện!"
-      body = f"""Chào Đức Anh,
+    subject = "🏁 Báo cáo tổng kết hoàn thành phiên ôn tập An Toàn Điện!"
+    body = f"""Chào Đức Anh,
 
 Hệ thống ghi nhận ông vừa hoàn thành một phiên ôn tập chuẩn bị thi Điện lực Điện Biên:
 - Thời gian kết thúc phiên: Hôm nay
@@ -115,9 +112,9 @@ Hệ thống ghi nhận ông vừa hoàn thành một phiên ôn tập chuẩn b
 - Số câu hỏi cần lưu ý (Star): {bookmarked_count} câu
 
 Chúc ông tiếp tục giữ vững phong độ cho kỳ thi sắp tới!"""
-    else:
-      subject = "⚡ Nhắc nhở ôn tập An Toàn Điện mỗi ngày!"
-      body = f"""Chào Đức Anh,
+  else:
+    subject = "⚡ Nhắc nhở ôn tập An Toàn Điện mỗi ngày!"
+    body = f"""Chào Đức Anh,
 
 Hôm nay là một ngày mới rồi! Hãy dành ra chút thời gian để vào ôn tập ngân hàng câu hỏi An Toàn Điện nhé:
 
@@ -127,6 +124,8 @@ Hôm nay là một ngày mới rồi! Hãy dành ra chút thời gian để vào
 - Số câu hỏi đang cần ghi nhớ (Star): {bookmarked_count} câu
 
 Chúc ông ôn thi thật tốt và đạt kết quả cao!"""
+
+  # --- Đoạn xử lý kết nối SMTP gửi mail giữ nguyên phía dưới ---
 Chào Đức Anh,
 
 Hôm nay là một ngày mới rồi! Hãy dành ra chút thời gian để vào ôn tập ngân hàng câu hỏi An Toàn Điện nhé:

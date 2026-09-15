@@ -39,50 +39,12 @@ def load_saved_progress():
     "total_study_seconds": 0,
     "last_login_date": ""
 }
-
 import subprocess
 
-def save_current_progress_and_sync_github():
-    # 1. Ghi dữ liệu trực tiếp vào file JSON cục bộ
-    data_to_save = {
-        "completed_chunks": list(str_app.session_state.get("completed_chunks", [])),
-        "passed_tests": list(str_app.session_state.get("passed_tests", [])),
-        "bookmarked_questions": str_app.session_state.get("bookmarked_questions", []),
-        "wrong_questions": str_app.session_state.get("wrong_questions", []),
-        "spaced_repetition_data": str_app.session_state.get("spaced_repetition_data", {}),
-        "total_study_seconds": str_app.session_state.get("total_study_seconds", 0),
-        "last_login_date": str_app.session_state.get("last_login_date", "")
-    }
-    
-    with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
-        json.dump(data_to_save, f, ensure_ascii=False, indent=4)
-        
-    # 2. Tự động Git commit & push lên GitHub
-    try:
-        subprocess.run(["git", "config", "--global", "user.email", "ducanh@bot.com"], check=False)
-        subprocess.run(["git", "config", "--global", "user.name", "Quiz Bot Auto Sync"], check=False)
-        subprocess.run(["git", "add", PROGRESS_FILE], check=True)
-        commit_result = subprocess.run(["git", "commit", "-m", "Auto-update quiz progress json"], capture_output=True, text=True)
-        
-        if "nothing to commit" not in commit_result.stdout:
-            subprocess.run(["git", "push"], check=True)
-    except Exception as e:
-        print(f"Lỗi đồng bộ Git tự động: {e}")
-    data = {
-        "completed_chunks": list(str_app.session_state.get("completed_chunks", [])),
-        "passed_tests": list(str_app.session_state.get("passed_tests", [])),
-        "bookmarked_questions": str_app.session_state.get("bookmarked_questions", []),
-        "wrong_questions": str_app.session_state.get("wrong_questions", []),
-        "spaced_repetition_data": str_app.session_state.get("spaced_repetition_data", {}),
-        "total_study_seconds": saved_data.get("total_study_seconds", 0),
-        "last_login_date": str_app.session_state.get("last_login_date", "")
-    }
-    try:
-        with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
-        return True
-    except:
-        return False
+def save_current_progress():
+    # Hàm cầu nối để các lệnh gọi cũ hoạt động bình thường
+    save_current_progress_and_sync_github()
+
 
 def scroll_to_top():
     components.html("""

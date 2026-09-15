@@ -485,8 +485,8 @@ else:
     if str_app.sidebar.button(
     "💾 Lưu lại tiến độ học", type="primary", use_container_width=True
 ):
-  save_current_progress_and_sync_github()
-  str_app.sidebar.success("✅ Đã lưu và đồng bộ tiến độ lên GitHub!")
+    save_current_progress_and_sync_github()
+    str_app.sidebar.success("✅ Đã lưu và đồng bộ tiến độ lên GitHub!")
 
     if str_app.sidebar.button("📧 Gửi Email nhắc nhở báo cáo", use_container_width=True):
         success, err_msg = send_daily_reminder_email(SENDER_EMAIL, completed_est_count, total_all_questions, bookmarked_count, current_total_hours)

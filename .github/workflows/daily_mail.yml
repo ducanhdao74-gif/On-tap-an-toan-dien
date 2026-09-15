@@ -1,0 +1,29 @@
+name: Daily Email Reminder
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Chạy lúc 0:00 UTC tức là 7:00 sáng giờ Việt Nam mỗi ngày
+  workflow_dispatch: # Cho phép bấm nút chạy thử thủ công bất cứ lúc nào
+
+jobs:
+  send-mail:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install pandas openpyxl requests
+
+      - name: Run send mail script
+        env:
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          SENDER_PASSWORD: ${{ secrets.SENDER_PASSWORD }}
+        run: |
+          python send_mail.py

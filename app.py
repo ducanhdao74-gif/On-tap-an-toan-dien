@@ -43,9 +43,20 @@ def load_saved_progress():
 import subprocess
 
 def save_current_progress_and_sync_github():
-    # 1. Gọi lại logic lưu dữ liệu hiện tại
-    save_current_progress()
+    # 1. Ghi dữ liệu trực tiếp vào file JSON cục bộ
+    data_to_save = {
+        "completed_chunks": list(str_app.session_state.get("completed_chunks", [])),
+        "passed_tests": list(str_app.session_state.get("passed_tests", [])),
+        "bookmarked_questions": str_app.session_state.get("bookmarked_questions", []),
+        "wrong_questions": str_app.session_state.get("wrong_questions", []),
+        "spaced_repetition_data": str_app.session_state.get("spaced_repetition_data", {}),
+        "total_study_seconds": str_app.session_state.get("total_study_seconds", 0),
+        "last_login_date": str_app.session_state.get("last_login_date", "")
+    }
     
+    with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data_to_save, f, ensure_ascii=False, indent=4)
+        
     # 2. Tự động Git commit & push lên GitHub
     try:
         subprocess.run(["git", "config", "--global", "user.email", "ducanh@bot.com"], check=False)
@@ -57,7 +68,6 @@ def save_current_progress_and_sync_github():
             subprocess.run(["git", "push"], check=True)
     except Exception as e:
         print(f"Lỗi đồng bộ Git tự động: {e}")
-
     data = {
         "completed_chunks": list(str_app.session_state.get("completed_chunks", [])),
         "passed_tests": list(str_app.session_state.get("passed_tests", [])),

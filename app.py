@@ -256,9 +256,9 @@ st.markdown("""
     .main-header-card {
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
         border-left: 5px solid #38bdf8;
-        padding: 18px 22px;
-        border-radius: 0 12px 12px 0;
-        margin-bottom: 25px;
+        padding: 14px 18px;
+        border-radius: 0 10px 10px 0;
+        margin-bottom: 20px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
     .question-card {
@@ -438,16 +438,17 @@ else:
             else:
                 q_item = q_list[idx]
                 
+                # Gom gọn tất cả vào chung một khung `.question-card` duy nhất để triệt tiêu khung rỗng
+                st.markdown('<div class="question-card">', unsafe_allow_html=True)
+                
                 st.markdown(f"""
-                    <div class="main-header-card">
+                    <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 1.1rem; font-weight: 700; color: #38bdf8;">📂 Chuyên đề: {selected_sheet}</span>
+                            <span style="font-size: 1.05rem; font-weight: 700; color: #38bdf8;">📂 Chuyên đề: {selected_sheet}</span>
                             <span class="badge-topic">Câu {idx + 1} / {total_q}</span>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
-                
-                st.markdown('<div class="question-card">', unsafe_allow_html=True)
                 
                 is_bm = any(b.get("question") == q_item["question"] for b in st.session_state["bookmarked_questions"])
                 bm_label = "⭐ Đã đánh dấu ghi nhớ" if is_bm else "☆ Đánh dấu câu cần ghi nhớ"
@@ -539,16 +540,16 @@ else:
                     
                 w_item = wrong_list[w_idx]
                 
+                st.markdown('<div class="question-card">', unsafe_allow_html=True)
                 st.markdown(f"""
-                    <div class="main-header-card">
+                    <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 1.1rem; font-weight: 700; color: #f43f5e;">⚠️ Nguồn: {w_item.get('sheet', 'N/A')}</span>
+                            <span style="font-size: 1.05rem; font-weight: 700; color: #f43f5e;">⚠️ Nguồn: {w_item.get('sheet', 'N/A')}</span>
                             <span class="badge-topic">Câu sai {w_idx + 1} / {len(wrong_list)}</span>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
                 
-                st.markdown('<div class="question-card">', unsafe_allow_html=True)
                 st.markdown(f"""
                     <div class="question-title">
                         <b>Câu {w_idx + 1}:</b> {w_item['question']}
@@ -603,16 +604,15 @@ else:
                     
                 bm_item = bm_list[gbm_idx]
                 
+                st.markdown('<div class="question-card">', unsafe_allow_html=True)
                 st.markdown(f"""
-                    <div class="main-header-card">
+                    <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 1.1rem; font-weight: 700; color: #eab308;">⭐ Chuyên đề: {bm_item.get('sheet', 'N/A')}</span>
+                            <span style="font-size: 1.05rem; font-weight: 700; color: #eab308;">⭐ Chuyên đề: {bm_item.get('sheet', 'N/A')}</span>
                             <span class="badge-topic">Đã lưu {gbm_idx + 1} / {len(bm_list)}</span>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
-                
-                st.markdown('<div class="question-card">', unsafe_allow_html=True)
                 
                 col_bm1, col_bm2 = st.columns([4, 1])
                 with col_bm2:
@@ -729,16 +729,15 @@ else:
                     if sub_mode == "📖 Ôn tập từng câu" and g_idx < actual_chunk_len:
                         q_item = current_chunk_questions[g_idx]
                         
+                        st.markdown('<div class="question-card">', unsafe_allow_html=True)
                         st.markdown(f"""
-                            <div class="main-header-card">
+                            <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-size: 1.1rem; font-weight: 700; color: #38bdf8;">📂 Phần {c_num + 1} — Chuyên đề: {q_item['sheet']}</span>
+                                    <span style="font-size: 1.05rem; font-weight: 700; color: #38bdf8;">📂 Phần {c_num + 1} — Chuyên đề: {q_item['sheet']}</span>
                                     <span class="badge-topic">Câu {g_idx + 1} / {actual_chunk_len}</span>
                                 </div>
                             </div>
                         """, unsafe_allow_html=True)
-                        
-                        st.markdown('<div class="question-card">', unsafe_allow_html=True)
                         
                         is_bm = any(b.get("question") == q_item["question"] for b in st.session_state["bookmarked_questions"])
                         bm_label = "⭐ Đã đánh dấu ghi nhớ" if is_bm else "☆ Đánh dấu câu cần ghi nhớ"
@@ -952,16 +951,16 @@ else:
                             
                         wc_item = wrong_in_chunk[wc_idx]
                         
+                        st.markdown('<div class="question-card">', unsafe_allow_html=True)
                         st.markdown(f"""
-                            <div class="main-header-card">
+                            <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-size: 1.1rem; font-weight: 700; color: #f43f5e;">⚠️ Ôn câu sai Phần {c_num + 1}</span>
+                                    <span style="font-size: 1.05rem; font-weight: 700; color: #f43f5e;">⚠️ Ôn câu sai Phần {c_num + 1}</span>
                                     <span class="badge-topic">Câu sai {wc_idx + 1} / {len(wrong_in_chunk)}</span>
                                 </div>
                             </div>
                         """, unsafe_allow_html=True)
                         
-                        st.markdown('<div class="question-card">', unsafe_allow_html=True)
                         st.markdown(f"""
                             <div class="question-title">
                                 <b>Câu hỏi:</b> {wc_item['question']}

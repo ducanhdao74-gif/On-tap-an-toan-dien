@@ -255,7 +255,6 @@ st.markdown("""
         margin-bottom: 15px;
     }
     
-    /* --- NÂNG CẤP GIAO DIỆN CHÍNH (QUESTION CARD & SUB-TABS) --- */
     .main-header-card {
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
         border-left: 5px solid #38bdf8;
@@ -335,7 +334,6 @@ def get_shuffled_options(q_item, session_key):
         
     return st.session_state[session_key]
 
-# --- MÀN HÌNH CHÀO MỪNG ---
 if not st.session_state["app_started"]:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col_w1, col_w2, col_w3 = st.columns([1, 2.2, 1])
@@ -355,7 +353,6 @@ if not st.session_state["app_started"]:
                 st.session_state["app_started"] = True
                 st.rerun()
 else:
-    # --- SIDEBAR DASHBOARD ---
     st.sidebar.markdown("### ⚡ Dashboard Ôn Tập")
 
     completed_chunks_set = st.session_state["completed_chunks"].union(st.session_state["passed_tests"])
@@ -462,7 +459,7 @@ else:
                 with col_q_head2:
                     if st.button(bm_label, key=f"bm_chuande_{idx}", use_container_width=True):
                         if is_bm:
-                            st.session_state["bookmarked_questions"] = [b for b in st.session_state["bookmarked_questions"] if b.get("question"] != q_item["question"]]
+                            st.session_state["bookmarked_questions"] = [b for b in st.session_state["bookmarked_questions"] if b.get("question") != q_item["question"]]
                             st.toast("Đã bỏ đánh dấu câu hỏi!", icon="ℹ️")
                         else:
                             st.session_state["bookmarked_questions"].append(q_item)
@@ -698,7 +695,6 @@ else:
                 st.sidebar.markdown("---")
                 st.sidebar.metric("Tổng số câu của phần", actual_chunk_len)
                 
-                # --- NÂNG CẤP THANH TAB CHỌN CHẾ ĐỘ PHỤ GỌN GÀNG, SANG TRỌNG ---
                 sub_mode = st.radio("Chế độ học trong phần:", [
                     "📖 Ôn tập từng câu",
                     "📝 Bài kiểm tra chốt kiến thức",

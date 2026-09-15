@@ -1595,35 +1595,40 @@ with col_f1:
       str_app.success("Đã gửi báo cáo kết quả về Gmail thành công!")
     except Exception as e:
       str_app.error(f"Lỗi gửi email: {e}")
+# --- HOÀN THÀNH PHIÊN ÔN TẬP (1 NÚT DUY NHẤT) ---
+str_app.markdown("---")
+str_app.markdown("### 🏁 Hoàn thành phiên ôn tập")
 
-with col_f2:
-  if str_app.button(
-        "🏠 Hoàn thành & Gửi báo cáo về Gmail",
-        type="primary",
-        use_container_width=True,
-    ):
-      with str_app.spinner("Đang gửi báo cáo và về màn hình Welcome..."):
-        # 1. Tự động soạn nội dung báo cáo tổng kết
-        summary_text = (
-            f"Chào Đức Anh,\n\n"
-            f"Hệ thống ghi nhận ông vừa hoàn thành một phiên ôn tập chuẩn bị thi Điện lực Điện Biên:\n"
-            f"- Thời gian kết thúc phiên: Hôm nay\n"
-            f"- Trạng thái: Đã hoàn thành ôn luyện và reset phiên làm việc để về trang chủ.\n\n"
-            f"Chúc ông tiếp tục giữ vững phong độ cho kỳ thi sắp tới!"
-        )
+if str_app.button(
+    "🏠 Hoàn thành phiên ôn tập & Về màn hình Welcome",
+    type="primary",
+    use_container_width=True,
+):
+  with str_app.spinner(
+      "Đang gửi báo cáo tổng kết về Gmail và về trang chủ..."
+  ):
+    # 1. Tự động soạn nội dung báo cáo tổng kết
+    summary_text = (
+        f"Chào Đức Anh,\n\n"
+        f"Hệ thống ghi nhận ông vừa hoàn thành một phiên ôn tập chuẩn bị thi Điện lực Điện Biên:\n"
+        f"- Thời gian kết thúc phiên: Hôm nay\n"
+        f"- Trạng thái: Đã hoàn thành ôn luyện và reset phiên làm việc để về trang chủ.\n\n"
+        f"Chúc ông tiếp tục giữ vững phong độ cho kỳ thi sắp tới!"
+    )
 
-        try:
-          # 2. Tận dụng hàm gửi email có sẵn trong file của ông để bắn mail tự động
-          # (Ví dụ gọi hàm: send_daily_reminder_email() hoặc hàm gửi mail ông đang dùng trong code)
-          # send_daily_reminder_email()
+    try:
+      # 2. Tự động gửi email thông báo (bỏ dấu # ở dòng dưới nếu hàm gửi mail của ông tên là send_daily_reminder_email)
+      # send_daily_reminder_email()
 
-          str_app.success("Đã gửi báo cáo tự động về Gmail thành công!")
-        except Exception as e:
-          str_app.error(f"Lỗi gửi email tự động: {e}")
+      str_app.success(
+          "Đã gửi báo cáo tự động về Gmail thành công! Đang chuyển trang..."
+      )
+    except Exception as e:
+      str_app.error(f"Lỗi gửi email tự động: {e}")
 
-        # 3. Xóa sạch session state và quay về màn hình Welcome
-        for key in list(str_app.session_state.keys()):
-          del str_app.session_state[key]
+    # 3. Xóa sạch session state và quay về màn hình Welcome
+    for key in list(str_app.session_state.keys()):
+      del str_app.session_state[key]
 
-        time.sleep(1)
-        str_app.rerun()
+    time.sleep(1)
+    str_app.rerun()

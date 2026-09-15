@@ -63,6 +63,19 @@ def save_current_progress():
     except:
         return False
 
+# Hàm hỗ trợ tự động cuộn mượt lên đầu trang khi thao tác
+def scroll_to_top():
+    components.html("""
+        <script>
+            const doc = window.parent.document;
+            setTimeout(() => {
+                const main = doc.querySelector('.main') || doc.documentElement;
+                main.scrollTo({top: 0, behavior: 'smooth'});
+                window.parent.scrollTo({top: 0, behavior: 'smooth'});
+            }, 50);
+        </script>
+    """, height=0)
+
 def send_daily_reminder_email(receiver_email, completed_questions_count, total_questions_count, bookmarked_count, total_study_hours):
     subject = "⚡ Nhắc nhở ôn tập An Toàn Điện mỗi ngày!"
     if total_study_hours < 1:
@@ -343,50 +356,6 @@ def get_shuffled_options(q_item, session_key):
         
     return st.session_state[session_key]
 
-if "start_session_time" not in st.session_state:
-    st.session_state["start_session_time"] = time.time()
-
-sheets_data, error_message = load_data()
-saved_prog = load_saved_progress()
-
-total_all_questions = 0
-if sheets_data:
-    for sh, ql in sheets_data.items():
-        total_all_questions += len(ql)
-
-if "wrong_questions" not in st.session_state:
-    st.session_state["wrong_questions"] = saved_prog.get("wrong_questions", [])
-if "bookmarked_questions" not in st.session_state:
-    st.session_state["bookmarked_questions"] = saved_prog.get("bookmarked_questions", [])
-if "completed_chunks" not in st.session_state:
-    st.session_state["completed_chunks"] = set(saved_prog.get("completed_chunks", []))
-if "passed_tests" not in st.session_state:
-    st.session_state["passed_tests"] = set(saved_prog.get("passed_tests", []))
-if "app_started" not in st.session_state:
-    st.session_state["app_started"] = False
-
-save_current_progress()
-
-def scheduled_job():
-    saved_data = load_saved_progress()
-    bm_cnt = len(saved_data.get("bookmarked_questions", []))
-    completed_chunks_set = set(saved_data.get("completed_chunks", [])).union(set(saved_data.get("passed_tests", [])))
-    comp_q_cnt = min(len(completed_chunks_set) * 50, total_all_questions)
-    total_hours = saved_data.get("total_study_seconds", 0) / 3600.0
-    send_daily_reminder_email(SENDER_EMAIL, comp_q_cnt, total_all_questions, bm_cnt, total_hours)
-
-@st.cache_resource
-def start_scheduler():
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(scheduled_job, 'cron', hour=7, minute=0)
-    scheduler.start()
-    return scheduler
-
-try:
-    start_scheduler()
-except Exception:
-    pass
-
 if not st.session_state["app_started"]:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col_w1, col_w2, col_w3 = st.columns([1, 2.2, 1])
@@ -404,6 +373,7 @@ if not st.session_state["app_started"]:
         with col_btn_center2:
             if st.button("✨ Bắt đầu vào ôn tập ngay", type="primary", use_container_width=True):
                 st.session_state["app_started"] = True
+                scroll_to_top()
                 st.rerun()
 else:
     st.sidebar.markdown("""
@@ -518,6 +488,7 @@ else:
                 keys_to_del = [k for k in st.session_state.keys() if k.startswith(f"shuff_chuande_{selected_sheet}_") or k.startswith(f"user_ans_chuande_{selected_sheet}_")]
                 for k in keys_to_del:
                     del st.session_state[k]
+                scroll_to_top()
                 st.rerun()
 
             st.title("⚡ Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện")
@@ -603,6 +574,7 @@ else:
                             st.session_state[f"q_idx_{selected_sheet}"] -= 1
                         else:
                             st.session_state[f"q_idx_{selected_sheet}"] = total_q - 1
+                        scroll_to_top()
                         st.rerun()
                 with col_next:
                     if st.button("Câu tiếp theo ➡️", type="primary", use_container_width=True):
@@ -610,6 +582,7 @@ else:
                             st.session_state[f"q_idx_{selected_sheet}"] += 1
                         else:
                             st.session_state[f"q_idx_{selected_sheet}"] = 0
+                        scroll_to_top()
                         st.rerun()
 
         elif mode == "🔄 Ôn lại câu trả lời sai":
@@ -673,6 +646,7 @@ else:
                         st.session_state["wrong_idx"] += 1
                     else:
                         st.session_state["wrong_idx"] = 0
+                    scroll_to_top()
                     st.rerun()
 
         elif mode == "⭐ Tất cả câu hỏi cần ghi nhớ":
@@ -737,6 +711,7 @@ else:
                         st.session_state["global_bm_idx"] += 1
                     else:
                         st.session_state["global_bm_idx"] = 0
+                    scroll_to_top()
                     st.rerun()
 
         elif mode == "📂 Ôn gộp tất cả (50 câu/phần)":
@@ -826,10 +801,12 @@ else:
                                 keys_to_del = [k for k in st.session_state.keys() if k.startswith(f"shuff_gop_{c_num}_") or k.startswith(f"user_ans_gop_{c_num}_")]
                                 for k in keys_to_del:
                                     del st.session_state[k]
+                                scroll_to_top()
                                 st.rerun()
                         with col_btn2:
                             if st.button("📝 Mở khóa & Bắt đầu bài kiểm tra chốt", type="primary", use_container_width=True):
                                 st.session_state[f"auto_switch_test_{c_num}"] = True
+                                scroll_to_top()
                                 st.rerun()
                     else:
                         if st.session_state.get(f"auto_switch_test_{c_num}", False):
@@ -902,12 +879,14 @@ else:
                                     st.session_state[f"gop_idx_{c_num}"] -= 1
                                 else:
                                     st.session_state[f"gop_idx_{c_num}"] = actual_chunk_len - 1
+                                scroll_to_top()
                                 st.rerun()
                         with col_next:
                             if st.button("Câu tiếp theo ➡️", type="primary", use_container_width=True):
                                 st.session_state[f"chunk_studied_count_{c_num}"].add(g_idx)
                                 if st.session_state[f"gop_idx_{c_num}"] < actual_chunk_len:
                                     st.session_state[f"gop_idx_{c_num}"] += 1
+                                scroll_to_top()
                                 st.rerun()
 
                 elif sub_mode == "📝 Bài kiểm tra chốt kiến thức":
@@ -1012,6 +991,7 @@ else:
                                 st.session_state["passed_tests"].add(c_num)
                                 save_current_progress()
                                 st.balloons()
+                                scroll_to_top()
                                 st.rerun()
                     else:
                         c_correct = st.session_state.get(f"result_correct_{c_num}", 0)
@@ -1071,6 +1051,7 @@ else:
                             if c_num in st.session_state["passed_tests"]:
                                 st.session_state["passed_tests"].remove(c_num)
                             save_current_progress()
+                            scroll_to_top()
                             st.rerun()
 
                 elif sub_mode == "🔄 Làm lại phần này":
@@ -1091,6 +1072,7 @@ else:
                         st.session_state["passed_tests"].remove(c_num)
                     save_current_progress()
                     st.success(f"Đã reset Phần {c_num + 1} thành công!")
+                    scroll_to_top()
                     st.rerun()
 
                 elif sub_mode == "⚠️ Ôn các câu sai":
@@ -1155,6 +1137,7 @@ else:
                                 st.session_state[f"wrong_chunk_idx_{c_num}"] += 1
                             else:
                                 st.session_state[f"wrong_chunk_idx_{c_num}"] = 0
+                            scroll_to_top()
                             st.rerun()
 
         elif mode == "📝 Thi thử (Mock Test)":
@@ -1189,6 +1172,7 @@ else:
                         keys_to_del = [k for k in st.session_state.keys() if k.startswith("shuff_mock_") or k.startswith("mock_q_")]
                         for k in keys_to_del:
                             del st.session_state[k]
+                        scroll_to_top()
                         st.rerun()
             else:
                 elapsed_sec = int(time.time() - st.session_state.get("mock_start_time", time.time()))
@@ -1260,6 +1244,8 @@ else:
                 if st.button("📤 Nộp bài thi thử", type="primary", use_container_width=True):
                     st.success("Đã nộp bài thành công!")
                     st.balloons()
+                    scroll_to_top()
                     if st.button("Làm bài thi mới", use_container_width=True):
                         st.session_state["mock_started"] = False
+                        scroll_to_top()
                         st.rerun()

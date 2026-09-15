@@ -26,7 +26,9 @@ if "total_questions_count" not in st.session_state:
 # --- HÀM TÍNH THỜI GIAN ÔN TẬP ---
 def get_total_study_time():
   current_session_duration = time.time() - st.session_state.start_time
-  total_seconds = st.session_state.get("accumulated_time", 0) + current_session_duration
+  total_seconds = (
+      st.session_state.get("accumulated_time", 0) + current_session_duration
+  )
   gio = int(total_seconds // 3600)
   phut = int((total_seconds % 3600) // 60)
   if gio > 0:
@@ -61,16 +63,28 @@ st.write(
     "Chào Đức Anh! Hệ thống ôn tập phục vụ ôn thi Công ty Điện lực Điện Biên."
 )
 
-# Đọc file dữ liệu câu hỏi (giả sử tên file excel của ông là cau_hoi.xlsx hoặc tương tự, điều chỉnh lại nếu cần)
-excel_file = "cau_hoi.xlsx"  # Ông thay đổi tên file này nếu file Excel của ông tên khác
+# Tìm file excel bắt đầu bằng "PL1" trong thư mục hiện tại cho chính xác
+excel_file = None
+for f in os.listdir("."):
+  if f.endswith(".xlsx") and f.startswith("PL1"):
+    excel_file = f
+    break
 
-if os.path.exists(excel_file):
+# Nếu không tìm thấy bằng chữ bắt đầu, thử quét các file excel khác
+if not excel_file:
+  for f in os.listdir("."):
+    if f.endswith(".xlsx"):
+      excel_file = f
+      break
+
+if excel_file and os.path.exists(excel_file):
   try:
     df = pd.read_excel(excel_file)
     st.session_state.total_questions_count = len(df)
 
     st.success(
-        f"Đã tải thành công ngân hàng câu hỏi! Tổng số câu: {len(df)} câu."
+        f"Đã tải thành công ngân hàng câu hỏi từ file `{excel_file}`! Tổng số"
+        f" câu: {len(df)} câu."
     )
 
     # Hiển thị thống kê nhanh
@@ -86,17 +100,19 @@ if os.path.exists(excel_file):
 
     st.divider()
 
-    # --- KHU VỰC LÀM BÀI ÔN TẬP CỦA ÔNG ---
+    # --- KHU VỰC LÀM BÀI ÔN TẬP ---
     st.subheader("📝 Bắt đầu ôn tập / Trắc nghiệm")
 
-    # Thêm logic làm bài ôn tập giao diện ở đây (chọn phần, làm câu hỏi, tính điểm...)
     option = st.selectbox(
         "Chọn chế độ ôn tập:", ["Làm toàn bộ câu hỏi", "Ôn theo phần"]
     )
 
     if option == "Làm toàn bộ câu hỏi":
       st.write("Giao diện danh sách câu hỏi hoặc làm từng câu sẽ hiển thị ở đây.")
-      # Ví dụ đánh dấu hoàn thành nhanh khi ông test:
+      # Hiển thị trước một vài dòng dữ liệu của file excel để xác nhận đúng phần ôn tập
+      with st.expander("Xem trước danh sách câu hỏi trong file"):
+        st.dataframe(df.head())
+
       if st.button("Đánh dấu hoàn thành toàn bộ câu hỏi (Test)"):
         st.session_state.completed_questions = set(range(len(df)))
         st.rerun()
@@ -109,9 +125,6 @@ if os.path.exists(excel_file):
     st.error(f"Lỗi khi đọc file Excel câu hỏi: {e}")
 else:
   st.warning(
-      f"⚠️ Không tìm thấy file `{excel_file}` trong thư mục GitHub. Vui lòng"
-      " đưa file Excel lên kho lưu trữ."
+      "⚠️ Không tìm thấy file Excel nào trong thư mục GitHub. Vui lòng kiểm tra"
+      " lại tên file."
   )
-  # Hiển thị tạm để không bị lỗi trống giao diện
-  with st.expander("📩 Xem trước nội dung thông báo tiến độ"):
-    st.code(get_progress_email_content(), language="text")

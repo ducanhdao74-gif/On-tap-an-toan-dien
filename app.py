@@ -411,7 +411,7 @@ def get_shuffled_options(q_item, session_key):
         
     return str_app.session_state[session_key]
 
-if not str_app.session_state["app_started"]:
+if not str_app.session_state.get("app_started", False):
     str_app.markdown("<br><br>", unsafe_allow_html=True)
     col_w1, col_w2, col_w3 = str_app.columns([1, 2.2, 1])
     with col_w2:

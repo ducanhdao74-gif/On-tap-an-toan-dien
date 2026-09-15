@@ -94,7 +94,7 @@ Hôm nay là một ngày mới rồi! Hãy dành ra chút thời gian để vào
 - Tổng thời gian đã ôn tập: {time_str}
 - Số câu hỏi đang cần ghi nhớ (Star): {bookmarked_count} câu
 
-Chúc ông ôn thi thật tốt và đạt kết quả cao!
+Chúc _ông ôn thi thật tốt và đạt kết quả cao!
 """
     message = MIMEMultipart()
     message["From"] = SENDER_EMAIL
@@ -1499,7 +1499,6 @@ else:
                 str_app.markdown("### 📥 Sao lưu & Xuất dữ liệu")
                 str_app.markdown("Tải tệp tiến độ hiện tại về máy tính để làm bản sao lưu an toàn.")
                 
-                # Tạo chuỗi JSON từ trạng thái hiện tại
                 current_saved_data = load_saved_progress()
                 json_str = json.dumps(current_saved_data, ensure_ascii=False, indent=4)
                 

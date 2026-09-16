@@ -439,7 +439,7 @@ def get_shuffled_options(q_item, session_key):
             "correct": new_correct_letter
         }
         
-  str_app.sidebar.markdown(
+str_app.sidebar.markdown(
       f"""
 <div class="metric-card-container">
 <div class="metric-label">📈 Tiến độ hoàn thành</div>

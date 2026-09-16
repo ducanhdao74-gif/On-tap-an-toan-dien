@@ -461,12 +461,12 @@ progress_ratio = (
       completed_est_count / total_all_questions if total_all_questions > 0 else 0.0
   )
 
-  current_total_seconds = saved_prog.get("total_study_seconds", 0) + (
-      time.time() - str_app.session_state["start_session_time"]
+current_total_seconds = saved_prog.get("total_study_seconds", 0) + (
+time.time() - str_app.session_state["start_session_time"]
   )
-  bookmarked_count = len(str_app.session_state.get("bookmarked questions", []))
-  wrong_count = len(str_app.session_state.get("wrong_questions", []))
-  flagged_count = len(str_app.session_state.get("flagged_questions", []))
+bookmarked_count = len(str_app.session_state.get("bookmarked questions", []))
+wrong_count = len(str_app.session_state.get("wrong_questions", []))
+flagged_count = len(str_app.session_state.get("flagged_questions", []))
 
   # 2. Hiển thị Dashboard Sidebar
   str_app.sidebar.markdown(

@@ -510,21 +510,27 @@ if str_app.session_state.get("is_studying", False):
   )
   str_app.sidebar.progress(progress_ratio)
 
-    col_s1, col_s2 = str_app.sidebar.columns(2)
-    with col_s1:
-        str_app.sidebar.markdown(f"""
-            <div class="metric-card-container" style="padding: 10px 6px;">
-                <div class="metric-label" style="font-size: 0.7rem;">⭐ Ghi nhớ</div>
-                <div class="metric-value" style="font-size: 1.2rem; color: #eab308; text-shadow: 0 0 10px rgba(234, 179, 8, 0.4);">{bookmarked_count}</div>
-            </div>
-        """, unsafe_allow_html=True)
-    with col_s2:
-        str_app.sidebar.markdown(f"""
-            <div class="metric-card-container" style="padding: 10px 6px;">
-                <div class="metric-label" style="font-size: 0.7rem;">⚠️ Câu sai</div>
-                <div class="metric-value" style="font-size: 1.2rem; color: #f43f5e; text-shadow: 0 0 10px rgba(244, 63, 94, 0.4);">{wrong_count}</div>
-            </div>
-        """, unsafe_allow_html=True)
+  col_s1, col_s2 = str_app.sidebar.columns(2)
+  with col_s1:
+    str_app.sidebar.markdown(
+        f"""
+        <div class="metric-card-container" style="padding: 10px 6px;">
+            <div class="metric-label" style="font-size: 0.7rem;">⭐ Ghi nhớ</div>
+            <div class="metric-value" style="font-size: 1.2rem; color: #eab308; text-shadow: 0 0 10px rgba(234, 179, 8, 0.4);">{bookmarked_count}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+  with col_s2:
+    str_app.sidebar.markdown(
+        f"""
+        <div class="metric-card-container" style="padding: 10px 6px;">
+            <div class="metric-label" style="font-size: 0.7rem;">❌ Sai nhiều</div>
+            <div class="metric-value" style="font-size: 1.2rem; color: #ef4444; text-shadow: 0 0 10px rgba(239, 68, 68, 0.4);">{wrong_count}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     str_app.sidebar.markdown(f"""
         <div class="metric-card-container">

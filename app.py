@@ -473,7 +473,6 @@ with col_btn_center2:
   """,
       unsafe_allow_html=True,
   )
-
   # Các nội dung khác của sidebar đặt ở đây...
 
     completed_chunks_set = str_app.session_state["completed_chunks"].union(str_app.session_state["passed_tests"])

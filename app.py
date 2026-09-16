@@ -454,8 +454,8 @@ if not str_app.session_state.get("app_started", False):
         """, unsafe_allow_html=True)
         str_app.markdown("<br>", unsafe_allow_html=True)
         
-        col_btn_center1, col_btn_center2, col_btn_center3 = str_app.columns([1, 1.5, 1])
-       with col_btn_center2:
+       col_btn_center1, col_btn_center2, col_btn_center3 = str_app.columns([1, 1.5, 1])
+with col_btn_center2:
   if str_app.button(
       "✨ Bắt đầu vào ôn tập ngay", type="primary", use_container_width=True
   ):

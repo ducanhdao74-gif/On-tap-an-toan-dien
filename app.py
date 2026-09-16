@@ -469,7 +469,7 @@ wrong_count = len(str_app.session_state.get("wrong_questions", []))
 flagged_count = len(str_app.session_state.get("flagged_questions", []))
 
   # 2. Hiển thị Dashboard Sidebar
-  str_app.sidebar.markdown(
+str_app.sidebar.markdown(
       """
         <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
             ⚡ Dashboard Tổng Quan

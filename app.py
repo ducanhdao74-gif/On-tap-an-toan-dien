@@ -98,7 +98,7 @@ def send_daily_reminder_email(
   else:
     time_str = f"{total_study_hours:.1f} giờ"
 
- if is_completion:
+  if is_completion:
     subject = "Bao cao tong ket hoan thanh phien on tap An Toan Dien!"
     body = f"""Chao Duc Anh,
 
@@ -124,21 +124,22 @@ Tien do hien tai cua ong:
 - So cau hoi dang can ghi nho (Star): {bookmarked_count} cau
 
 Chuc ong on thi that tot va dat ket qua cao!"""
-    message = MIMEMultipart()
-    message["From"] = SENDER_EMAIL
-    message["To"] = receiver_email
-    message["Subject"] = Header(subject, 'utf-8')
-    message.attach(MIMEText(body, 'plain', 'utf-8'))
 
-    try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        server.login(SENDER_EMAIL, SENDER_PASSWORD)
-        server.sendmail(SENDER_EMAIL, receiver_email, message.as_string())
-        server.quit()
-        return True, "Thành công"
-    except Exception as e:
-        return False, str(e)
+  message = MIMEMultipart()
+  message["From"] = SENDER_EMAIL
+  message["To"] = receiver_email
+  message["Subject"] = Header(subject, "utf-8")
+  message.attach(MIMEText(body, "plain", "utf-8"))
+
+  try:
+    server = smtplib.SMTP("smtp.gmail.com", 587)
+    server.starttls()
+    server.login(SENDER_EMAIL, SENDER_PASSWORD)
+    server.sendmail(SENDER_EMAIL, receiver_email, message.as_string())
+    server.quit()
+    return True, "Thành công"
+  except Exception as e:
+    return False, str(e)
 
 @str_app.cache_data
 def load_data():

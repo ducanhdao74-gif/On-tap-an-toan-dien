@@ -497,14 +497,18 @@ current_total_hours = current_total_seconds / 3600.0
 wrong_count = len(str_app.session_state.get("wrong_questions", []))
 flagged_count = len(str_app.session_state.get("flagged_questions", []))
 
-    str_app.sidebar.markdown(f"""
+   if str_app.session_state.get("is_studying", False):
+  str_app.sidebar.markdown(
+      f"""
         <div class="metric-card-container">
             <div class="metric-label">📈 Tiến độ hoàn thành</div>
             <div class="metric-value">{progress_ratio * 100:.1f}%</div>
             <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">{completed_est_count}/{total_all_questions} câu</div>
         </div>
-    """, unsafe_allow_html=True)
-    str_app.sidebar.progress(progress_ratio)
+    """,
+      unsafe_allow_html=True,
+  )
+  str_app.sidebar.progress(progress_ratio)
 
     col_s1, col_s2 = str_app.sidebar.columns(2)
     with col_s1:

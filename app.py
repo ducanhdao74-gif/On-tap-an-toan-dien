@@ -1557,8 +1557,8 @@ else:
                     time.sleep(1)
                     str_app.rerun()
                     # --- NÚT THOÁT VỀ MÀN HÌNH WELCOME (ĐẶT Ở CUỐI FILE) ---
-with st.sidebar:
-    st.divider()
-    if st.button("🏠 Về màn hình Welcome", use_container_width=True):
-        st.session_state["app_started"] = False
-        st.rerun()
+with str_app.sidebar:
+    str_app.divider()
+    if str_app.button("🏠 Về màn hình Welcome", use_container_width=True):
+        str_app.session_state["app_started"] = False
+        str_app.rerun()

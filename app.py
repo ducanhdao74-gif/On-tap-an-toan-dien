@@ -497,7 +497,7 @@ current_total_hours = current_total_seconds / 3600.0
 wrong_count = len(str_app.session_state.get("wrong_questions", []))
 flagged_count = len(str_app.session_state.get("flagged_questions", []))
 
-   if str_app.session_state.get("is_studying", False):
+if str_app.session_state.get("is_studying", False):
   str_app.sidebar.markdown(
       f"""
         <div class="metric-card-container">

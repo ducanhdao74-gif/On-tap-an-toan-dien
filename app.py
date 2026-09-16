@@ -406,7 +406,6 @@ def get_shuffled_options(q_item, session_key):
     return str_app.session_state[session_key]
 
 if not str_app.session_state["app_started"]:
-    # Thêm đoạn CSS này để ẩn thanh sidebar ở màn hình Welcome
     str_app.markdown(
         """
         <style>
@@ -417,7 +416,7 @@ if not str_app.session_state["app_started"]:
     )
     
     str_app.markdown("<br><br>", unsafe_allow_html=True)
-    col_w1, col_w2, col_w3 = str_app.columns([1, 2.2, 1])
+    col_w1, col_w2, col_w3 = str_app.columns([1, 2.2, 1])  # Thẳng hàng lề ở đây
     with col_w2:
         str_app.markdown("""
             <div class="welcome-card">

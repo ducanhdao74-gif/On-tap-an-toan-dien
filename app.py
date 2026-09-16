@@ -406,6 +406,16 @@ def get_shuffled_options(q_item, session_key):
     return str_app.session_state[session_key]
 
 if not str_app.session_state["app_started"]:
+    # Thêm đoạn CSS này để ẩn thanh sidebar ở màn hình Welcome
+    str_app.markdown(
+        """
+        <style>
+            [data-testid="stSidebar"] {display: none;}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    
     str_app.markdown("<br><br>", unsafe_allow_html=True)
     col_w1, col_w2, col_w3 = str_app.columns([1, 2.2, 1])
     with col_w2:
@@ -416,7 +426,7 @@ if not str_app.session_state["app_started"]:
                 <p style="font-size: 1.05rem; color: #94a3b8; margin-top: 8px;">Chúc ông ôn tập thật tập trung, nắm trọn kiến thức và đạt kết quả cao nhất! 🚀</p>
             </div>
         """, unsafe_allow_html=True)
-        str_app.markdown("<br>", unsafe_allow_html=True)
+    str_app.markdown("<br>", unsafe_allow_html=True)
         
         col_btn_center1, col_btn_center2, col_btn_center3 = str_app.columns([1, 1.5, 1])
         with col_btn_center2:

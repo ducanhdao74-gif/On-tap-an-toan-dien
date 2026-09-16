@@ -445,26 +445,29 @@ if not str_app.session_state.get("app_started", False):
     str_app.markdown("<br><br>", unsafe_allow_html=True)
     col_w1, col_w2, col_w3 = str_app.columns([1, 2.2, 1])
     with col_w2:
-        str_app.markdown("""
-            <div class="welcome-card">
-                <h1 class="sparkle-title">⚡ Chào Đức Anh!</h1>
-                <p style="font-size: 1.25rem; color: #e2e8f0; margin-top: 15px; font-weight: 500;">Hệ thống Ngân hàng câu hỏi An Toàn Điện đã sẵn sàng.</p>
-                <p style="font-size: 1.05rem; color: #94a3b8; margin-top: 8px;">Chúc ông ôn tập thật tập trung, nắm trọn kiến thức và đạt kết quả cao nhất! 🚀</p>
-            </div>
-        """, unsafe_allow_html=True)
+       str_app.markdown(
+            """
+            <div style="font-size: 1.25rem; color: #e2e8f0; margin-top: 15px; font-weight: 500;">Hệ thống Ngân hàng câu hỏi An Toàn Điện đã sẵn sàng.</div>
+            <p style="font-size: 1.05rem; color: #94a3b8; margin-top: 8px;">Chúc ông ôn tập thật tập trung, nắm trọn kiến thức và đạt kết quả cao nhất! 🚀</p>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
         str_app.markdown("<br>", unsafe_allow_html=True)
-        
-      col_btn_center1, col_btn_center2, col_btn_center3 = str_app.columns(
-        [1, 1.5, 1]
-    )
-    with col_btn_center2:
-      if str_app.button(
-          "✨ Bắt đầu vào ôn tập ngay", type="primary", use_container_width=True
-      ):
-        str_app.session_state["app_started"] = True
-        str_app.session_state["is_studying"] = True
-        scroll_to_top()
-        str_app.rerun()
+
+        col_btn_center1, col_btn_center2, col_btn_center3 = str_app.columns(
+            [1, 1.5, 1]
+        )
+        with col_btn_center2:
+          if str_app.button(
+              "✨ Bắt đầu vào ôn tập ngay",
+              type="primary",
+              use_container_width=True,
+          ):
+            str_app.session_state["app_started"] = True
+            str_app.session_state["is_studying"] = True
+            scroll_to_top()
+            str_app.rerun()
 else:
     str_app.sidebar.markdown("""
         <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">

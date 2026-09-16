@@ -439,35 +439,46 @@ def get_shuffled_options(q_item, session_key):
             "correct": new_correct_letter
         }
         
-str_app.sidebar.markdown(
-      f"""
-<div class="metric-card-container">
-<div class="metric-label">📈 Tiến độ hoàn thành</div>
-<div class="metric-value">{progress_ratio * 100:.1f}%</div>
-<div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">{completed_est_count} / {total_all_questions} câu</div>
-</div>
-""",
-      unsafe_allow_html=True,
-  )
-  # 1. Tính toán các biến số trước
+# 1. Tính toán các biến số trước tiên
 completed_chunks_set = str_app.session_state["completed_chunks"].union(
-      str_app.session_state["passed_tests"]
-  )
+    str_app.session_state["passed_tests"]
+)
 chunk_size_calc = 50
 completed_est_count = min(
-      len(completed_chunks_set) * chunk_size_calc, total_all_questions
-  )
+    len(completed_chunks_set) * chunk_size_calc, total_all_questions
+)
 progress_ratio = (
-      completed_est_count / total_all_questions if total_all_questions > 0 else 0.0
-  )
+    completed_est_count / total_all_questions if total_all_questions > 0 else 0.0
+)
 
 current_total_seconds = saved_prog.get("total_study_seconds", 0) + (
-time.time() - str_app.session_state["start_session_time"]
-  )
+    time.time() - str_app.session_state["start_session_time"]
+)
 bookmarked_count = len(str_app.session_state.get("bookmarked questions", []))
 wrong_count = len(str_app.session_state.get("wrong_questions", []))
 flagged_count = len(str_app.session_state.get("flagged_questions", []))
 
+# 2. Sau đó mới gọi hiển thị Sidebar Dashboard
+str_app.sidebar.markdown(
+    """
+    <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+        ⚡ Dashboard Tổng Quan
+    </div>
+""",
+    unsafe_allow_html=True,
+)
+
+str_app.sidebar.markdown(
+    f"""
+    <div class="metric-card-container">
+        <div class="metric-label">📈 Tiến độ hoàn thành</div>
+        <div class="metric-value">{progress_ratio * 100:.1f}%</div>
+        <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">{completed_est_count} / {total_all_questions} câu</div>
+    </div>
+""",
+    unsafe_allow_html=True,
+)
+str_app.sidebar.progress(progress_ratio)
   # 2. Hiển thị Dashboard Sidebar
 str_app.sidebar.markdown(
       """

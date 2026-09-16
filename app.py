@@ -490,8 +490,8 @@ current_total_seconds = saved_prog.get("total_study_seconds", 0) + (
     time.time() - str_app.session_state["start_session_time"]
 )
 current_total_hours = current_total_seconds / 3600.0
-bookmarked_count = len(str_app.session_state.get("bookmarked questions", []))
-    wrong_count = len(str_app.session_state.get("wrong_questions", []))
+wrong_count = len(str_app.session_state.get("wrong_questions", []))
+flagged_count = len(str_app.session_state.get("flagged_questions", []))
 
     str_app.sidebar.markdown(f"""
         <div class="metric-card-container">

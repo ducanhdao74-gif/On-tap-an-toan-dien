@@ -450,11 +450,11 @@ str_app.sidebar.markdown(
       unsafe_allow_html=True,
   )
   # 1. Tính toán các biến số trước
-  completed_chunks_set = str_app.session_state["completed_chunks"].union(
+completed_chunks_set = str_app.session_state["completed_chunks"].union(
       str_app.session_state["passed_tests"]
   )
-  chunk_size_calc = 50
-  completed_est_count = min(
+chunk_size_calc = 50
+completed_est_count = min(
       len(completed_chunks_set) * chunk_size_calc, total_all_questions
   )
   progress_ratio = (

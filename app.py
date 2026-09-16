@@ -1556,3 +1556,9 @@ else:
                     str_app.success("Đã thiết lập lại toàn bộ ứng dụng từ đầu!")
                     time.sleep(1)
                     str_app.rerun()
+                    # --- NÚT THOÁT VỀ MÀN HÌNH WELCOME (ĐẶT Ở CUỐI FILE) ---
+with st.sidebar:
+    st.divider()
+    if st.button("🏠 Về màn hình Welcome", use_container_width=True):
+        st.session_state["app_started"] = False
+        st.rerun()

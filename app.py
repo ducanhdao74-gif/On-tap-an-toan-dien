@@ -98,13 +98,13 @@ def send_daily_reminder_email(
   else:
     time_str = f"{total_study_hours:.1f} giờ"
 
-  if is_completion:
+ if is_completion:
     subject = "Bao cao tong ket hoan thanh phien on tap An Toan Dien!"
     body = f"""Chao Duc Anh,
 
 He thong ghi nhan ong vua hoan thanh mot phien on tap chuan bi thi Dien luc Dien Bien:
 - Thoi gian ket thuc phien: Hom nay
-- Trang thai: Da hoan thanh on luyen va reset phien lam việc ve trang chu.
+- Trang thai: Da hoan thanh on luyen va reset phien lam viec ve trang chu.
 
 Tien do phien vua roi:
 - So cau da hoan thanh: {completed_questions_count}/{total_questions_count} cau
@@ -121,7 +121,7 @@ Hom nay la mot ngay moi roi! Hay danh ra chut thoi gian de vao on tap ngan hang 
 Tien do hien tai cua ong:
 - So cau da hoan thanh: {completed_questions_count}/{total_questions_count} cau
 - Tong thoi gian da on tap: {time_str}
-- So cau hoi dang can ghi nhớ (Star): {bookmarked_count} cau
+- So cau hoi dang can ghi nho (Star): {bookmarked_count} cau
 
 Chuc ong on thi that tot va dat ket qua cao!"""
     message = MIMEMultipart()

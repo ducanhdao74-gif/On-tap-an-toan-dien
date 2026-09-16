@@ -439,16 +439,16 @@ def get_shuffled_options(q_item, session_key):
             "correct": new_correct_letter
         }
         
-    return str_app.session_state[session_key]
-
-
-            <div style="font-weight: bold; color: #38bdf8; font-size: 1.1rem;">{completed_est_count} / {total_all_questions} câu ({progress_ratio*100:.1f}%)</div>
-        </div>
-    """,
+  str_app.sidebar.markdown(
+      f"""
+<div class="metric-card-container">
+<div class="metric-label">📈 Tiến độ hoàn thành</div>
+<div class="metric-value">{progress_ratio * 100:.1f}%</div>
+<div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">{completed_est_count} / {total_all_questions} câu</div>
+</div>
+""",
       unsafe_allow_html=True,
   )
-  # Các nội dung khác của sidebar đặt ở đây...
-else:
   # 1. Tính toán các biến số trước
   completed_chunks_set = str_app.session_state["completed_chunks"].union(
       str_app.session_state["passed_tests"]

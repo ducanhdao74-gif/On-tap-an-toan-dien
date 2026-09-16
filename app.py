@@ -489,13 +489,42 @@ str_app.sidebar.markdown(
   )
 str_app.sidebar.progress(progress_ratio)
 
-if str_app.session_state.get("is_studying", False):
+else:
+  # Tính toán đầy đủ tất cả các biến trước khi dùng ở sidebar
+  completed_chunks_set = str_app.session_state["completed_chunks"].union(
+      str_app.session_state["passed_tests"]
+  )
+  chunk_size_calc = 50
+  completed_est_count = min(
+      len(completed_chunks_set) * chunk_size_calc, total_all_questions
+  )
+  progress_ratio = (
+      completed_est_count / total_all_questions if total_all_questions > 0 else 0.0
+  )
+
+  current_total_seconds = saved_prog.get("total_study_seconds", 0) + (
+      time.time() - str_app.session_state["start_session_time"]
+  )
+  bookmarked_count = len(str_app.session_state.get("bookmarked questions", []))
+  wrong_count = len(str_app.session_state.get("wrong_questions", []))
+  flagged_count = len(str_app.session_state.get("flagged_questions", []))
+
+  # Hiển thị Sidebar Dashboard an toàn tuyệt đối
+  str_app.sidebar.markdown(
+      """
+        <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+            ⚡ Dashboard Tổng Quan
+        </div>
+    """,
+      unsafe_allow_html=True,
+  )
+
   str_app.sidebar.markdown(
       f"""
         <div class="metric-card-container">
             <div class="metric-label">📈 Tiến độ hoàn thành</div>
             <div class="metric-value">{progress_ratio * 100:.1f}%</div>
-            <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">{completed_est_count}/{total_all_questions} câu</div>
+            <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">{completed_est_count} / {total_all_questions} câu</div>
         </div>
     """,
       unsafe_allow_html=True,

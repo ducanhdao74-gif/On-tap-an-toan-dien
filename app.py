@@ -489,7 +489,7 @@ str_app.sidebar.markdown(
   )
 str_app.sidebar.progress(progress_ratio)
 
-else:
+if str_app.session_state.get("is_studying", False):
   # Tính toán đầy đủ tất cả các biến trước khi dùng ở sidebar
   completed_chunks_set = str_app.session_state["completed_chunks"].union(
       str_app.session_state["passed_tests"]

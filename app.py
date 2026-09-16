@@ -464,13 +464,14 @@ with col_btn_center2:
     str_app.session_state["is_studying"] = True
     scroll_to_top()
     str_app.rerun()
-   if str_app.session_state.get("is_studying", False):
+
+if str_app.session_state.get("is_studying", False):
   str_app.sidebar.markdown(
       """
-      <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-          ⚡ Dashboard Tổng Quan
-      </div>
-  """,
+        <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+            ⚡ Dashboard Tổng Quan
+        </div>
+    """,
       unsafe_allow_html=True,
   )
   # Các nội dung khác của sidebar đặt ở đây...

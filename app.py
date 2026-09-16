@@ -453,7 +453,7 @@ if not str_app.session_state.get("app_started", False):
         """,
             unsafe_allow_html=True,
         )
-        str_app.markdown("<br>", unsafe_allow_html=True)
+str_app.markdown("<br>", unsafe_allow_html=True)
 
         col_btn_center1, col_btn_center2, col_btn_center3 = str_app.columns(
             [1, 1.5, 1]
@@ -468,12 +468,17 @@ if not str_app.session_state.get("app_started", False):
             str_app.session_state["is_studying"] = True
             scroll_to_top()
             str_app.rerun()
-else:
-    str_app.sidebar.markdown("""
-        <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-            ⚡ Dashboard Tổng Quan
-        </div>
-    """, unsafe_allow_html=True)
+   if str_app.session_state.get("is_studying", False):
+  str_app.sidebar.markdown(
+      """
+      <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+          ⚡ Dashboard Tổng Quan
+      </div>
+  """,
+      unsafe_allow_html=True,
+  )
+
+  # Các nội dung khác của sidebar đặt ở đây...
 
     completed_chunks_set = str_app.session_state["completed_chunks"].union(str_app.session_state["passed_tests"])
     chunk_size_calc = 50

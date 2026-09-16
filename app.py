@@ -15,7 +15,8 @@ from email.header import Header
 str_app.set_page_config(
     page_title="⚡ Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện",
     page_icon="⚡",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed",  # <--- Thêm đúng dòng này vào đây
 )
 
 PROGRESS_FILE = "quiz_progress.json"

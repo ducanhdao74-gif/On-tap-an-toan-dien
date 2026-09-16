@@ -15,8 +15,7 @@ from email.header import Header
 str_app.set_page_config(
     page_title="⚡ Ôn Tập Ngân Hàng Câu Hỏi An Toàn Điện",
     page_icon="⚡",
-    layout="wide",
-    initial_sidebar_state="collapsed",  # <--- Thêm đúng dòng này vào đây
+    layout="wide"
 )
 
 PROGRESS_FILE = "quiz_progress.json"
@@ -32,48 +31,40 @@ def load_saved_progress():
         except:
             pass
     return {
-    "completed_chunks": [0, 1, 2],
-    "passed_tests": [0, 1, 2],
-    "bookmarked_questions": [],
-    "wrong_questions": [],
-    "spaced_repetition_data": {},
-    "total_study_seconds": 0,
-    "last_login_date": ""
-}
-import subprocess
+        "completed_chunks": [],
+        "passed_tests": [],
+        "bookmarked_questions": [],
+        "wrong_questions": [],
+        "spaced_repetition_data": {},
+        "total_study_seconds": 0,
+        "last_login_date": ""
+    }
 
-def save_current_progress_and_sync_github():
-    # 1. Ghi dữ liệu trực tiếp vào file JSON cục bộ
+def save_current_progress():
+    if "start_session_time" in str_app.session_state:
+        elapsed = time.time() - str_app.session_state["start_session_time"]
+        str_app.session_state["start_session_time"] = time.time()
+        saved_data = load_saved_progress()
+        saved_data["total_study_seconds"] = saved_data.get("total_study_seconds", 0) + elapsed
+    else:
+        saved_data = load_saved_progress()
+
     data = {
         "completed_chunks": list(str_app.session_state.get("completed_chunks", [])),
         "passed_tests": list(str_app.session_state.get("passed_tests", [])),
         "bookmarked_questions": str_app.session_state.get("bookmarked_questions", []),
         "wrong_questions": str_app.session_state.get("wrong_questions", []),
         "spaced_repetition_data": str_app.session_state.get("spaced_repetition_data", {}),
-        "total_study_seconds": str_app.session_state.get("total_study_seconds", 0),
+        "total_study_seconds": saved_data.get("total_study_seconds", 0),
         "last_login_date": str_app.session_state.get("last_login_date", "")
     }
-    
     try:
         with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
-            
-        # 2. Tự động Git commit & push lên GitHub
-        subprocess.run(["git", "config", "--global", "user.email", "ducanh@bot.com"], check=False)
-        subprocess.run(["git", "config", "--global", "user.name", "Quiz Bot Auto Sync"], check=False)
-        subprocess.run(["git", "add", PROGRESS_FILE], check=True)
-        commit_result = subprocess.run(["git", "commit", "-m", "Auto-update quiz progress json"], capture_output=True, text=True)
-        
-        if "nothing to commit" not in commit_result.stdout:
-            subprocess.run(["git", "push"], check=True)
         return True
-    except Exception as e:
-        print(f"Lỗi đồng bộ Git tự động: {e}")
+    except:
         return False
 
-def save_current_progress():
-    # Hàm cầu nối đặt ở phía sau hàm chính để hứng lệnh gọi cũ an toàn
-    save_current_progress_and_sync_github()
 def scroll_to_top():
     components.html("""
         <script>
@@ -86,61 +77,40 @@ def scroll_to_top():
         </script>
     """, height=0)
 
-def send_daily_reminder_email(
-    receiver_email,
-    completed_questions_count,
-    total_questions_count,
-    bookmarked_count,
-    total_study_hours,
-    is_completion=False,
-):
-  if total_study_hours < 1:
-    time_str = f"{int(total_study_hours * 60)} phút"
-  else:
-    time_str = f"{total_study_hours:.1f} giờ"
+def send_daily_reminder_email(receiver_email, completed_questions_count, total_questions_count, bookmarked_count, total_study_hours):
+    subject = "⚡ Nhắc nhở ôn tập An Toàn Điện mỗi ngày!"
+    if total_study_hours < 1:
+        time_str = f"{int(total_study_hours * 60)} phút"
+    else:
+        time_str = f"{total_study_hours:.1f} giờ"
 
-  if is_completion:
-    subject = "Bao cao tong ket hoan thanh phien on tap An Toan Dien!"
-    body = f"""Chao Duc Anh,
+    body = f"""
+Chào Đức Anh,
 
-He thong ghi nhan ong vua hoan thanh mot phien on tap chuan bi thi Dien luc Dien Bien:
-- Thoi gian ket thuc phien: Hom nay
-- Trang thai: Da hoan thanh on luyen va reset phien lam viec ve trang chu.
+Hôm nay là một ngày mới rồi! Hãy dành ra chút thời gian để vào ôn tập ngân hàng câu hỏi An Toàn Điện nhé:
 
-Tien do phien vua roi:
-- So cau da hoan thanh: {completed_questions_count}/{total_questions_count} cau
-- Tong thoi gian on tap: {time_str}
-- So cau hoi can luu y (Star): {bookmarked_count} cau
+📊 Tiến độ hiện tại của ông:
+- Số câu đã hoàn thành: {completed_questions_count}/{total_questions_count} câu
+- Tổng thời gian đã ôn tập: {time_str}
+- Số câu hỏi đang cần ghi nhớ (Star): {bookmarked_count} câu
 
-Chuc ong tiep tuc giu vung phong do cho ky thi sap toi!"""
-  else:
-    subject = "Nhac nho on tap An Toan Dien moi ngay!"
-    body = f"""Chao Duc Anh,
+Chúc ông ôn thi thật tốt và đạt kết quả cao!
+"""
+    message = MIMEMultipart()
+    message["From"] = SENDER_EMAIL
+    message["To"] = receiver_email
+    message["Subject"] = Header(subject, 'utf-8')
+    message.attach(MIMEText(body, 'plain', 'utf-8'))
 
-Hom nay la mot ngay moi roi! Hay danh ra chut thoi gian de vao on tap ngan hang cau hoi An Toan Dien nhe:
-
-Tien do hien tai cua ong:
-- So cau da hoan thanh: {completed_questions_count}/{total_questions_count} cau
-- Tong thoi gian da on tap: {time_str}
-- So cau hoi dang can ghi nho (Star): {bookmarked_count} cau
-
-Chuc ong on thi that tot va dat ket qua cao!"""
-
-  message = MIMEMultipart()
-  message["From"] = SENDER_EMAIL
-  message["To"] = receiver_email
-  message["Subject"] = Header(subject, "utf-8")
-  message.attach(MIMEText(body, "plain", "utf-8"))
-
-  try:
-    server = smtplib.SMTP("smtp.gmail.com", 587)
-    server.starttls()
-    server.login(SENDER_EMAIL, SENDER_PASSWORD)
-    server.sendmail(SENDER_EMAIL, receiver_email, message.as_string())
-    server.quit()
-    return True, "Thành công"
-  except Exception as e:
-    return False, str(e)
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(SENDER_EMAIL, SENDER_PASSWORD)
+        server.sendmail(SENDER_EMAIL, receiver_email, message.as_string())
+        server.quit()
+        return True, "Thành công"
+    except Exception as e:
+        return False, str(e)
 
 @str_app.cache_data
 def load_data():
@@ -240,17 +210,11 @@ if "bookmarked_questions" not in str_app.session_state:
 if "spaced_repetition_data" not in str_app.session_state:
     str_app.session_state["spaced_repetition_data"] = saved_prog.get("spaced_repetition_data", {})
 if "completed_chunks" not in str_app.session_state:
-  # Thêm trực tiếp [0, 1, 2] vào để ép nhận 3 phần đầu đã hoàn thành
-  saved_chunks = saved_prog.get("completed_chunks", [])
-  if not saved_chunks:
-    saved_chunks = [0, 1, 2]
-  str_app.session_state["completed_chunks"] = set(saved_chunks)
-
+    str_app.session_state["completed_chunks"] = set(saved_prog.get("completed_chunks", []))
 if "passed_tests" not in str_app.session_state:
-  saved_passed = saved_prog.get("passed_tests", [])
-  if not saved_passed:
-    saved_passed = [0, 1, 2]
-  str_app.session_state["passed_tests"] = set(saved_passed)
+    str_app.session_state["passed_tests"] = set(saved_prog.get("passed_tests", []))
+if "app_started" not in str_app.session_state:
+    str_app.session_state["app_started"] = False
 
 save_current_progress()
 
@@ -439,130 +403,68 @@ def get_shuffled_options(q_item, session_key):
             "correct": new_correct_letter
         }
         
-# 1. Tính toán các biến số trước tiên
-completed_chunks_set = str_app.session_state["completed_chunks"].union(
-    str_app.session_state["passed_tests"]
-)
-chunk_size_calc = 50
-completed_est_count = min(
-    len(completed_chunks_set) * chunk_size_calc, total_all_questions
-)
-progress_ratio = (
-    completed_est_count / total_all_questions if total_all_questions > 0 else 0.0
-)
+    return str_app.session_state[session_key]
 
-current_total_seconds = saved_prog.get("total_study_seconds", 0) + (
-    time.time() - str_app.session_state["start_session_time"]
-)
-bookmarked_count = len(str_app.session_state.get("bookmarked questions", []))
-wrong_count = len(str_app.session_state.get("wrong_questions", []))
-flagged_count = len(str_app.session_state.get("flagged_questions", []))
-
-# 2. Sau đó mới gọi hiển thị Sidebar Dashboard
-str_app.sidebar.markdown(
-    """
-    <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-        ⚡ Dashboard Tổng Quan
-    </div>
-""",
-    unsafe_allow_html=True,
-)
-
-str_app.sidebar.markdown(
-    f"""
-    <div class="metric-card-container">
-        <div class="metric-label">📈 Tiến độ hoàn thành</div>
-        <div class="metric-value">{progress_ratio * 100:.1f}%</div>
-        <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">{completed_est_count} / {total_all_questions} câu</div>
-    </div>
-""",
-    unsafe_allow_html=True,
-)
-str_app.sidebar.progress(progress_ratio)
-  # 2. Hiển thị Dashboard Sidebar
-str_app.sidebar.markdown(
-      """
+if not str_app.session_state["app_started"]:
+    str_app.markdown("<br><br>", unsafe_allow_html=True)
+    col_w1, col_w2, col_w3 = str_app.columns([1, 2.2, 1])
+    with col_w2:
+        str_app.markdown("""
+            <div class="welcome-card">
+                <h1 class="sparkle-title">⚡ Chào Đức Anh!</h1>
+                <p style="font-size: 1.25rem; color: #e2e8f0; margin-top: 15px; font-weight: 500;">Hệ thống Ngân hàng câu hỏi An Toàn Điện đã sẵn sàng.</p>
+                <p style="font-size: 1.05rem; color: #94a3b8; margin-top: 8px;">Chúc ông ôn tập thật tập trung, nắm trọn kiến thức và đạt kết quả cao nhất! 🚀</p>
+            </div>
+        """, unsafe_allow_html=True)
+        str_app.markdown("<br>", unsafe_allow_html=True)
+        
+        col_btn_center1, col_btn_center2, col_btn_center3 = str_app.columns([1, 1.5, 1])
+        with col_btn_center2:
+            if str_app.button("✨ Bắt đầu vào ôn tập ngay", type="primary", use_container_width=True):
+                str_app.session_state["app_started"] = True
+                scroll_to_top()
+                str_app.rerun()
+else:
+    str_app.sidebar.markdown("""
         <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
             ⚡ Dashboard Tổng Quan
         </div>
-    """,
-      unsafe_allow_html=True,
-  )
-str_app.sidebar.markdown(
-      f"""
+    """, unsafe_allow_html=True)
+
+    completed_chunks_set = str_app.session_state["completed_chunks"].union(str_app.session_state["passed_tests"])
+    chunk_size_calc = 50
+    completed_est_count = min(len(completed_chunks_set) * chunk_size_calc, total_all_questions)
+    progress_ratio = completed_est_count / total_all_questions if total_all_questions > 0 else 0.0
+
+    current_total_seconds = saved_prog.get("total_study_seconds", 0) + (time.time() - str_app.session_state["start_session_time"])
+    current_total_hours = current_total_seconds / 3600.0
+    bookmarked_count = len(str_app.session_state.get("bookmarked_questions", []))
+    wrong_count = len(str_app.session_state.get("wrong_questions", []))
+
+    str_app.sidebar.markdown(f"""
         <div class="metric-card-container">
             <div class="metric-label">📈 Tiến độ hoàn thành</div>
             <div class="metric-value">{progress_ratio * 100:.1f}%</div>
             <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">{completed_est_count}/{total_all_questions} câu</div>
         </div>
-    """,
-      unsafe_allow_html=True,
-  )
-str_app.sidebar.progress(progress_ratio)
+    """, unsafe_allow_html=True)
+    str_app.sidebar.progress(progress_ratio)
 
-if str_app.session_state.get("is_studying", False):
-  # Tính toán đầy đủ tất cả các biến trước khi dùng ở sidebar
-  completed_chunks_set = str_app.session_state["completed_chunks"].union(
-      str_app.session_state["passed_tests"]
-  )
-  chunk_size_calc = 50
-  completed_est_count = min(
-      len(completed_chunks_set) * chunk_size_calc, total_all_questions
-  )
-  progress_ratio = (
-      completed_est_count / total_all_questions if total_all_questions > 0 else 0.0
-  )
-
-  current_total_seconds = saved_prog.get("total_study_seconds", 0) + (
-      time.time() - str_app.session_state["start_session_time"]
-  )
-  bookmarked_count = len(str_app.session_state.get("bookmarked questions", []))
-  wrong_count = len(str_app.session_state.get("wrong_questions", []))
-  flagged_count = len(str_app.session_state.get("flagged_questions", []))
-
-  # Hiển thị Sidebar Dashboard an toàn tuyệt đối
-  str_app.sidebar.markdown(
-      """
-        <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-            ⚡ Dashboard Tổng Quan
-        </div>
-    """,
-      unsafe_allow_html=True,
-  )
-
-  str_app.sidebar.markdown(
-      f"""
-        <div class="metric-card-container">
-            <div class="metric-label">📈 Tiến độ hoàn thành</div>
-            <div class="metric-value">{progress_ratio * 100:.1f}%</div>
-            <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">{completed_est_count} / {total_all_questions} câu</div>
-        </div>
-    """,
-      unsafe_allow_html=True,
-  )
-  str_app.sidebar.progress(progress_ratio)
-
-  col_s1, col_s2 = str_app.sidebar.columns(2)
-  with col_s1:
-    str_app.sidebar.markdown(
-        f"""
-        <div class="metric-card-container" style="padding: 10px 6px;">
-            <div class="metric-label" style="font-size: 0.7rem;">⭐ Ghi nhớ</div>
-            <div class="metric-value" style="font-size: 1.2rem; color: #eab308; text-shadow: 0 0 10px rgba(234, 179, 8, 0.4);">{bookmarked_count}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-  with col_s2:
-    str_app.sidebar.markdown(
-        f"""
-        <div class="metric-card-container" style="padding: 10px 6px;">
-            <div class="metric-label" style="font-size: 0.7rem;">❌ Sai nhiều</div>
-            <div class="metric-value" style="font-size: 1.2rem; color: #ef4444; text-shadow: 0 0 10px rgba(239, 68, 68, 0.4);">{wrong_count}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    col_s1, col_s2 = str_app.sidebar.columns(2)
+    with col_s1:
+        str_app.sidebar.markdown(f"""
+            <div class="metric-card-container" style="padding: 10px 6px;">
+                <div class="metric-label" style="font-size: 0.7rem;">⭐ Ghi nhớ</div>
+                <div class="metric-value" style="font-size: 1.2rem; color: #eab308; text-shadow: 0 0 10px rgba(234, 179, 8, 0.4);">{bookmarked_count}</div>
+            </div>
+        """, unsafe_allow_html=True)
+    with col_s2:
+        str_app.sidebar.markdown(f"""
+            <div class="metric-card-container" style="padding: 10px 6px;">
+                <div class="metric-label" style="font-size: 0.7rem;">⚠️ Câu sai</div>
+                <div class="metric-value" style="font-size: 1.2rem; color: #f43f5e; text-shadow: 0 0 10px rgba(244, 63, 94, 0.4);">{wrong_count}</div>
+            </div>
+        """, unsafe_allow_html=True)
 
     str_app.sidebar.markdown(f"""
         <div class="metric-card-container">
@@ -574,11 +476,11 @@ if str_app.session_state.get("is_studying", False):
 
     str_app.sidebar.markdown("<br>", unsafe_allow_html=True)
 
-    if str_app.sidebar.button(
-    "💾 Lưu lại tiến độ học", type="primary", use_container_width=True
-):
-        save_current_progress_and_sync_github()
-        str_app.sidebar.success("✅ Đã lưu và đồng bộ tiến độ lên GitHub!")
+    if str_app.sidebar.button("💾 Lưu lại tiến độ học", type="primary", use_container_width=True):
+        if save_current_progress():
+            str_app.sidebar.success("✅ Đã lưu tiến độ thành công!")
+        else:
+            str_app.sidebar.error("❌ Lỗi khi lưu dữ liệu!")
 
     if str_app.sidebar.button("📧 Gửi Email nhắc nhở báo cáo", use_container_width=True):
         success, err_msg = send_daily_reminder_email(SENDER_EMAIL, completed_est_count, total_all_questions, bookmarked_count, current_total_hours)
@@ -1654,87 +1556,3 @@ if str_app.session_state.get("is_studying", False):
                     str_app.success("Đã thiết lập lại toàn bộ ứng dụng từ đầu!")
                     time.sleep(1)
                     str_app.rerun()
-                    # --- THÊM PHẦN KẾT THÚC ÔN TẬP VÀ GỬI MAIL VỀ GMAIL ---
-
-      # 2. Tstr_app.markdown("---")
-# Chỉ hiển thị nút này khi người dùng thực sự đang trong phiên ôn tập
-if str_app.session_state.get("started", False):
-  str_app.markdown("---")
-  str_app.markdown("### 🏁 Hoàn thành phiên ôn tập")
-
-  if str_app.button(
-      "🏠 Hoàn thành phiên ôn tập & Về màn hình Welcome",
-      type="primary",
-      use_container_width=True,
-      key="unique_btn_return_welcome_final_2026",
-  ):
-    with str_app.spinner(
-        "Đang gửi báo cáo tổng kết về Gmail và về trang chủ..."
-    ):
-      summary_text = (
-          f"Chào Đức Anh,\n\n"
-          f"Hệ thống ghi nhận ông vừa hoàn thành một phiên ôn tập chuẩn bị thi Điện lực Điện Biên:\n"
-          f"- Thời gian kết thúc phiên: Hôm nay\n"
-          f"- Trạng thái: Đã hoàn thành phiên ôn luyện và reset phiên làm việc để về trang chủ.\n\n"
-          f"Chúc ông tiếp tục giữ vững phong độ cho kỳ thi sắp tới!"
-      )
-
-      try:
-        # send_daily_reminder_email()
-        str_app.success(
-            "Đã gửi báo cáo tự động về Gmail thành công! Đang chuyển trang..."
-        )
-      except Exception as e:
-        str_app.error(f"Lỗi gửi email tự động: {e}")
-
-      for key in list(str_app.session_state.keys()):
-        del str_app.session_state[key]
-
-      time.sleep(1)
-      str_app.rerun()
-       # Đưa nút hoàn thành lên thanh sidebar (thanh task bên trái)
-# Chỉ hiển thị nút chức năng trên sidebar khi người dùng đã vào phiên ôn tập
-    if str_app.session_state.get("is_studying", False):
-      if str_app.sidebar.button(
-          "🏠 Hoàn thành & Về Welcome",
-          type="primary",
-          use_container_width=True,
-          key="btn_sidebar_return_welcome",
-      ):
-        with str_app.sidebar.spinner("Đang gửi báo cáo và về trang chủ..."):
-          # 1. Soạn nội dung báo cáo tự động
-          summary_text = (
-              f"Chào Đức Anh,\n\n"
-              f"Hệ thống ghi nhận ông vừa hoàn thành phiên ôn tập Điện lực Điện Biên từ Sidebar:\n"
-              f"- Trạng thái: Đã reset phiên làm việc về trang chủ.\n"
-              f"Chúc ông đạt kết quả cao trong kỳ thi sắp tới!"
-          )
-          
-          # Phần gửi mail và reset session giữ nguyên ở đây...
-
-    try:
-      # 2. Sử dụng str_app.session_state thay vì st.session_state để đồng bộ với app của ông
-      send_daily_reminder_email(
-          receiver_email="ducanhdao74@gmail.com",
-          completed_questions_count=str_app.session_state.get(
-              "completed_count", 0
-          ),
-          total_questions_count=str_app.session_state.get(
-              "total_questions", 1000
-          ),
-          bookmarked_count=str_app.session_state.get("bookmarked_count", 0),
-          total_study_hours=str_app.session_state.get("study_hours", 1.0),
-          is_completion=True,  # <--- Thêm đúng dòng này vào đây
-      )
-      str_app.sidebar.success("Đã gửi báo cáo tự động về Gmail thành công!")
-    except Exception as e:
-      str_app.sidebar.error(f"Lỗi gửi email: {e}")
-
-    # 3. Dừng 2 giây để chắc chắn mail đã bắn đi thành công
-    time.sleep(2)
-
-    # 4. Xóa sạch session state và quay về màn hình Welcome
-    for key in list(str_app.session_state.keys()):
-      del str_app.session_state[key]
-
-    str_app.rerun()

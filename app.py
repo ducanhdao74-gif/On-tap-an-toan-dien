@@ -1556,3 +1556,107 @@ else:
                     str_app.success("Đã thiết lập lại toàn bộ ứng dụng từ đầu!")
                     time.sleep(1)
                     str_app.rerun()
+                    import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+# --- CẤU HÌNH GMAIL TỰ ĐỘNG ---
+GMAIL_SENDER = "ducanhdao74@gmail.com"
+GMAIL_APP_PASSWORD = "xkhokguxzvprepjy"
+GMAIL_RECEIVER = "ducanhdao74@gmail.com"
+
+
+def send_completion_email(
+    completed_count, total_count, progress_pct, starred_count
+):
+  try:
+    msg = MIMEMultipart()
+    msg["From"] = GMAIL_SENDER
+    msg["To"] = GMAIL_RECEIVER
+    msg["Subject"] = "Bao cao tong ket hoan thanh phien on tap An Toan Dien!"
+
+    body = f"""Chao Duc Anh,
+
+He thống ghi nhận ông vua hoan thanh mot phien on tap chuan bi thi Dien luc Dien Bien:
+- Thoi gian ket thuc phien: Hom nay
+- Trang thai: Da hoan thanh on luyen va reset phien lam viec ve trang chu.
+
+Tien do phien vua roi:
+- So cau da hoan thanh: {completed_count}/{total_count} cau
+- Tong thoi gian on tap: 1.0 giờ
+- So cau hoi can luu y (Star): {starred_count} cau
+
+Chúc ông tiep tuc giu vung phong do cho ky thi sap toi!
+"""
+    msg.attach(MIMEText(body, "plain", "utf-8"))
+
+    server = smtplib.SMTP("smtp.gmail.com", 587)
+    server.starttls()
+    server.login(GMAIL_SENDER, GMAIL_APP_PASSWORD)
+    server.sendmail(GMAIL_SENDER, GMAIL_RECEIVER, msg.as_string())
+    server.quit()
+    return True
+  except Exception as e:
+    print(f"Lỗi gửi email: {e}")
+    return False
+
+
+# === GIAO DIỆN NÚT BẤM TRÊN SIDEBAR ===
+str_app.sidebar.markdown("---")
+str_app.sidebar.markdown(
+    """
+    <div style="font-size: 1.1rem; font-weight: 700; color: #f8fafc; margin-bottom: 10px;">
+        🏁 Trạng thái & Kết thúc
+    </div>
+""",
+    unsafe_allow_html=True,
+)
+
+col_sb1, col_sb2 = str_app.sidebar.columns(2)
+
+with col_sb1:
+  if str_app.button(
+      "✅ Hoàn thành phần này", use_container_width=True, type="primary"
+  ):
+    # 1. Lưu tiến độ hoàn thành
+    current_chunk = str_app.session_state.get("current_chunk_idx", 0)
+    if "completed_chunks" not in str_app.session_state:
+      str_app.session_state["completed_chunks"] = set()
+    str_app.session_state["completed_chunks"].add(current_chunk)
+
+    # Lấy thông số tính toán cho email
+    completed_chunks_set = str_app.session_state["completed_chunks"].union(
+        str_app.session_state.get("passed_tests", set())
+    )
+    completed_est_count = min(
+        len(completed_chunks_set) * 50, total_all_questions
+    )
+    progress_pct = (
+        (completed_est_count / total_all_questions * 100)
+        if total_all_questions > 0
+        else 0.0
+    )
+    starred_count = len(
+        str_app.session_state.get("bookmarked questions", [])
+    )
+
+    # 2. Tự động bắn email báo cáo theo đúng mẫu yêu cầu
+    with str_app.spinner("Đang gửi email tổng kết..."):
+      send_completion_email(
+          completed_est_count, total_all_questions, progress_pct, starred_count
+      )
+
+    # 3. Đưa app về màn hình Welcome
+    str_app.session_state["is_studying"] = False
+    str_app.session_state["app_started"] = False
+    scroll_to_top()
+    str_app.rerun()
+
+with col_sb2:
+  if str_app.button(
+      "🚪 Thoát / Về màn hình chính", use_container_width=True
+  ):
+    str_app.session_state["is_studying"] = False
+    str_app.session_state["app_started"] = False
+    scroll_to_top()
+    str_app.rerun()

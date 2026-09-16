@@ -477,7 +477,7 @@ str_app.sidebar.markdown(
     """,
       unsafe_allow_html=True,
   )
-  str_app.sidebar.markdown(
+str_app.sidebar.markdown(
       f"""
         <div class="metric-card-container">
             <div class="metric-label">📈 Tiến độ hoàn thành</div>

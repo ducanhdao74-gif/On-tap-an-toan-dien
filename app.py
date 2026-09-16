@@ -487,7 +487,7 @@ str_app.sidebar.markdown(
     """,
       unsafe_allow_html=True,
   )
-  str_app.sidebar.progress(progress_ratio)
+str_app.sidebar.progress(progress_ratio)
 
 if str_app.session_state.get("is_studying", False):
   str_app.sidebar.markdown(

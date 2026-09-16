@@ -1631,13 +1631,16 @@ if str_app.session_state.get("started", False):
       time.sleep(1)
       str_app.rerun()
        # Đưa nút hoàn thành lên thanh sidebar (thanh task bên trái)
-if str_app.sidebar.button(
-    "🏠 Hoàn thành & Về Welcome",
-    type="primary",
-    use_container_width=True,
-    key="btn_sidebar_return_welcome",
-):
-  with str_app.sidebar.spinner("Đang gửi báo cáo và về trang chủ..."):
+# Chỉ hiển thị nút chức năng trên sidebar khi người dùng đã vào phiên ôn tập
+    if str_app.session_state.get("is_studying", False):
+      if str_app.sidebar.button(
+          "🏠 Hoàn thành & Về Welcome",
+          type="primary",
+          use_container_width=True,
+          key="btn_sidebar_return_welcome",
+      ):
+        with str_app.sidebar.spinner("Đang gửi báo cáo và về trang chủ..."):
+          # ... các phần xử lý gửi mail và reset giữ nguyên bên dưới ...
     # 1. Soạn nội dung báo cáo tự động
     summary_text = (
         f"Chào Đức Anh,\n\n"

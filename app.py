@@ -457,7 +457,7 @@ chunk_size_calc = 50
 completed_est_count = min(
       len(completed_chunks_set) * chunk_size_calc, total_all_questions
   )
-  progress_ratio = (
+progress_ratio = (
       completed_est_count / total_all_questions if total_all_questions > 0 else 0.0
   )
 

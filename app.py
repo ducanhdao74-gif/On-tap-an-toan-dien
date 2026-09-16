@@ -456,13 +456,13 @@ if not str_app.session_state.get("app_started", False):
         
         col_btn_center1, col_btn_center2, col_btn_center3 = str_app.columns([1, 1.5, 1])
         with col_btn_center2:
-         if str_app.button(
-        "✨ Bắt đầu vào ôn tập ngay", type="primary", use_container_width=True
-    ):
-      str_app.session_state["app_started"] = True
-      str_app.session_state["is_studying"] = True
-      scroll_to_top()
-      str_app.rerun()
+if str_app.button(
+    "✨ Bắt đầu vào ôn tập ngay", type="primary", use_container_width=True
+):
+  str_app.session_state["app_started"] = True
+  str_app.session_state["is_studying"] = True
+  scroll_to_top()
+  str_app.rerun()
 else:
     str_app.sidebar.markdown("""
         <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">

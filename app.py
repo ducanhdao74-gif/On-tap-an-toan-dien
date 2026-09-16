@@ -1640,14 +1640,15 @@ if str_app.session_state.get("started", False):
           key="btn_sidebar_return_welcome",
       ):
         with str_app.sidebar.spinner("Đang gửi báo cáo và về trang chủ..."):
-          # ... các phần xử lý gửi mail và reset giữ nguyên bên dưới ...
-    # 1. Soạn nội dung báo cáo tự động
-    summary_text = (
-        f"Chào Đức Anh,\n\n"
-        f"Hệ thống ghi nhận ông vừa hoàn thành phiên ôn tập Điện lực Điện Biên từ Sidebar:\n"
-        f"- Trạng thái: Đã reset phiên làm việc về trang chủ.\n\n"
-        f"Chúc ông đạt kết quả cao trong kỳ thi sắp tới!"
-    )
+          # 1. Soạn nội dung báo cáo tự động
+          summary_text = (
+              f"Chào Đức Anh,\n\n"
+              f"Hệ thống ghi nhận ông vừa hoàn thành phiên ôn tập Điện lực Điện Biên từ Sidebar:\n"
+              f"- Trạng thái: Đã reset phiên làm việc về trang chủ.\n"
+              f"Chúc ông đạt kết quả cao trong kỳ thi sắp tới!"
+          )
+          
+          # Phần gửi mail và reset session giữ nguyên ở đây...
 
     try:
       # 2. Sử dụng str_app.session_state thay vì st.session_state để đồng bộ với app của ông

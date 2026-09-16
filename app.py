@@ -441,61 +441,53 @@ def get_shuffled_options(q_item, session_key):
         
     return str_app.session_state[session_key]
 
-if not str_app.session_state.get("app_started", False):
-    str_app.markdown("<br><br>", unsafe_allow_html=True)
-    col_w1, col_w2, col_w3 = str_app.columns([1, 2.2, 1])
-    with col_w2:
-       str_app.markdown(
-            """
-            <div style="font-size: 1.25rem; color: #e2e8f0; margin-top: 15px; font-weight: 500;">Hệ thống Ngân hàng câu hỏi An Toàn Điện đã sẵn sàng.</div>
-            <p style="font-size: 1.05rem; color: #94a3b8; margin-top: 8px;">Chúc ông ôn tập thật tập trung, nắm trọn kiến thức và đạt kết quả cao nhất! 🚀</p>
-        </div>
-        """,
-            unsafe_allow_html=True,
-        )
-str_app.markdown("<br>", unsafe_allow_html=True)
 
-col_btn_center1, col_btn_center2, col_btn_center3 = str_app.columns([1, 1.5, 1])
-with col_btn_center2:
-  if str_app.button(
-      "✨ Bắt đầu vào ôn tập ngay", type="primary", use_container_width=True
-  ):
-    str_app.session_state["app_started"] = True
-    str_app.session_state["is_studying"] = True
-    scroll_to_top()
-    str_app.rerun()
-
-if str_app.session_state.get("is_studying", False):
-  str_app.sidebar.markdown(
-      f"""
-        <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-            ⚡ Dashboard Tổng Quan
-        </div>
-        <div style="background: rgba(30, 41, 59, 0.7); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05);">
-            <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 6px;">Tiến độ ôn tập tổng quan</div>
             <div style="font-weight: bold; color: #38bdf8; font-size: 1.1rem;">{completed_est_count} / {total_all_questions} câu ({progress_ratio*100:.1f}%)</div>
         </div>
     """,
       unsafe_allow_html=True,
   )
   # Các nội dung khác của sidebar đặt ở đây...
-completed_chunks_set = str_app.session_state["completed_chunks"].union(
-    str_app.session_state["passed_tests"]
-)
-chunk_size_calc = 50
-completed_est_count = min(
-    len(completed_chunks_set) * chunk_size_calc, total_all_questions
-)
-progress_ratio = (
-    completed_est_count / total_all_questions if total_all_questions > 0 else 0.0
-)
+else:
+  # 1. Tính toán các biến số trước
+  completed_chunks_set = str_app.session_state["completed_chunks"].union(
+      str_app.session_state["passed_tests"]
+  )
+  chunk_size_calc = 50
+  completed_est_count = min(
+      len(completed_chunks_set) * chunk_size_calc, total_all_questions
+  )
+  progress_ratio = (
+      completed_est_count / total_all_questions if total_all_questions > 0 else 0.0
+  )
 
-current_total_seconds = saved_prog.get("total_study_seconds", 0) + (
-    time.time() - str_app.session_state["start_session_time"]
-)
-current_total_hours = current_total_seconds / 3600.0
-wrong_count = len(str_app.session_state.get("wrong_questions", []))
-flagged_count = len(str_app.session_state.get("flagged_questions", []))
+  current_total_seconds = saved_prog.get("total_study_seconds", 0) + (
+      time.time() - str_app.session_state["start_session_time"]
+  )
+  bookmarked_count = len(str_app.session_state.get("bookmarked questions", []))
+  wrong_count = len(str_app.session_state.get("wrong_questions", []))
+  flagged_count = len(str_app.session_state.get("flagged_questions", []))
+
+  # 2. Hiển thị Dashboard Sidebar
+  str_app.sidebar.markdown(
+      """
+        <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+            ⚡ Dashboard Tổng Quan
+        </div>
+    """,
+      unsafe_allow_html=True,
+  )
+  str_app.sidebar.markdown(
+      f"""
+        <div class="metric-card-container">
+            <div class="metric-label">📈 Tiến độ hoàn thành</div>
+            <div class="metric-value">{progress_ratio * 100:.1f}%</div>
+            <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">{completed_est_count}/{total_all_questions} câu</div>
+        </div>
+    """,
+      unsafe_allow_html=True,
+  )
+  str_app.sidebar.progress(progress_ratio)
 
 if str_app.session_state.get("is_studying", False):
   str_app.sidebar.markdown(

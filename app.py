@@ -467,9 +467,13 @@ with col_btn_center2:
 
 if str_app.session_state.get("is_studying", False):
   str_app.sidebar.markdown(
-      """
+      f"""
         <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
             ⚡ Dashboard Tổng Quan
+        </div>
+        <div style="background: rgba(30, 41, 59, 0.7); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 6px;">Tiến độ ôn tập tổng quan</div>
+            <div style="font-weight: bold; color: #38bdf8; font-size: 1.1rem;">{completed_est_count} / {total_all_questions} câu ({progress_ratio*100:.1f}%)</div>
         </div>
     """,
       unsafe_allow_html=True,

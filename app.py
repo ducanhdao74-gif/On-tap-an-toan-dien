@@ -475,14 +475,22 @@ if str_app.session_state.get("is_studying", False):
       unsafe_allow_html=True,
   )
   # Các nội dung khác của sidebar đặt ở đây...
-completed_chunks_set = str_app.session_state["completed_chunks"].union(str_app.session_state["passed_tests"])
-    chunk_size_calc = 50
-    completed_est_count = min(len(completed_chunks_set) * chunk_size_calc, total_all_questions)
-    progress_ratio = completed_est_count / total_all_questions if total_all_questions > 0 else 0.0
+completed_chunks_set = str_app.session_state["completed_chunks"].union(
+    str_app.session_state["passed_tests"]
+)
+chunk_size_calc = 50
+completed_est_count = min(
+    len(completed_chunks_set) * chunk_size_calc, total_all_questions
+)
+progress_ratio = (
+    completed_est_count / total_all_questions if total_all_questions > 0 else 0.0
+)
 
-    current_total_seconds = saved_prog.get("total_study_seconds", 0) + (time.time() - str_app.session_state["start_session_time"])
-    current_total_hours = current_total_seconds / 3600.0
-    bookmarked_count = len(str_app.session_state.get("bookmarked_questions", []))
+current_total_seconds = saved_prog.get("total_study_seconds", 0) + (
+    time.time() - str_app.session_state["start_session_time"]
+)
+current_total_hours = current_total_seconds / 3600.0
+bookmarked_count = len(str_app.session_state.get("bookmarked questions", []))
     wrong_count = len(str_app.session_state.get("wrong_questions", []))
 
     str_app.sidebar.markdown(f"""

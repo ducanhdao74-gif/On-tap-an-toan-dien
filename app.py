@@ -704,10 +704,9 @@ else:
                         scroll_to_top()
                         str_app.rerun()
 
-                   elif mode == "🔄 Ôn lại câu trả lời sai":
+    elif mode == "🔄 Ôn lại câu trả lời sai":
     str_app.title("🔄 Ôn Lại Câu Trả Lời Sai")
     str_app.markdown("---")
-    
     wrong_list = str_app.session_state.get("wrong_questions", [])
     if not wrong_list:
         str_app.info(" Hiện tại bạn không có câu trả lời sai nào được lưu lại.")
@@ -716,8 +715,6 @@ else:
         if "wrong_idx" not in str_app.session_state:
             str_app.session_state["wrong_idx"] = 0
             
-        w_idx = str_app.session_state["wrong_idx"]
-
         w_idx = str_app.session_state["wrong_idx"]
         if w_idx >= len(wrong_list):
             w_idx = 0

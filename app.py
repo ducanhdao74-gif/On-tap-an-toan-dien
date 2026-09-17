@@ -721,7 +721,7 @@ else:
                         w_idx = 0
                         str_app.session_state["wrong_idx"] = 0
                     
-                w_item = wrong_list[w_idx]
+                        w_item = wrong_list[w_idx]
                 
                 str_app.markdown(f"""
                     <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">

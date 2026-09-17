@@ -662,9 +662,9 @@ else:
                 options = shuff_data["options"]
                 correct_letter = shuff_data["correct"]
                 
-                ans_storage_key = f"user_ans_chuande_{selected_sheet}_{idx}"
-                answered_key = f"answered_chuande_{selected_sheet}_{idx}"
-                is_already_answered = str_app.session_state.get(answered_key, False)
+                ans_storage_key = f"user_ans_wrong_{w_idx}"
+    answered_key = f"answered_wrong_{w_idx}"
+    is_already_answered = str_app.session_state.get(answered_key, False)
                 
                 default_idx = None
                 current_saved_ans = str_app.session_state.get(ans_storage_key, None)

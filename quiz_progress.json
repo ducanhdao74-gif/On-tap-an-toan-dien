@@ -1,9 +1,19 @@
 {
-   "completed_chunks": [0, 1, 2, 3],
-"passed_tests": [0, 1, 2, 3],
+    "completed_chunks": [
+        0,
+        1,
+        2,
+        3
+    ],
+    "passed_tests": [
+        0,
+        1,
+        2,
+        3
+    ],
     "bookmarked_questions": [],
     "wrong_questions": [],
     "spaced_repetition_data": {},
-    "total_study_seconds": 214.01481413841248,
+    "total_study_seconds": 488.912960767746,
     "last_login_date": ""
 }

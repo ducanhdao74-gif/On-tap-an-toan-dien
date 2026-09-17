@@ -56,8 +56,12 @@
         "Câu 1: Theo Quy trình An toàn, người chỉ đạo chung khi công việc do nhiều đơn vị công tác của cùng một tổ chức hoạt động điện lực thực hiện là ?": {
             "box": 2,
             "next_review": 1789640031.2486875
+        },
+        "Câu 386: Theo Bộ Luật lao động, Người lao động có trách nhiệm gì về AT-VSLĐ?": {
+            "box": 2,
+            "next_review": 1789640051.1868856
         }
     },
-    "total_study_seconds": 1227.0525097846985,
+    "total_study_seconds": 1245.140266418457,
     "last_login_date": ""
 }

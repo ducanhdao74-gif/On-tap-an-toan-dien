@@ -110,7 +110,7 @@ message["To"] = receiver_email
 message["Subject"] = Header(subject, 'utf-8')
 message.attach(MIMEText(body, 'plain', 'utf-8'))
 
-    try:
+try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
         server.login(SENDER_EMAIL, SENDER_PASSWORD)

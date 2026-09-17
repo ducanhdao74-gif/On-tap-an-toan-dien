@@ -672,11 +672,13 @@ else:
                     default_idx = options.index(current_saved_ans)
                     
                 else:
-                    saved_choice = str_app.session_state.get(ans_storage_key)
-                    str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_choice}</b></p>", unsafe_allow_html=True)
-                    
-                    is_correct = saved_choice.strip().upper().startswith(correct_letter)
-                    str_app.markdown("<br>", unsafe_allow_html=True)
+        saved_choice = str_app.session_state.get(ans_storage_key)
+        str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_choice}</b></p>", unsafe_allow_html=True)
+        
+        if saved_choice is not None:
+            is_correct = saved_choice.strip().upper().startswith(correct_letter)
+        else:
+            is_correct = False
                     if is_correct:
                         str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
                     else:

@@ -722,22 +722,22 @@ else:
 
         w_item = wrong_list[w_idx]
                 
-                        str_app.markdown(f"""
-                    <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 1.05rem; font-weight: 700; color: #f43f5e;">⚠️ Nguồn: {w_item.get('sheet', 'N/A')}</span>
-                            <span class="badge-topic">Câu sai {w_idx + 1} / {len(wrong_list)}</span>
-                        </div>
-                    </div>
-                """, unsafe_allow_html=True)
+        str_app.markdown(f"""
+        div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 1.05rem; font-weight: 700; color: #f43f5e;">⚠️ Nguồn: {w_item.get('sheet', 'N/A')}</span>
+        <span class="badge-topic">Câu sai {w_idx + 1} / {len(wrong_list)}</span>
+        </div>
+        </div>
+         """, unsafe_allow_html=True)
                 
-                        str_app.markdown(f"""
-                    <div class="question-card">
-                        <div class="question-title">
-                            <b>Câu {w_idx + 1}:</b> {w_item['question']}
-                        </div>
-                    </div>
-                """, unsafe_allow_html=True)
+        str_app.markdown(f"""
+        <div class="question-card">
+        <div class="question-title">
+        <b>Câu {w_idx + 1}:</b> {w_item['question']}
+        </div>
+        </div>
+        """, unsafe_allow_html=True)
                 
                         shuff_data = get_shuffled_options(w_item, f"shuff_wrong_{w_idx}")
                         options = shuff_data["options"]

@@ -52,8 +52,10 @@ def save_current_progress():
     data = {
         "completed_chunks": list(str_app.session_state.get("completed_chunks", [])),
         "passed_tests": list(str_app.session_state.get("passed_tests", [])),
-        "bookmarked_questions": str_app.session_state.get("bookmarked_questions", []),
-        "wrong_questions": str_app.session_state.get("wrong_questions", []),
+       "bookmarked_questions": list(
+    str_app.session_state.get("bookmarked_questions", [])
+),
+        "wrong_questions": list(str_app.session_state.get("wrong_questions", [])),
         "spaced_repetition_data": str_app.session_state.get("spaced_repetition_data", {}),
         "total_study_seconds": saved_data.get("total_study_seconds", 0),
         "last_login_date": str_app.session_state.get("last_login_date", "")

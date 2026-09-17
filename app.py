@@ -84,18 +84,26 @@ def send_daily_reminder_email(receiver_email, completed_questions_count, total_q
     else:
         time_str = f"{total_study_hours:.1f} giờ"
 
-    body = f"""
-Chào Đức Anh,
-
-Hôm nay là một ngày mới rồi! Hãy dành ra chút thời gian để vào ôn tập ngân hàng câu hỏi An Toàn Điện nhé:
-
-📊 Tiến độ hiện tại của ông:
-- Số câu đã hoàn thành: {completed_questions_count}/{total_questions_count} câu
-- Tổng thời gian đã ôn tập: {time_str}
-- Số câu hỏi đang cần ghi nhớ (Star): {bookmarked_count} câu
-
-Chúc ông ôn thi thật tốt và đạt kết quả cao!
-"""
+   body = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; color: #333;">
+        <h3 style="color: #2563eb;">📊 Báo cáo tiến độ ôn tập An Toàn Điện mỗi ngày</h3>
+        <p>Chào Đức Anh,</p>
+        <p>Hôm nay là một ngày mới rồi! Hãy dành ra chút thời gian để vào ôn tập ngân hàng câu hỏi An Toàn Điện nhé:</p>
+        
+        <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+          <h4 style="margin-top: 0; color: #1e293b;">📈 Tiến độ hiện tại của ông:</h4>
+          <ul style="line-height: 1.6; padding-left: 20px;">
+            <li>Số câu đã hoàn thành: <b>{completed_questions_count}/{total_questions_count}</b> câu</li>
+            <li>Tổng thời gian đã ôn tập: <b>{time_str}</b></li>
+            <li>Số câu hỏi đang cần ghi nhớ (Star): <b>{bookmarked_count}</b> câu</li>
+          </ul>
+        </div>
+        
+        <p style="margin-top: 15px;">Chúc ông ôn thi thật tốt và đạt kết quả cao! 🚀</p>
+      </body>
+    </html>
+    """
     message = MIMEMultipart()
     message["From"] = SENDER_EMAIL
     message["To"] = receiver_email

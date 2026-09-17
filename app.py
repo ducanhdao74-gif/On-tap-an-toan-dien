@@ -104,11 +104,11 @@ body = f"""
       </body>
     </html>
     """
-    message = MIMEMultipart()
-    message["From"] = SENDER_EMAIL
-    message["To"] = receiver_email
-    message["Subject"] = Header(subject, 'utf-8')
-   message.attach(MIMEText(body, 'plain', 'utf-8'))
+message = MIMEMultipart()
+message["From"] = SENDER_EMAIL
+message["To"] = receiver_email
+message["Subject"] = Header(subject, 'utf-8')
+message.attach(MIMEText(body, 'plain', 'utf-8'))
 
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)

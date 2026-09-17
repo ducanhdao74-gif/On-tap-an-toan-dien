@@ -66,11 +66,11 @@ def save_current_progress():
   }
 
   try:
-    # 1. Ghi lưu cục bộ trên server Streamlit
+    # 1. Ghi lưu cục bộ
     with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
       json.dump(data, f, ensure_ascii=False, indent=4)
 
-    # 2. Tự động push thẳng lên GitHub qua API sử dụng Secrets
+    # 2. Push lên GitHub qua API
     if (
         "GITHUB_TOKEN" in str_app.secrets
         and "REPO_NAME" in str_app.secrets
@@ -90,7 +90,8 @@ def save_current_progress():
 
     return True
   except Exception as e:
-    print(f"Lỗi lưu tiến độ: {e}")
+    # In trực tiếp lỗi ra app để tụi mình biết nguyên nhân chính xác
+    str_app.error(f"Chi tiết lỗi GitHub API: {str(e)}")
     return False
 
 def scroll_to_top():

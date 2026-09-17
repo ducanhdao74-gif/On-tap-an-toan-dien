@@ -765,9 +765,9 @@ else:
                 else:
                     saved_w_choice = str_app.session_state.get(w_storage_key)
                     str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_w_choice}</b></p>", unsafe_allow_html=True)
-                                else:
-                        correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
-                        str_app.error(f"❌ Sai rồi! Đáp án đúng là **{correct_text}**.")
+                else:
+                    correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
+                    str_app.error(f"❌ Sai rồi! Đáp án đúng là **{correct_text}**.")
                 
                 str_app.markdown("<br>", unsafe_allow_html=True)
                 if str_app.button("Câu tiếp theo ➡️", type="primary", use_container_width=True, key=f"next_wrong_{w_idx}"):

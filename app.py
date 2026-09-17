@@ -85,7 +85,6 @@ def send_daily_reminder_email(receiver_email, completed_questions_count, total_q
     else:
         time_str = f"{total_study_hours:.1f} giờ"
 
-    # Tạo giao diện HTML chuyên nghiệp, trực quan thay vì text thô
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -281,7 +280,6 @@ try:
 except Exception:
     pass
 
-# --- CYBERPUNK / DARK TECH GLASSMORPHISM CSS & OPTION CARDS ---
 str_app.markdown("""
     <style>
     @keyframes shine {
@@ -365,8 +363,6 @@ str_app.markdown("""
         font-weight: 600;
         margin: 0;
     }
-    
-    /* --- NÂNG CẤP GIAO DIỆN CHỌN ĐÁP ÁN (OPTION CARDS) --- */
     div[data-testid="stRadio"] > div[role="radiogroup"] {
         gap: 12px !important;
     }

@@ -41,28 +41,34 @@ def load_saved_progress():
     }
 
 def save_current_progress():
+    # 1. Đọc dữ liệu cũ từ file lên trước để tính thời gian học
+    saved_data = load_saved_progress()
+    
     if "start_session_time" in str_app.session_state:
         elapsed = time.time() - str_app.session_state["start_session_time"]
         str_app.session_state["start_session_time"] = time.time()
-        saved_data = load_saved_progress()
-        saved_data["total_study_seconds"] = saved_data.get("total_study_seconds", 0) + elapsed
+        total_seconds = saved_data.get("total_study_seconds", 0) + elapsed
     else:
-        saved_data = load_saved_progress()
+        total_seconds = saved_data.get("total_study_seconds", 0)
 
+    # 2. Gom dữ liệu hiện tại từ session_state (có fallback sang file cũ nếu session trống)
     data = {
-        "completed_chunks": list(str_app.session_state.get("completed_chunks", [])),
-        "passed_tests": list(str_app.session_state.get("passed_tests", [])),
-        "bookmarked_questions": str_app.session_state.get("bookmarked_questions", []),
-        "wrong_questions": str_app.session_state.get("wrong_questions", []),
-        "spaced_repetition_data": str_app.session_state.get("spaced_repetition_data", {}),
-        "total_study_seconds": saved_data.get("total_study_seconds", 0),
-        "last_login_date": str_app.session_state.get("last_login_date", "")
+        "completed_chunks": list(str_app.session_state.get("completed_chunks", saved_data.get("completed_chunks", []))),
+        "passed_tests": list(str_app.session_state.get("passed_tests", saved_data.get("passed_tests", []))),
+        "bookmarked_questions": str_app.session_state.get("bookmarked_questions", saved_data.get("bookmarked_questions", [])),
+        "wrong_questions": str_app.session_state.get("wrong_questions", saved_data.get("wrong_questions", [])),
+        "spaced_repetition_data": str_app.session_state.get("spaced_repetition_data", saved_data.get("spaced_repetition_data", {})),
+        "total_study_seconds": total_seconds,
+        "last_login_date": str_app.session_state.get("last_login_date", saved_data.get("last_login_date", ""))
     }
+    
+    # 3. Ghi xuống file JSON
     try:
         with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
         return True
-    except:
+    except Exception as e:
+        print(f"Lỗi lưu file: {e}")
         return False
 
 def scroll_to_top():

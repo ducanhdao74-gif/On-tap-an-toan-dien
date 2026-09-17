@@ -765,7 +765,7 @@ else:
     else:
         saved_w_choice = str_app.session_state.get(w_storage_key)
         str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_w_choice}</b></p>", unsafe_allow_html=True)
-            str_app.success(f" Chính xác! Đáp án đúng là {correct_letter}.")
+        str_app.success(f" Chính xác! Đáp án đúng là {correct_letter}.")
         else:
             correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
             str_app.error(f" Sai rồi! Đáp án đúng là **{correct_text}**.")

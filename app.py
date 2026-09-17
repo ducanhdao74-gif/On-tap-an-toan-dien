@@ -41,31 +41,57 @@ def load_saved_progress():
     }
 
 def save_current_progress():
-    if "start_session_time" in str_app.session_state:
-        elapsed = time.time() - str_app.session_state["start_session_time"]
-        str_app.session_state["start_session_time"] = time.time()
-        saved_data = load_saved_progress()
-        saved_data["total_study_seconds"] = saved_data.get("total_study_seconds", 0) + elapsed
-    else:
-        saved_data = load_saved_progress()
+  if "start_session_time" in str_app.session_state:
+    elapsed = time.time() - str_app.session_state["start_session_time"]
+    str_app.session_state["start_session_time"] = time.time()
+    saved_data = load_saved_progress()
+    saved_data["total_study_seconds"] = (
+        saved_data.get("total_study_seconds", 0) + elapsed
+    )
+  else:
+    saved_data = load_saved_progress()
 
-    data = {
-        "completed_chunks": list(str_app.session_state.get("completed_chunks", [])),
-        "passed_tests": list(str_app.session_state.get("passed_tests", [])),
-       "bookmarked_questions": list(
-    str_app.session_state.get("bookmarked_questions", [])
-),
-        "wrong_questions": list(str_app.session_state.get("wrong_questions", [])),
-        "spaced_repetition_data": str_app.session_state.get("spaced_repetition_data", {}),
-        "total_study_seconds": saved_data.get("total_study_seconds", 0),
-        "last_login_date": str_app.session_state.get("last_login_date", "")
-    }
-    try:
-        with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
-        return True
-    except:
-        return False
+  data = {
+      "completed_chunks": list(str_app.session_state.get("completed_chunks", [])),
+      "passed_tests": list(str_app.session_state.get("passed_tests", [])),
+      "bookmarked_questions": list(
+          str_app.session_state.get("bookmarked_questions", [])
+      ),
+      "wrong_questions": list(str_app.session_state.get("wrong_questions", [])),
+      "spaced_repetition_data": str_app.session_state.get(
+          "spaced_repetition_data", {}
+      ),
+      "total_study_seconds": saved_data.get("total_study_seconds", 0),
+      "last_login_date": str_app.session_state.get("last_login_date", ""),
+  }
+
+  try:
+    # 1. Ghi lưu cục bộ trên server Streamlit
+    with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
+      json.dump(data, f, ensure_ascii=False, indent=4)
+
+    # 2. Tự động push thẳng lên GitHub qua API sử dụng Secrets
+    if (
+        "GITHUB_TOKEN" in str_app.secrets
+        and "REPO_NAME" in str_app.secrets
+    ):
+      g = Github(str_app.secrets["GITHUB_TOKEN"])
+      repo = g.get_repo(str_app.secrets["REPO_NAME"])
+      file_path = "quiz_progress.json"
+      updated_content = json.dumps(data, ensure_ascii=False, indent=4)
+
+      file_contents = repo.get_contents(file_path)
+      repo.update_file(
+          file_path,
+          "Auto-update quiz progress via Streamlit app",
+          updated_content,
+          file_contents.sha,
+      )
+
+    return True
+  except Exception as e:
+    print(f"Lỗi lưu tiến độ: {e}")
+    return False
 
 def scroll_to_top():
     components.html("""

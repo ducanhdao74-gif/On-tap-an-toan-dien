@@ -78,29 +78,56 @@ def scroll_to_top():
     """, height=0)
 
 def send_daily_reminder_email(receiver_email, completed_questions_count, total_questions_count, bookmarked_count, total_study_hours):
-    subject = "⚡ Nhắc nhở ôn tập An Toàn Điện mỗi ngày!"
+    subject = "⚡ Báo cáo tiến độ ôn tập An Toàn Điện mỗi ngày"
+    
     if total_study_hours < 1:
         time_str = f"{int(total_study_hours * 60)} phút"
     else:
         time_str = f"{total_study_hours:.1f} giờ"
 
-    body = f"""
-Chào Đức Anh,
+    # Tạo giao diện HTML chuyên nghiệp, trực quan thay vì text thô
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body {{ font-family: Arial, sans-serif; color: #333; line-height: 1.6; margin: 0; padding: 0; }}
+            .container {{ max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9; }}
+            .header {{ background-color: #007bff; color: white; padding: 15px; border-radius: 6px 6px 0 0; text-align: center; }}
+            .content {{ padding: 20px; background-color: white; border-radius: 0 0 6px 6px; }}
+            .stat-box {{ background-color: #f8f9fa; border-left: 4px solid #007bff; padding: 10px 15px; margin-bottom: 12px; border-radius: 4px; }}
+            .footer {{ text-align: center; font-size: 12px; color: #777; margin-top: 15px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h2>📊 Báo cáo tiến độ ôn tập An Toàn Điện</h2>
+            </div>
+            <div class="content">
+                <p>Chào Đức Anh,</p>
+                <p>Đây là hệ thống tự động tổng kết tiến độ ôn thi của bạn:</p>
+                
+                <div class="stat-box">📈 <b>Số câu đã hoàn thành:</b> {completed_questions_count} / {total_questions_count} câu</div>
+                <div class="stat-box">⏱️ <b>Tổng thời gian ôn tập:</b> {time_str}</div>
+                <div class="stat-box">⭐ <b>Số câu hỏi cần ghi nhớ (Star):</b> {bookmarked_count} câu</div>
+                
+                <p style="margin-top: 20px;">Chúc bạn có một ngày ôn tập hiệu quả và đạt kết quả cao!</p>
+            </div>
+            <div class="footer">
+                <p>Hệ thống tự động kích hoạt qua ứng dụng ôn tập.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
 
-Hôm nay là một ngày mới rồi! Hãy dành ra chút thời gian để vào ôn tập ngân hàng câu hỏi An Toàn Điện nhé:
-
-📊 Tiến độ hiện tại của ông:
-- Số câu đã hoàn thành: {completed_questions_count}/{total_questions_count} câu
-- Tổng thời gian đã ôn tập: {time_str}
-- Số câu hỏi đang cần ghi nhớ (Star): {bookmarked_count} câu
-
-Chúc ông ôn thi thật tốt và đạt kết quả cao!
-"""
-    message = MIMEMultipart()
+    message = MIMEMultipart("alternative")
     message["From"] = SENDER_EMAIL
     message["To"] = receiver_email
     message["Subject"] = Header(subject, 'utf-8')
-    message.attach(MIMEText(body, 'plain', 'utf-8'))
+    message.attach(MIMEText(html_content, 'html', 'utf-8'))
 
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
@@ -1499,7 +1526,6 @@ else:
                 str_app.markdown("### 📥 Sao lưu & Xuất dữ liệu")
                 str_app.markdown("Tải tệp tiến độ hiện tại về máy tính để làm bản sao lưu an toàn.")
                 
-                # Tạo chuỗi JSON từ trạng thái hiện tại
                 current_saved_data = load_saved_progress()
                 json_str = json.dumps(current_saved_data, ensure_ascii=False, indent=4)
                 

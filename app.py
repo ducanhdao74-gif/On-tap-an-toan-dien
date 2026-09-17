@@ -742,7 +742,7 @@ else:
                 options = shuff_data["options"]
                 correct_letter = shuff_data["correct"]
                 
-                w_storage_key = f"user_ans_wrong_{w_idx}"
+               w_storage_key = f"user_ans_wrong_{w_idx}"
     w_answered_key = f"answered_wrong_{w_idx}"
     is_w_answered = str_app.session_state.get(w_answered_key, False)
 
@@ -762,12 +762,9 @@ else:
                 wrong_list = [w for w in wrong_list if w.get("question") != w_item.get("question")]
                 str_app.session_state["wrong_questions"] = wrong_list
                 save_current_progress()
-                else:
-                    saved_w_choice = str_app.session_state.get(w_storage_key)
-                    str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_w_choice}</b></p>", unsafe_allow_html=True)
-                    
-                    str_app.markdown("<br>", unsafe_allow_html=True)
-                    if saved_w_choice.strip().upper().startswith(correct_letter):
+    else:
+        saved_w_choice = str_app.session_state.get(w_storage_key)
+        str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_w_choice}</b></p>", unsafe_allow_html=True)
                         str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}. (Đã xóa khỏi danh sách câu sai)")
                     else:
                         correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")

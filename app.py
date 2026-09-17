@@ -77,14 +77,10 @@ def scroll_to_top():
         </script>
     """, height=0)
 
-def send_daily_reminder_email(receiver_email, completed_questions_count, total_questions_count, bookmarked_count, total_study_hours):
-    subject = "⚡ Nhắc nhở ôn tập An Toàn Điện mỗi ngày!"
-    if total_study_hours < 1:
-        time_str = f"{int(total_study_hours * 60)} phút"
-    else:
-        time_str = f"{total_study_hours:.1f} giờ"
-
-body = f"""
+def send_daily_email(receiver_email, completed_questions_count, total_questions_count, time_str, bookmarked_count):
+    subject = "📊 Báo cáo tiến độ ôn tập An Toàn Điện mỗi ngày"
+    
+    body = f"""
     <html>
       <body style="font-family: Arial, sans-serif; color: #333;">
         <h3 style="color: #2563eb;">📊 Báo cáo tiến độ ôn tập An Toàn Điện mỗi ngày</h3>
@@ -104,20 +100,21 @@ body = f"""
       </body>
     </html>
     """
-message = MIMEMultipart()
-message["From"] = SENDER_EMAIL
-message["To"] = receiver_email
-message["Subject"] = Header(subject, 'utf-8')
-message.attach(MIMEText(body, 'plain', 'utf-8'))
-
-try:
+    
+    message = MIMEMultipart()
+    message["From"] = SENDER_EMAIL
+    message["To"] = receiver_email
+    message["Subject"] = Header(subject, 'utf-8')
+    message.attach(MIMEText(body, 'html', 'utf-8')) # Đã đổi thành 'html'
+    
+    try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
         server.sendmail(SENDER_EMAIL, receiver_email, message.as_string())
         server.quit()
         return True, "Thành công"
-except Exception as e:
+    except Exception as e:
         return False, str(e)
 
 @str_app.cache_data

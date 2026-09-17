@@ -3,3 +3,4 @@ gspread
 APScheduler==3.10.4
 pandas
 openpyxl
+PyGithub

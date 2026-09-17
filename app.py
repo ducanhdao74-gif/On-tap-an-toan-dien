@@ -1525,9 +1525,9 @@ else:
                         scroll_to_top()
                         str_app.rerun()
 
-        elif mode == "⚙️ Quản lý kho lưu trữ & Dữ liệu":
-            str_app.title("⚙️ Trung Tâm Quản Lý Trạng Thái & Kho Lưu Trữ")
-            str_app.markdown("---")
+                    elif mode == "⚙️ Quản lý kho lưu trữ & Dữ liệu":
+                        str_app.title("⚙️ Trung Tâm Quản Lý Trạng Thái & Kho Lưu Trữ")
+                        str_app.markdown("---")
             
             str_app.markdown("""
                 <div class="welcome-card" style="text-align: left; padding: 25px;">

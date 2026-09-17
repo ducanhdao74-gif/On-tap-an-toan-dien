@@ -1407,9 +1407,9 @@ else:
                             scroll_to_top()
                             str_app.rerun()
 
-        elif mode == "📝 Thi thử (Mock Test)":
-            str_app.title("📝 Chế Độ Thi Thử (Mock Test)")
-            str_app.markdown("---")
+                        elif mode == "📝 Thi thử (Mock Test)":
+                            str_app.title("📝 Chế Độ Thi Thử (Mock Test)")
+                            str_app.markdown("---")
             
             all_questions = []
             for sh, ql in sheets_data.items():

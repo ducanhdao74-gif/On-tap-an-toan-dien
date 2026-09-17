@@ -687,7 +687,7 @@ else:
                 
                         str_app.markdown("<br>", unsafe_allow_html=True)
                         col_prev, col_next = str_app.columns([1, 1])
-                with col_prev:
+        with col_prev:
                     if str_app.button("⬅️ Câu trước", use_container_width=True):
                         if str_app.session_state[f"q_idx_{selected_sheet}"] > 0:
                             str_app.session_state[f"q_idx_{selected_sheet}"] -= 1

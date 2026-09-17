@@ -779,8 +779,7 @@ else:
             str_app.session_state["wrong_idx"] = 0
         scroll_to_top()
         str_app.rerun()
-
-        elif mode == "🧠 Spaced Repetition (Ôn thông minh)":
+    elif mode == "🧠 Spaced Repetition (Ôn thông minh)":
             str_app.title("🧠 Chế Độ Ôn Thông Minh (Spaced Repetition)")
             str_app.markdown("---")
             

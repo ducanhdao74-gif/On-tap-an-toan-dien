@@ -876,8 +876,8 @@ else:
                     str_app.rerun()
 
                 elif mode == "⭐ Tất cả câu hỏi cần ghi nhớ":
-            str_app.title("⭐ Tất Cả Câu Hỏi Cần Ghi Nhớ")
-            str_app.markdown("---")
+                str_app.title("⭐ Tất Cả Câu Hỏi Cần Ghi Nhớ")
+                str_app.markdown("---")
             
             bm_list = str_app.session_state["bookmarked_questions"]
             if not bm_list:

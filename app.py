@@ -671,21 +671,6 @@ else:
                 if current_saved_ans in options:
                     default_idx = options.index(current_saved_ans)
                     
-                if not is_already_answered:
-                    selected_opt = str_app.radio("Lựa chọn đáp án:", options, index=default_idx, key=f"radio_chuande_{selected_sheet}_{idx}", label_visibility="collapsed")
-                    
-                    if selected_opt is not None:
-                        str_app.session_state[ans_storage_key] = selected_opt
-                        str_app.session_state[answered_key] = True
-                        str_app.session_state[f"done_{selected_sheet}"] = min(total_q, max(str_app.session_state[f"done_{selected_sheet}"], idx + 1))
-                        
-                        is_correct = selected_opt.strip().upper().startswith(correct_letter)
-                        update_spaced_repetition(q_item["question"], is_correct)
-                        if not is_correct:
-                            if not any(w.get("question") == q_item["question"] for w in str_app.session_state["wrong_questions"]):
-                                str_app.session_state["wrong_questions"].append(q_item)
-                                save_current_progress()
-                        str_app.rerun()
                 else:
                     saved_choice = str_app.session_state.get(ans_storage_key)
                     str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_choice}</b></p>", unsafe_allow_html=True)

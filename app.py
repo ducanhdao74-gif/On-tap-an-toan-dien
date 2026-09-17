@@ -716,7 +716,7 @@ else:
                     if "wrong_idx" not in str_app.session_state:
                         str_app.session_state["wrong_idx"] = 0
                     
-                w_idx = str_app.session_state["wrong_idx"]
+                        w_idx = str_app.session_state["wrong_idx"]
                     if w_idx >= len(wrong_list):
                         w_idx = 0
                         str_app.session_state["wrong_idx"] = 0

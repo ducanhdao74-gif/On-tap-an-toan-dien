@@ -663,21 +663,21 @@ else:
                 correct_letter = shuff_data["correct"]
                 
                 ans_storage_key = f"user_ans_wrong_{w_idx}"
-    answered_key = f"answered_wrong_{w_idx}"
-    is_already_answered = str_app.session_state.get(answered_key, False)
+                answered_key = f"answered_wrong_{w_idx}"
+                is_already_answered = str_app.session_state.get(answered_key, False)
                 
                 default_idx = None
                 current_saved_ans = str_app.session_state.get(ans_storage_key, None)
                 saved_choice = current_saved_ans
-    if current_saved_ans in options:
-        default_idx = options.index(current_saved_ans)
-    else:
-        saved_choice = str_app.session_state.get(ans_storage_key)
-        str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_choice}</b></p>", unsafe_allow_html=True)
-        if saved_choice is not None:
-            is_correct = saved_choice.strip().upper().startswith(correct_letter)
-        else:
-            is_correct = False
+                if current_saved_ans in options:
+                default_idx = options.index(current_saved_ans)
+                else:
+                saved_choice = str_app.session_state.get(ans_storage_key)
+                str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_choice}</b></p>", unsafe_allow_html=True)
+                if saved_choice is not None:
+                is_correct = saved_choice.strip().upper().startswith(correct_letter)
+                else:
+                is_correct = False
         if is_correct:
                         str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
         else:

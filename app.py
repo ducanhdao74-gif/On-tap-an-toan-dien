@@ -695,7 +695,7 @@ else:
                             str_app.session_state[f"q_idx_{selected_sheet}"] = total_q - 1
                         scroll_to_top()
                         str_app.rerun()
-                with col_next:
+        with col_next:
                     if str_app.button("Câu tiếp theo ➡️", type="primary", use_container_width=True):
                         if str_app.session_state[f"q_idx_{selected_sheet}"] < total_q - 1:
                             str_app.session_state[f"q_idx_{selected_sheet}"] += 1

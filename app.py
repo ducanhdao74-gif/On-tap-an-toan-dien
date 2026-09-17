@@ -42,6 +42,7 @@ def load_saved_progress():
     }
 
 def save_current_progress():
+  # Chỉ tính toán thời gian và đóng gói dữ liệu đẩy lên GitHub khi người dùng bấm nút lưu
   if "start_session_time" in str_app.session_state:
     elapsed = time.time() - str_app.session_state["start_session_time"]
     str_app.session_state["start_session_time"] = time.time()
@@ -67,11 +68,11 @@ def save_current_progress():
   }
 
   try:
-    # 1. Ghi lưu cục bộ
+    # 1. Ghi lưu cục bộ nhẹ nhàng
     with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
       json.dump(data, f, ensure_ascii=False, indent=4)
 
-    # 2. Push lên GitHub qua API
+    # 2. Đồng bộ lên GitHub qua API (Chỉ chạy ở đây!)
     if (
         "GITHUB_TOKEN" in str_app.secrets
         and "REPO_NAME" in str_app.secrets
@@ -81,17 +82,24 @@ def save_current_progress():
       file_path = "quiz_progress.json"
       updated_content = json.dumps(data, ensure_ascii=False, indent=4)
 
-      file_contents = repo.get_contents(file_path)
-      repo.update_file(
-          file_path,
-          "Auto-update quiz progress via Streamlit app",
-          updated_content,
-          file_contents.sha,
-      )
+      try:
+        file_contents = repo.get_contents(file_path)
+        repo.update_file(
+            file_path,
+            "Auto-update quiz progress via Streamlit app",
+            updated_content,
+            file_contents.sha,
+        )
+      except Exception:
+        # Nếu file chưa tồn tại trên repo thì tạo mới luôn
+        repo.create_file(
+            file_path,
+            "Create initial quiz progress file",
+            updated_content,
+        )
 
     return True
   except Exception as e:
-    # In trực tiếp lỗi ra app để tụi mình biết nguyên nhân chính xác
     str_app.error(f"Chi tiết lỗi GitHub API: {str(e)}")
     return False
 

@@ -704,9 +704,9 @@ else:
                         scroll_to_top()
                         str_app.rerun()
 
-        elif mode == "🔄 Ôn lại câu trả lời sai":
-            str_app.title("🔄 Ôn Lại Câu Trả Lời Sai")
-            str_app.markdown("---")
+                    elif mode == "🔄 Ôn lại câu trả lời sai":
+                        str_app.title("🔄 Ôn Lại Câu Trả Lời Sai")
+                        str_app.markdown("---")
             
             wrong_list = str_app.session_state["wrong_questions"]
             if not wrong_list:

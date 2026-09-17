@@ -762,7 +762,7 @@ else:
                 wrong_list = [w for w in wrong_list if w.get("question") != w_item.get("question")]
                 str_app.session_state["wrong_questions"] = wrong_list
                 save_current_progress()
-    else:
+                else:
         saved_w_choice = str_app.session_state.get(w_storage_key)
         str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_w_choice}</b></p>", unsafe_allow_html=True)
                 else:

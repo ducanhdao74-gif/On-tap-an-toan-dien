@@ -117,7 +117,7 @@ try:
         server.sendmail(SENDER_EMAIL, receiver_email, message.as_string())
         server.quit()
         return True, "Thành công"
-    except Exception as e:
+except Exception as e:
         return False, str(e)
 
 @str_app.cache_data

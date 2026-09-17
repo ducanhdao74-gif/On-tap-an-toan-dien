@@ -875,7 +875,7 @@ else:
                     scroll_to_top()
                     str_app.rerun()
 
-        elif mode == "⭐ Tất cả câu hỏi cần ghi nhớ":
+                elif mode == "⭐ Tất cả câu hỏi cần ghi nhớ":
             str_app.title("⭐ Tất Cả Câu Hỏi Cần Ghi Nhớ")
             str_app.markdown("---")
             

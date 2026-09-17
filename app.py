@@ -758,7 +758,7 @@ else:
                         
                         is_correct = w_choice.strip().upper().startswith(correct_letter)
                         update_spaced_repetition(w_item["question"], is_correct)
-                       if is_correct:
+            if is_correct:
             wrong_list = [w for w in wrong_list if w.get("question") != w_item.get("question")]
             str_app.session_state["wrong_questions"] = wrong_list
             save_current_progress()

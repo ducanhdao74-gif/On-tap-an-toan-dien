@@ -942,9 +942,9 @@ else:
                     scroll_to_top()
                     str_app.rerun()
 
-        elif mode == "📂 Ôn gộp tất cả (50 câu/phần)":
-            str_app.title("📂 Ôn Gộp Tất Cả Chuyên Đề (50 Câu/Phần)")
-            str_app.markdown("---")
+                elif mode == "📂 Ôn gộp tất cả (50 câu/phần)":
+                    str_app.title("📂 Ôn Gộp Tất Cả Chuyên Đề (50 Câu/Phần)")
+                    str_app.markdown("---")
             
             all_questions = []
             for sh, ql in sheets_data.items():

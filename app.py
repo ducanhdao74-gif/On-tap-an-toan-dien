@@ -705,19 +705,19 @@ else:
                         str_app.rerun()
 
     if mode == "🔄 Ôn lại câu trả lời sai":
-    str_app.title("🔄 Ôn Lại Câu Trả Lời Sai")
-    str_app.markdown("---")
-    wrong_list = str_app.session_state.get("wrong_questions", [])
-    if not wrong_list:
-        str_app.info(" Hiện tại bạn không có câu trả lời sai nào được lưu lại.")
-    else:
-        str_app.write(f"Bạn đang có **{len(wrong_list)}** câu cần ôn tập lại.")
-        if "wrong_idx" not in str_app.session_state:
-            str_app.session_state["wrong_idx"] = 0
-            
-        w_idx = str_app.session_state["wrong_idx"]
-        if w_idx >= len(wrong_list):
-            w_idx = 0
+        str_app.title("🔄 Ôn Lại Câu Trả Lời Sai")
+        str_app.markdown("---")
+        wrong_list = str_app.session_state.get("wrong_questions", [])
+        if not wrong_list:
+            str_app.info(" Hiện tại bạn không có câu trả lời sai nào được lưu lại.")
+        else:
+            str_app.write(f"Bạn đang có **{len(wrong_list)}** câu cần ôn tập lại.")
+            if "wrong_idx" not in str_app.session_state:
+                str_app.session_state["wrong_idx"] = 0
+                
+            w_idx = str_app.session_state["wrong_idx"]
+            if w_idx >= len(wrong_list):
+                w_idx = 0
             str_app.session_state["wrong_idx"] = 0
 
         w_item = wrong_list[w_idx]

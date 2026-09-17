@@ -84,7 +84,7 @@ def send_daily_reminder_email(receiver_email, completed_questions_count, total_q
     else:
         time_str = f"{total_study_hours:.1f} giờ"
 
-   body = f"""
+body = f"""
     <html>
       <body style="font-family: Arial, sans-serif; color: #333;">
         <h3 style="color: #2563eb;">📊 Báo cáo tiến độ ôn tập An Toàn Điện mỗi ngày</h3>

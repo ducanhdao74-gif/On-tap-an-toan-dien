@@ -751,7 +751,7 @@ else:
                     w_default_idx = options.index(str_app.session_state.get(w_storage_key))
             
                 if not is_w_answered:
-                    w_choice = str_app.radio("Lựa chọn đáp án:", options, index=w_default_idx, key=f"radio_wrong_{w_idx}", label_visibility="collapsed")
+        w_choice = str_app.radio("Lựa chọn đáp án:", options, index=w_default_idx, key=f"radio_wrong_{w_idx}", label_visibility="collapsed")
         if w_choice is not None:
             str_app.session_state[w_storage_key] = w_choice
             str_app.session_state[w_answered_key] = True
@@ -762,13 +762,14 @@ else:
                 wrong_list = [w for w in wrong_list if w.get("question") != w_item.get("question")]
                 str_app.session_state["wrong_questions"] = wrong_list
                 save_current_progress()
-                else:
+    else:
         saved_w_choice = str_app.session_state.get(w_storage_key)
         str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_w_choice}</b></p>", unsafe_allow_html=True)
-                else:
-                    correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
-                    str_app.error(f"❌ Sai rồi! Đáp án đúng là **{correct_text}**.")
-                
+        if saved_w_choice.strip().upper().startswith(correct_letter):
+            str_app.success(f" Chính xác! Đáp án đúng là {correct_letter}.")
+        else:
+            correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
+            str_app.error(f" Sai rồi! Đáp án đúng là **{correct_text}**.")
                 str_app.markdown("<br>", unsafe_allow_html=True)
                 if str_app.button("Câu tiếp theo ➡️", type="primary", use_container_width=True, key=f"next_wrong_{w_idx}"):
                     if str_app.session_state["wrong_idx"] < len(wrong_list) - 1:

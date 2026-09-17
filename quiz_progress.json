@@ -11,9 +11,21 @@
         2,
         3
     ],
-    "bookmarked_questions": [],
+    "bookmarked_questions": [
+        {
+            "question": "Câu 2: Theo Quy trình An toàn, người có trách nhiệm phân công công việc, chỉ huy và giám sát nhân viên đơn vị công tác trong suốt quá trình thực hiện công việc là ?",
+            "options": [
+                "A. Người chỉ huy trực tiếp.",
+                "B. Người lãnh đạo công việc.",
+                "C. Người cấp phiếu.",
+                "D. Người cho phép."
+            ],
+            "correct": "A",
+            "sheet": "1. An toàn chung"
+        }
+    ],
     "wrong_questions": [],
     "spaced_repetition_data": {},
-    "total_study_seconds": 511.9008536338806,
+    "total_study_seconds": 513.7775266170502,
     "last_login_date": ""
 }

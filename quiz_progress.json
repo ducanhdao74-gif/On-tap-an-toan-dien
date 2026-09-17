@@ -36,7 +36,12 @@
         }
     ],
     "wrong_questions": [],
-    "spaced_repetition_data": {},
-    "total_study_seconds": 749.7041759490967,
+    "spaced_repetition_data": {
+        "Câu 29: Theo Quy trình An toàn thủ tục an toàn trước khi tiến hành công việc có sử dụng thiết bị nâng là gì?": {
+            "box": 1,
+            "next_review": 1789624476.3308377
+        }
+    },
+    "total_study_seconds": 741.8350737094879,
     "last_login_date": ""
 }

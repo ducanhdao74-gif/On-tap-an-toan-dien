@@ -770,7 +770,7 @@ else:
         else:
             correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
             str_app.error(f" Sai rồi! Đáp án đúng là **{correct_text}**.")
-                    else:
+        else:
                         str_app.session_state["wrong_idx"] = 0
                     scroll_to_top()
                     str_app.rerun()

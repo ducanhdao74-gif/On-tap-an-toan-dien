@@ -742,7 +742,7 @@ else:
                 options = shuff_data["options"]
                 correct_letter = shuff_data["correct"]
                 
-                          w_storage_key = f"user_ans_wrong_{w_idx}"
+                w_storage_key = f"user_ans_wrong_{w_idx}"
                 w_answered_key = f"answered_wrong_{w_idx}"
                 is_w_answered = str_app.session_state.get(w_answered_key, False)
             

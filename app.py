@@ -549,7 +549,7 @@ else:
             str_app.sidebar.error("❌ Lỗi khi lưu dữ liệu!")
 
     if str_app.sidebar.button("📧 Gửi Email nhắc nhở báo cáo", use_container_width=True):
-        success, err_msg = send_daily_reminder_email(SENDER_EMAIL, completed_est_count, total_all_questions, bookmarked_count, current_total_hours)
+        success, err_msg = send_daily_email(SENDER_EMAIL, completed_est_count, total_all_questions, bookmarked_count, current_total_hours)
         if success:
             str_app.sidebar.success("✅ Đã gửi email báo cáo vào Gmail!")
         else:

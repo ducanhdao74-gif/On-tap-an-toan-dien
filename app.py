@@ -24,22 +24,37 @@ PROGRESS_FILE = "quiz_progress.json"
 SENDER_EMAIL = "ducanhdao74@gmail.com"
 SENDER_PASSWORD = "ospeifebafqlufpi"
 
+@str_app.cache_data(ttl=300)
 def load_saved_progress():
-    if os.path.exists(PROGRESS_FILE):
-        try:
-            with open(PROGRESS_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except:
-            pass
-    return {
-        "completed_chunks": [],
-        "passed_tests": [],
-        "bookmarked_questions": [],
-        "wrong_questions": [],
-        "spaced_repetition_data": {},
-        "total_study_seconds": 0,
-        "last_login_date": ""
-    }
+  # 1. Kéo từ GitHub về lưu cache cục bộ khi khởi động (chỉ chạy ngầm 1 lần)
+  if "GITHUB_TOKEN" in str_app.secrets and "REPO_NAME" in str_app.secrets:
+    try:
+      g = Github(str_app.secrets["GITHUB_TOKEN"])
+      repo = g.get_repo(str_app.secrets["REPO_NAME"])
+      file_contents = repo.get_contents("quiz_progress.json")
+      file_data = file_contents.decoded_content.decode("utf-8")
+      with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
+        f.write(file_data)
+    except Exception:
+      pass
+
+  # 2. Đọc từ file cục bộ siêu nhanh, không độ trễ
+  if os.path.exists(PROGRESS_FILE):
+    try:
+      with open(PROGRESS_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+    except Exception:
+      pass
+
+  return {
+      "completed_chunks": [],
+      "passed_tests": [],
+      "bookmarked_questions": [],
+      "wrong_questions": [],
+      "spaced_repetition_data": {},
+      "total_study_seconds": 0,
+      "last_login_date": "",
+  }
 
 def save_current_progress():
   # Chỉ tính toán thời gian và đóng gói dữ liệu đẩy lên GitHub khi người dùng bấm nút lưu

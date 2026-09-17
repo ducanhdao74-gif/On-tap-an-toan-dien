@@ -743,14 +743,14 @@ else:
                 correct_letter = shuff_data["correct"]
                 
                 w_storage_key = f"user_ans_wrong_{w_idx}"
-                w_answered_key = f"answered_wrong_{w_idx}"
-                is_w_answered = str_app.session_state.get(w_answered_key, False)
-                
-                w_default_idx = None
-                if str_app.session_state.get(w_storage_key) in options:
-                    w_default_idx = options.index(str_app.session_state.get(w_storage_key))
-                    
-        if not is_w_answered:
+    w_answered_key = f"answered_wrong_{w_idx}"
+    is_w_answered = str_app.session_state.get(w_answered_key, False)
+
+    w_default_idx = None
+    if str_app.session_state.get(w_storage_key) in options:
+        w_default_idx = options.index(str_app.session_state.get(w_storage_key))
+
+    if not is_w_answered:
         w_choice = str_app.radio("Lựa chọn đáp án:", options, index=w_default_idx, key=f"radio_wrong_{w_idx}", label_visibility="collapsed")
         if w_choice is not None:
             str_app.session_state[w_storage_key] = w_choice
@@ -762,7 +762,6 @@ else:
                 wrong_list = [w for w in wrong_list if w.get("question") != w_item.get("question")]
                 str_app.session_state["wrong_questions"] = wrong_list
                 save_current_progress()
-        # Đã xóa dòng str_app.rerun() ở dòng 765
                 else:
                     saved_w_choice = str_app.session_state.get(w_storage_key)
                     str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_w_choice}</b></p>", unsafe_allow_html=True)

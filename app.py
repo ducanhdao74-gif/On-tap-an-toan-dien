@@ -677,7 +677,7 @@ else:
                 if saved_choice is not None:
                     is_correct = saved_choice.strip().upper().startswith(correct_letter)
                 else:
-                is_correct = False
+                    is_correct = False
                         if is_correct:
                                         str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
                         else:

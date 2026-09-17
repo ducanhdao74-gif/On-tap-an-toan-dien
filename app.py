@@ -751,7 +751,7 @@ else:
                     w_default_idx = options.index(str_app.session_state.get(w_storage_key))
             
                 if not is_w_answered:
-                w_choice = str_app.radio("Lựa chọn đáp án:", options, index=w_default_idx, key=f"radio_wrong_{w_idx}", label_visibility="collapsed")
+                    w_choice = str_app.radio("Lựa chọn đáp án:", options, index=w_default_idx, key=f"radio_wrong_{w_idx}", label_visibility="collapsed")
         if w_choice is not None:
             str_app.session_state[w_storage_key] = w_choice
             str_app.session_state[w_answered_key] = True

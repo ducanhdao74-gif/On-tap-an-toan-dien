@@ -758,11 +758,11 @@ else:
                         
                         is_correct = w_choice.strip().upper().startswith(correct_letter)
                         update_spaced_repetition(w_item["question"], is_correct)
-                        if is_correct:
-                            wrong_list = [w for w in wrong_list if w.get("question") != w_item.get("question")]
-                            str_app.session_state["wrong_questions"] = wrong_list
-                            save_current_progress()
-                        str_app.rerun()
+                       if is_correct:
+            wrong_list = [w for w in wrong_list if w.get("question") != w_item.get("question")]
+            str_app.session_state["wrong_questions"] = wrong_list
+            save_current_progress()
+        # Đã xóa dòng str_app.rerun() ở dòng 765
                 else:
                     saved_w_choice = str_app.session_state.get(w_storage_key)
                     str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_w_choice}</b></p>", unsafe_allow_html=True)

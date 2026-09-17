@@ -108,7 +108,7 @@ def send_daily_reminder_email(receiver_email, completed_questions_count, total_q
     message["From"] = SENDER_EMAIL
     message["To"] = receiver_email
     message["Subject"] = Header(subject, 'utf-8')
-    message.attach(MIMEText(body, 'plain', 'utf-8'))
+   message.attach(MIMEText(body, 'plain', 'utf-8'))
 
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)

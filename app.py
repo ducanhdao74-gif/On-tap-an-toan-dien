@@ -684,8 +684,8 @@ else:
                                         correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
                                         str_app.error(f"❌ Sai rồi! Đáp án đúng là **{correct_text}**.")
                 
-                                        str_app.markdown("<br>", unsafe_allow_html=True)
-                                        col_prev, col_next = str_app.columns([1, 1])
+                str_app.markdown("<br>", unsafe_allow_html=True)
+                col_prev, col_next = str_app.columns([1, 1])
         with col_prev:
                     if str_app.button("⬅️ Câu trước", use_container_width=True):
                         if str_app.session_state[f"q_idx_{selected_sheet}"] > 0:

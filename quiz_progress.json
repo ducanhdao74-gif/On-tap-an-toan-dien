@@ -64,8 +64,12 @@
         "Câu 307: Theo Quy trình An toàn, thì khoảng cách cho phép nhỏ nhất đến phần có điện cao áp xoay chiều được quy định như thế nào?": {
             "box": 2,
             "next_review": 1789640065.433647
+        },
+        "Câu 34: Theo Quy trình An toàn, nội dung nào dưới đây là quy định đúng và được áp dụng để thực hiện nối đất tạo vùng an toàn khi làm việc ?": {
+            "box": 2,
+            "next_review": 1789640503.2340438
         }
     },
-    "total_study_seconds": 1259.3870210647583,
+    "total_study_seconds": 1697.18741106987,
     "last_login_date": ""
 }

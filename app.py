@@ -240,8 +240,20 @@ def load_data():
 if "start_session_time" not in str_app.session_state:
     str_app.session_state["start_session_time"] = time.time()
 
-sheets_data, error_message = load_data()
-saved_prog = load_saved_progress()
+if "cached_sheets_data" not in str_app.session_state:
+  with str_app.spinner("Đang tải ngân hàng câu hỏi lần đầu..."):
+    (
+        str_app.session_state["cached_sheets_data"],
+        str_app.session_state["cached_error_msg"],
+    ) = load_data()
+
+sheets_data = str_app.session_state["cached_sheets_data"]
+error_message = str_app.session_state["cached_error_msg"]
+
+if "cached_saved_prog" not in str_app.session_state:
+  str_app.session_state["cached_saved_prog"] = load_saved_progress()
+
+saved_prog = str_app.session_state["cached_saved_prog"]
 
 total_all_questions = 0
 if sheets_data:
@@ -261,7 +273,7 @@ if "passed_tests" not in str_app.session_state:
 if "app_started" not in str_app.session_state:
     str_app.session_state["app_started"] = False
 
-save_current_progress()
+#save_current_progress()
 
 def update_spaced_repetition(q_text, is_correct):
     sr_data = str_app.session_state["spaced_repetition_data"]

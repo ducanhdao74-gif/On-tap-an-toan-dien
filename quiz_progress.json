@@ -22,10 +22,21 @@
             ],
             "correct": "A",
             "sheet": "1. An toàn chung"
+        },
+        {
+            "question": "Câu 29: Theo Quy trình An toàn thủ tục an toàn trước khi tiến hành công việc có sử dụng thiết bị nâng là gì?",
+            "options": [
+                "A. Tiến hành lập phương án thi công, phương án đảm bảo an toàn trong quá trình làm việc. Kiểm tra chất lượng thiết bị nâng.",
+                "B. Tiến hành đánh giá rủi ro các công việc nâng, hạ và lập phương án đảm bảo an toàn trong quá trình làm việc.",
+                "C. Tiến hành đánh giá rủi ro các công việc nâng, hạ và lập phương án thi công, phương án đảm bảo an toàn trong quá trình làm việc.",
+                "D. Kiểm tra hồ sơ thiết bị nâng và lập phương án phương án thi công, phương án đảm bảo an toàn trong quá trình làm việc."
+            ],
+            "correct": "C",
+            "sheet": "10. QLVH nhà máy điện"
         }
     ],
     "wrong_questions": [],
     "spaced_repetition_data": {},
-    "total_study_seconds": 744.2146077156067,
+    "total_study_seconds": 741.8345181941986,
     "last_login_date": ""
 }

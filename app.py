@@ -670,7 +670,7 @@ else:
                 current_saved_ans = str_app.session_state.get(ans_storage_key, None)
                 saved_choice = current_saved_ans
                 if current_saved_ans in options:
-                default_idx = options.index(current_saved_ans)
+                    default_idx = options.index(current_saved_ans)
                 else:
                 saved_choice = str_app.session_state.get(ans_storage_key)
                 str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_choice}</b></p>", unsafe_allow_html=True)
@@ -678,11 +678,11 @@ else:
                 is_correct = saved_choice.strip().upper().startswith(correct_letter)
                 else:
                 is_correct = False
-        if is_correct:
-                        str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
-        else:
-                        correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
-                        str_app.error(f"❌ Sai rồi! Đáp án đúng là **{correct_text}**.")
+                        if is_correct:
+                                        str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
+                        else:
+                                        correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
+                                        str_app.error(f"❌ Sai rồi! Đáp án đúng là **{correct_text}**.")
                 
                         str_app.markdown("<br>", unsafe_allow_html=True)
                         col_prev, col_next = str_app.columns([1, 1])

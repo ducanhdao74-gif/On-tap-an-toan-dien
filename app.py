@@ -1,5 +1,4 @@
 import streamlit as str_app
-from github import Github
 import streamlit.components.v1 as components
 import pandas as pd
 import openpyxl
@@ -25,85 +24,46 @@ SENDER_EMAIL = "ducanhdao74@gmail.com"
 SENDER_PASSWORD = "ospeifebafqlufpi"
 
 def load_saved_progress():
-  # Chỉ đọc trực tiếp từ file cục bộ, tuyệt đối không gọi GitHub API khi đang thao tác
-  if os.path.exists(PROGRESS_FILE):
-    try:
-      with open(PROGRESS_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
-    except Exception:
-      pass
-
-  return {
-      "completed_chunks": [],
-      "passed_tests": [],
-      "bookmarked_questions": [],
-      "wrong_questions": [],
-      "spaced_repetition_data": {},
-      "total_study_seconds": 0,
-      "last_login_date": "",
-  }
+    if os.path.exists(PROGRESS_FILE):
+        try:
+            with open(PROGRESS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            pass
+    return {
+        "completed_chunks": [],
+        "passed_tests": [],
+        "bookmarked_questions": [],
+        "wrong_questions": [],
+        "spaced_repetition_data": {},
+        "total_study_seconds": 0,
+        "last_login_date": ""
+    }
 
 def save_current_progress():
-  # Chỉ tính toán thời gian và đóng gói dữ liệu đẩy lên GitHub khi người dùng bấm nút lưu
-  if "start_session_time" in str_app.session_state:
-    elapsed = time.time() - str_app.session_state["start_session_time"]
-    str_app.session_state["start_session_time"] = time.time()
-    saved_data = load_saved_progress()
-    saved_data["total_study_seconds"] = (
-        saved_data.get("total_study_seconds", 0) + elapsed
-    )
-  else:
-    saved_data = load_saved_progress()
+    if "start_session_time" in str_app.session_state:
+        elapsed = time.time() - str_app.session_state["start_session_time"]
+        str_app.session_state["start_session_time"] = time.time()
+        saved_data = load_saved_progress()
+        saved_data["total_study_seconds"] = saved_data.get("total_study_seconds", 0) + elapsed
+    else:
+        saved_data = load_saved_progress()
 
-  data = {
-      "completed_chunks": list(str_app.session_state.get("completed_chunks", [])),
-      "passed_tests": list(str_app.session_state.get("passed_tests", [])),
-      "bookmarked_questions": list(
-          str_app.session_state.get("bookmarked_questions", [])
-      ),
-      "wrong_questions": list(str_app.session_state.get("wrong_questions", [])),
-      "spaced_repetition_data": str_app.session_state.get(
-          "spaced_repetition_data", {}
-      ),
-      "total_study_seconds": saved_data.get("total_study_seconds", 0),
-      "last_login_date": str_app.session_state.get("last_login_date", ""),
-  }
-
-  try:
-    # 1. Ghi lưu cục bộ nhẹ nhàng
-    with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
-      json.dump(data, f, ensure_ascii=False, indent=4)
-
-    # 2. Đồng bộ lên GitHub qua API (Chỉ chạy ở đây!)
-    if (
-        "GITHUB_TOKEN" in str_app.secrets
-        and "REPO_NAME" in str_app.secrets
-    ):
-      g = Github(str_app.secrets["GITHUB_TOKEN"])
-      repo = g.get_repo(str_app.secrets["REPO_NAME"])
-      file_path = "quiz_progress.json"
-      updated_content = json.dumps(data, ensure_ascii=False, indent=4)
-
-      try:
-        file_contents = repo.get_contents(file_path)
-        repo.update_file(
-            file_path,
-            "Auto-update quiz progress via Streamlit app",
-            updated_content,
-            file_contents.sha,
-        )
-      except Exception:
-        # Nếu file chưa tồn tại trên repo thì tạo mới luôn
-        repo.create_file(
-            file_path,
-            "Create initial quiz progress file",
-            updated_content,
-        )
-
-    return True
-  except Exception as e:
-    str_app.error(f"Chi tiết lỗi GitHub API: {str(e)}")
-    return False
+    data = {
+        "completed_chunks": list(str_app.session_state.get("completed_chunks", [])),
+        "passed_tests": list(str_app.session_state.get("passed_tests", [])),
+        "bookmarked_questions": str_app.session_state.get("bookmarked_questions", []),
+        "wrong_questions": str_app.session_state.get("wrong_questions", []),
+        "spaced_repetition_data": str_app.session_state.get("spaced_repetition_data", {}),
+        "total_study_seconds": saved_data.get("total_study_seconds", 0),
+        "last_login_date": str_app.session_state.get("last_login_date", "")
+    }
+    try:
+        with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+        return True
+    except:
+        return False
 
 def scroll_to_top():
     components.html("""
@@ -117,36 +77,31 @@ def scroll_to_top():
         </script>
     """, height=0)
 
-def send_daily_email(receiver_email, completed_questions_count, total_questions_count, time_str, bookmarked_count):
-    subject = "📊 Báo cáo tiến độ ôn tập An Toàn Điện mỗi ngày"
-    
+def send_daily_reminder_email(receiver_email, completed_questions_count, total_questions_count, bookmarked_count, total_study_hours):
+    subject = "⚡ Nhắc nhở ôn tập An Toàn Điện mỗi ngày!"
+    if total_study_hours < 1:
+        time_str = f"{int(total_study_hours * 60)} phút"
+    else:
+        time_str = f"{total_study_hours:.1f} giờ"
+
     body = f"""
-    <html>
-      <body style="font-family: Arial, sans-serif; color: #333;">
-        <h3 style="color: #2563eb;">📊 Báo cáo tiến độ ôn tập An Toàn Điện mỗi ngày</h3>
-        <p>Chào Đức Anh,</p>
-        <p>Hôm nay là một ngày mới rồi! Hãy dành ra chút thời gian để vào ôn tập ngân hàng câu hỏi An Toàn Điện nhé:</p>
-        
-        <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
-          <h4 style="margin-top: 0; color: #1e293b;">📈 Tiến độ hiện tại của ông:</h4>
-          <ul style="line-height: 1.6; padding-left: 20px;">
-            <li>Số câu đã hoàn thành: <b>{completed_questions_count}/{total_questions_count}</b> câu</li>
-            <li>Tổng thời gian đã ôn tập: <b>{time_str}</b></li>
-            <li>Số câu hỏi đang cần ghi nhớ (Star): <b>{bookmarked_count}</b> câu</li>
-          </ul>
-        </div>
-        
-        <p style="margin-top: 15px;">Chúc ông ôn thi thật tốt và đạt kết quả cao! 🚀</p>
-      </body>
-    </html>
-    """
-    
+Chào Đức Anh,
+
+Hôm nay là một ngày mới rồi! Hãy dành ra chút thời gian để vào ôn tập ngân hàng câu hỏi An Toàn Điện nhé:
+
+📊 Tiến độ hiện tại của ông:
+- Số câu đã hoàn thành: {completed_questions_count}/{total_questions_count} câu
+- Tổng thời gian đã ôn tập: {time_str}
+- Số câu hỏi đang cần ghi nhớ (Star): {bookmarked_count} câu
+
+Chúc ông ôn thi thật tốt và đạt kết quả cao!
+"""
     message = MIMEMultipart()
     message["From"] = SENDER_EMAIL
     message["To"] = receiver_email
     message["Subject"] = Header(subject, 'utf-8')
-    message.attach(MIMEText(body, 'html', 'utf-8')) # Đã đổi thành 'html'
-    
+    message.attach(MIMEText(body, 'plain', 'utf-8'))
+
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
@@ -240,20 +195,8 @@ def load_data():
 if "start_session_time" not in str_app.session_state:
     str_app.session_state["start_session_time"] = time.time()
 
-if "cached_sheets_data" not in str_app.session_state:
-  with str_app.spinner("Đang tải ngân hàng câu hỏi lần đầu..."):
-    (
-        str_app.session_state["cached_sheets_data"],
-        str_app.session_state["cached_error_msg"],
-    ) = load_data()
-
-sheets_data = str_app.session_state["cached_sheets_data"]
-error_message = str_app.session_state["cached_error_msg"]
-
-if "cached_saved_prog" not in str_app.session_state:
-  str_app.session_state["cached_saved_prog"] = load_saved_progress()
-
-saved_prog = str_app.session_state["cached_saved_prog"]
+sheets_data, error_message = load_data()
+saved_prog = load_saved_progress()
 
 total_all_questions = 0
 if sheets_data:
@@ -273,7 +216,7 @@ if "passed_tests" not in str_app.session_state:
 if "app_started" not in str_app.session_state:
     str_app.session_state["app_started"] = False
 
-#save_current_progress()
+save_current_progress()
 
 def update_spaced_repetition(q_text, is_correct):
     sr_data = str_app.session_state["spaced_repetition_data"]
@@ -463,17 +406,8 @@ def get_shuffled_options(q_item, session_key):
     return str_app.session_state[session_key]
 
 if not str_app.session_state["app_started"]:
-    str_app.markdown(
-        """
-        <style>
-            [data-testid="stSidebar"] {display: none;}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-    
     str_app.markdown("<br><br>", unsafe_allow_html=True)
-    col_w1, col_w2, col_w3 = str_app.columns([1, 2.2, 1])  # Thẳng hàng lề ở đây
+    col_w1, col_w2, col_w3 = str_app.columns([1, 2.2, 1])
     with col_w2:
         str_app.markdown("""
             <div class="welcome-card">
@@ -482,10 +416,10 @@ if not str_app.session_state["app_started"]:
                 <p style="font-size: 1.05rem; color: #94a3b8; margin-top: 8px;">Chúc ông ôn tập thật tập trung, nắm trọn kiến thức và đạt kết quả cao nhất! 🚀</p>
             </div>
         """, unsafe_allow_html=True)
-    str_app.markdown("<br>", unsafe_allow_html=True)
+        str_app.markdown("<br>", unsafe_allow_html=True)
         
-    col_btn_center1, col_btn_center2, col_btn_center3 = str_app.columns([1, 1.5, 1])
-    with col_btn_center2:
+        col_btn_center1, col_btn_center2, col_btn_center3 = str_app.columns([1, 1.5, 1])
+        with col_btn_center2:
             if str_app.button("✨ Bắt đầu vào ôn tập ngay", type="primary", use_container_width=True):
                 str_app.session_state["app_started"] = True
                 scroll_to_top()
@@ -549,7 +483,7 @@ else:
             str_app.sidebar.error("❌ Lỗi khi lưu dữ liệu!")
 
     if str_app.sidebar.button("📧 Gửi Email nhắc nhở báo cáo", use_container_width=True):
-        success, err_msg = send_daily_email(SENDER_EMAIL, completed_est_count, total_all_questions, bookmarked_count, current_total_hours)
+        success, err_msg = send_daily_reminder_email(SENDER_EMAIL, completed_est_count, total_all_questions, bookmarked_count, current_total_hours)
         if success:
             str_app.sidebar.success("✅ Đã gửi email báo cáo vào Gmail!")
         else:
@@ -662,39 +596,53 @@ else:
                 options = shuff_data["options"]
                 correct_letter = shuff_data["correct"]
                 
-                ans_storage_key = f"user_ans_wrong_{w_idx}"
-                answered_key = f"answered_wrong_{w_idx}"
+                ans_storage_key = f"user_ans_chuande_{selected_sheet}_{idx}"
+                answered_key = f"answered_chuande_{selected_sheet}_{idx}"
                 is_already_answered = str_app.session_state.get(answered_key, False)
                 
                 default_idx = None
                 current_saved_ans = str_app.session_state.get(ans_storage_key, None)
-                saved_choice = current_saved_ans
                 if current_saved_ans in options:
                     default_idx = options.index(current_saved_ans)
+                    
+                if not is_already_answered:
+                    selected_opt = str_app.radio("Lựa chọn đáp án:", options, index=default_idx, key=f"radio_chuande_{selected_sheet}_{idx}", label_visibility="collapsed")
+                    
+                    if selected_opt is not None:
+                        str_app.session_state[ans_storage_key] = selected_opt
+                        str_app.session_state[answered_key] = True
+                        str_app.session_state[f"done_{selected_sheet}"] = min(total_q, max(str_app.session_state[f"done_{selected_sheet}"], idx + 1))
+                        
+                        is_correct = selected_opt.strip().upper().startswith(correct_letter)
+                        update_spaced_repetition(q_item["question"], is_correct)
+                        if not is_correct:
+                            if not any(w.get("question") == q_item["question"] for w in str_app.session_state["wrong_questions"]):
+                                str_app.session_state["wrong_questions"].append(q_item)
+                                save_current_progress()
+                        str_app.rerun()
                 else:
                     saved_choice = str_app.session_state.get(ans_storage_key)
-                str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_choice}</b></p>", unsafe_allow_html=True)
-                if saved_choice is not None:
+                    str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_choice}</b></p>", unsafe_allow_html=True)
+                    
                     is_correct = saved_choice.strip().upper().startswith(correct_letter)
-                else:
-                    is_correct = False
-                if is_correct:
-                                        str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
-                else:
-                                        correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
-                                        str_app.error(f"❌ Sai rồi! Đáp án đúng là **{correct_text}**.")
+                    str_app.markdown("<br>", unsafe_allow_html=True)
+                    if is_correct:
+                        str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
+                    else:
+                        correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
+                        str_app.error(f"❌ Sai rồi! Đáp án đúng là **{correct_text}**.")
                 
-                                        str_app.markdown("<br>", unsafe_allow_html=True)
-                                        col_prev, col_next = str_app.columns([1, 1])
-                                        with col_prev:
-                                        if str_app.button("⬅️ Câu trước", use_container_width=True):
-                                        if str_app.session_state[f"q_idx_{selected_sheet}"] > 0:
-                                            str_app.session_state[f"q_idx_{selected_sheet}"] -= 1
-                                        else:
-                                            str_app.session_state[f"q_idx_{selected_sheet}"] = total_q - 1
-                                        scroll_to_top()
-                                        str_app.rerun()
-                                        with col_next:
+                str_app.markdown("<br>", unsafe_allow_html=True)
+                col_prev, col_next = str_app.columns([1, 1])
+                with col_prev:
+                    if str_app.button("⬅️ Câu trước", use_container_width=True):
+                        if str_app.session_state[f"q_idx_{selected_sheet}"] > 0:
+                            str_app.session_state[f"q_idx_{selected_sheet}"] -= 1
+                        else:
+                            str_app.session_state[f"q_idx_{selected_sheet}"] = total_q - 1
+                        scroll_to_top()
+                        str_app.rerun()
+                with col_next:
                     if str_app.button("Câu tiếp theo ➡️", type="primary", use_container_width=True):
                         if str_app.session_state[f"q_idx_{selected_sheet}"] < total_q - 1:
                             str_app.session_state[f"q_idx_{selected_sheet}"] += 1
@@ -703,83 +651,88 @@ else:
                         scroll_to_top()
                         str_app.rerun()
 
-    if mode == "🔄 Ôn lại câu trả lời sai":
-        str_app.title("🔄 Ôn Lại Câu Trả Lời Sai")
-        str_app.markdown("---")
-        wrong_list = str_app.session_state.get("wrong_questions", [])
-        if not wrong_list:
-            str_app.info(" Hiện tại bạn không có câu trả lời sai nào được lưu lại.")
-        else:
-            str_app.write(f"Bạn đang có **{len(wrong_list)}** câu cần ôn tập lại.")
-            if "wrong_idx" not in str_app.session_state:
-                str_app.session_state["wrong_idx"] = 0
-                
-            w_idx = str_app.session_state["wrong_idx"]
-            if w_idx >= len(wrong_list):
-                w_idx = 0
-            str_app.session_state["wrong_idx"] = 0
-
-        w_item = wrong_list[w_idx]
-                
-        str_app.markdown(f"""
-        div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-size: 1.05rem; font-weight: 700; color: #f43f5e;">⚠️ Nguồn: {w_item.get('sheet', 'N/A')}</span>
-        <span class="badge-topic">Câu sai {w_idx + 1} / {len(wrong_list)}</span>
-        </div>
-        </div>
-         """, unsafe_allow_html=True)
-                
-        str_app.markdown(f"""
-        <div class="question-card">
-        <div class="question-title">
-        <b>Câu {w_idx + 1}:</b> {w_item['question']}
-        </div>
-        </div>
-        """, unsafe_allow_html=True)
-                
-        shuff_data = get_shuffled_options(w_item, f"shuff_wrong_{w_idx}")
-        options = shuff_data["options"]
-        correct_letter = shuff_data["correct"]
-
-        w_storage_key = f"user_ans_wrong_{w_idx}"
-        w_answered_key = f"answered_wrong_{w_idx}"
-        is_w_answered = str_app.session_state.get(w_answered_key, False)
-
-    w_default_idx = None
-    if str_app.session_state.get(w_storage_key) in options:
-        w_default_idx = options.index(str_app.session_state.get(w_storage_key))
-
-    if not is_w_answered:
-        w_choice = str_app.radio("Lựa chọn đáp án:", options, index=w_default_idx, key=f"radio_wrong_{w_idx}", label_visibility="collapsed")
-        if w_choice is not None:
-            str_app.session_state[w_storage_key] = w_choice
-            str_app.session_state[w_answered_key] = True
+        elif mode == "🔄 Ôn lại câu trả lời sai":
+            str_app.title("🔄 Ôn Lại Câu Trả Lời Sai")
+            str_app.markdown("---")
             
-            is_correct = w_choice.strip().upper().startswith(correct_letter)
-            update_spaced_repetition(w_item["question"], is_correct)
-            if is_correct:
-                wrong_list = [w for w in wrong_list if w.get("question") != w_item.get("question")]
-                str_app.session_state["wrong_questions"] = wrong_list
-                save_current_progress()
-    else:
-        saved_w_choice = str_app.session_state.get(w_storage_key)
-        str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_w_choice}</b></p>", unsafe_allow_html=True)
-    if saved_w_choice and saved_w_choice.strip().upper().startswith(correct_letter):
-        str_app.success(f" Chính xác! Đáp án đúng là {correct_letter}.")
-    else:
-        correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
-        str_app.error(f" Sai rồi! Đáp án đúng là **{correct_text}**.")
+            wrong_list = str_app.session_state["wrong_questions"]
+            if not wrong_list:
+                str_app.info("🎉 Hiện tại bạn chưa có câu trả lời sai nào được lưu lại.")
+            else:
+                str_app.write(f"Bạn đang có **{len(wrong_list)}** câu cần ôn tập lại.")
+                if "wrong_idx" not in str_app.session_state:
+                    str_app.session_state["wrong_idx"] = 0
+                    
+                w_idx = str_app.session_state["wrong_idx"]
+                if w_idx >= len(wrong_list):
+                    w_idx = 0
+                    str_app.session_state["wrong_idx"] = 0
+                    
+                w_item = wrong_list[w_idx]
+                
+                str_app.markdown(f"""
+                    <div class="main-header-card" style="margin-top: 0; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 1.05rem; font-weight: 700; color: #f43f5e;">⚠️ Nguồn: {w_item.get('sheet', 'N/A')}</span>
+                            <span class="badge-topic">Câu sai {w_idx + 1} / {len(wrong_list)}</span>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                str_app.markdown(f"""
+                    <div class="question-card">
+                        <div class="question-title">
+                            <b>Câu {w_idx + 1}:</b> {w_item['question']}
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                shuff_data = get_shuffled_options(w_item, f"shuff_wrong_{w_idx}")
+                options = shuff_data["options"]
+                correct_letter = shuff_data["correct"]
+                
+                w_storage_key = f"user_ans_wrong_{w_idx}"
+                w_answered_key = f"answered_wrong_{w_idx}"
+                is_w_answered = str_app.session_state.get(w_answered_key, False)
+                
+                w_default_idx = None
+                if str_app.session_state.get(w_storage_key) in options:
+                    w_default_idx = options.index(str_app.session_state.get(w_storage_key))
+                    
+                if not is_w_answered:
+                    w_choice = str_app.radio("Lựa chọn đáp án:", options, index=w_default_idx, key=f"radio_wrong_{w_idx}", label_visibility="collapsed")
+                    if w_choice is not None:
+                        str_app.session_state[w_storage_key] = w_choice
+                        str_app.session_state[w_answered_key] = True
+                        
+                        is_correct = w_choice.strip().upper().startswith(correct_letter)
+                        update_spaced_repetition(w_item["question"], is_correct)
+                        if is_correct:
+                            wrong_list = [w for w in wrong_list if w.get("question") != w_item.get("question")]
+                            str_app.session_state["wrong_questions"] = wrong_list
+                            save_current_progress()
+                        str_app.rerun()
+                else:
+                    saved_w_choice = str_app.session_state.get(w_storage_key)
+                    str_app.markdown(f"<p style='color: #cbd5e1; font-size: 1.05rem;'>Đã chọn: <b>{saved_w_choice}</b></p>", unsafe_allow_html=True)
+                    
+                    str_app.markdown("<br>", unsafe_allow_html=True)
+                    if saved_w_choice.strip().upper().startswith(correct_letter):
+                        str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}. (Đã xóa khỏi danh sách câu sai)")
+                    else:
+                        correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
+                        str_app.error(f"❌ Sai rồi! Đáp án đúng là **{correct_text}**.")
+                
+                str_app.markdown("<br>", unsafe_allow_html=True)
+                if str_app.button("Câu tiếp theo ➡️", type="primary", use_container_width=True, key=f"next_wrong_{w_idx}"):
+                    if str_app.session_state["wrong_idx"] < len(wrong_list) - 1:
+                        str_app.session_state["wrong_idx"] += 1
+                    else:
+                        str_app.session_state["wrong_idx"] = 0
+                    scroll_to_top()
+                    str_app.rerun()
 
-    str_app.markdown("<br>", unsafe_allow_html=True)
-    if str_app.button("Câu tiếp theo ➡️", type="primary", use_container_width=True, key=f"next_wrong_{w_idx}"):
-        if str_app.session_state["wrong_idx"] < len(wrong_list) - 1:
-            str_app.session_state["wrong_idx"] += 1
-        else:
-            str_app.session_state["wrong_idx"] = 0
-        scroll_to_top()
-        str_app.rerun()
-    elif mode == "🧠 Spaced Repetition (Ôn thông minh)":
+        elif mode == "🧠 Spaced Repetition (Ôn thông minh)":
             str_app.title("🧠 Chế Độ Ôn Thông Minh (Spaced Repetition)")
             str_app.markdown("---")
             
@@ -875,9 +828,9 @@ else:
                     scroll_to_top()
                     str_app.rerun()
 
-                elif mode == "⭐ Tất cả câu hỏi cần ghi nhớ":
-                    str_app.title("⭐ Tất Cả Câu Hỏi Cần Ghi Nhớ")
-                    str_app.markdown("---")
+        elif mode == "⭐ Tất cả câu hỏi cần ghi nhớ":
+            str_app.title("⭐ Tất Cả Câu Hỏi Cần Ghi Nhớ")
+            str_app.markdown("---")
             
             bm_list = str_app.session_state["bookmarked_questions"]
             if not bm_list:
@@ -942,9 +895,9 @@ else:
                     scroll_to_top()
                     str_app.rerun()
 
-                elif mode == "📂 Ôn gộp tất cả (50 câu/phần)":
-                    str_app.title("📂 Ôn Gộp Tất Cả Chuyên Đề (50 Câu/Phần)")
-                    str_app.markdown("---")
+        elif mode == "📂 Ôn gộp tất cả (50 câu/phần)":
+            str_app.title("📂 Ôn Gộp Tất Cả Chuyên Đề (50 Câu/Phần)")
+            str_app.markdown("---")
             
             all_questions = []
             for sh, ql in sheets_data.items():
@@ -1407,9 +1360,9 @@ else:
                             scroll_to_top()
                             str_app.rerun()
 
-                        elif mode == "📝 Thi thử (Mock Test)":
-                            str_app.title("📝 Chế Độ Thi Thử (Mock Test)")
-                            str_app.markdown("---")
+        elif mode == "📝 Thi thử (Mock Test)":
+            str_app.title("📝 Chế Độ Thi Thử (Mock Test)")
+            str_app.markdown("---")
             
             all_questions = []
             for sh, ql in sheets_data.items():
@@ -1525,9 +1478,9 @@ else:
                         scroll_to_top()
                         str_app.rerun()
 
-                    elif mode == "⚙️ Quản lý kho lưu trữ & Dữ liệu":
-                        str_app.title("⚙️ Trung Tâm Quản Lý Trạng Thái & Kho Lưu Trữ")
-                        str_app.markdown("---")
+        elif mode == "⚙️ Quản lý kho lưu trữ & Dữ liệu":
+            str_app.title("⚙️ Trung Tâm Quản Lý Trạng Thái & Kho Lưu Trữ")
+            str_app.markdown("---")
             
             str_app.markdown("""
                 <div class="welcome-card" style="text-align: left; padding: 25px;">
@@ -1603,9 +1556,3 @@ else:
                     str_app.success("Đã thiết lập lại toàn bộ ứng dụng từ đầu!")
                     time.sleep(1)
                     str_app.rerun()
-                    # --- NÚT THOÁT VỀ MÀN HÌNH WELCOME (ĐẶT Ở CUỐI FILE) ---
-with str_app.sidebar:
-    str_app.divider()
-    if str_app.button("🏠 Về màn hình Welcome", use_container_width=True):
-        str_app.session_state["app_started"] = False
-        str_app.rerun()

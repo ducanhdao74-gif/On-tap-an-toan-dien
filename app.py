@@ -708,7 +708,7 @@ else:
                         str_app.title("🔄 Ôn Lại Câu Trả Lời Sai")
                         str_app.markdown("---")
             
-            wrong_list = str_app.session_state["wrong_questions"]
+                        wrong_list = str_app.session_state["wrong_questions"]
             if not wrong_list:
                 str_app.info("🎉 Hiện tại bạn chưa có câu trả lời sai nào được lưu lại.")
             else:

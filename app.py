@@ -680,7 +680,7 @@ else:
                     is_correct = False
                 if is_correct:
                                         str_app.success(f"🎉 Chính xác! Đáp án đúng là {correct_letter}.")
-                        else:
+                else:
                                         correct_text = next((opt for opt in options if opt.strip().upper().startswith(correct_letter)), "")
                                         str_app.error(f"❌ Sai rồi! Đáp án đúng là **{correct_text}**.")
                 
